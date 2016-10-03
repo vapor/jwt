@@ -79,14 +79,6 @@ struct JWToken {
     }
 }
 
-func decode(_ jwt: String) throws -> JSON {
-    guard let data = Data(base64Encoded: jwt) else {
-        throw JWTError.notBase64Encoded
-    }
-
-    return try JSON(bytes: try data.makeBytes())
-}
-
 func newECKeyPair(_ hashSize: HashSize) throws -> OpaquePointer {
     guard
         let ecKey = EC_KEY_new_by_curve_name(hashSize.curve),
@@ -110,28 +102,6 @@ func newECKeyPair(_ hashSize: HashSize) throws -> OpaquePointer {
     let publicKey = EC_POINT_new(group)
     EC_POINT_mul(group, publicKey, &privateNum, nil, nil, context)
     EC_KEY_set_public_key(ecKey, publicKey)
-
-    // Convert public key to base64 string
-
-    EC_KEY_set_conv_form(ecKey, POINT_CONVERSION_UNCOMPRESSED)
-
-    let pub_len = i2o_ECPublicKey(ecKey, nil)
-    var pub: UnsafeMutablePointer<UInt8>? = nil
-
-    guard i2o_ECPublicKey(ecKey, &pub) == pub_len else {
-        throw JWTError.couldNotGenerateKey
-    }
-
-    if let pub = pub {
-        var publicBytes = Bytes(repeating: 0, count: Int(pub_len))
-        for i in 0..<Int(pub_len) {
-            publicBytes[i] = Byte(pub[i])
-        }
-        let publicData = Data(bytes: publicBytes)
-        print("public key: \(publicData.base64String)")
-    } else {
-        throw JWTError.couldNotGenerateKey
-    }
 
     // Release resources
 
@@ -244,6 +214,16 @@ extension Algorithm {
         }
     }
 
+    var headerValue: String {
+        switch self {
+        case .none: return "none"
+        case .hs(let hashSize):
+            return "HS" + hashSize.string
+        case .es(let hashSize):
+            return "ES" + hashSize.string
+        }
+    }
+
     func encrypt(_ message: String) throws -> String {
         switch self {
         case .hs(let hashSize):
@@ -292,16 +272,6 @@ extension Algorithm {
             let ecKey = try newECPublicKey(hashSize)
             let verified = ECDSA_do_verify(digest, Int32(digest.count), signature, ecKey)
             return verified == 1
-        }
-    }
-
-    var headerValue: String {
-        switch self {
-        case .none: return "none"
-        case .hs(let hashSize):
-            return "HS" + hashSize.string
-        case .es(let hashSize):
-            return "ES" + hashSize.string
         }
     }
 }

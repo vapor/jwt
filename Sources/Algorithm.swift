@@ -3,16 +3,16 @@ import Foundation
 import Hash
 import HMAC
 
-enum Algorithm {
+public enum Algorithm {
     case none
     case es(HashSize)
     case hs(HashSize)
     //    case rs(HashSize)
 }
 
-extension Algorithm {
+public extension Algorithm {
 
-    init(_ string: String, key: String) throws {
+    public init(_ string: String, key: String) throws {
         guard string != "none" else {
             self = .none
             return
@@ -35,7 +35,7 @@ extension Algorithm {
         }
     }
 
-    var headerValue: String {
+    public var headerValue: String {
         switch self {
         case .none: return "none"
         case .hs(let hashSize):
@@ -45,7 +45,7 @@ extension Algorithm {
         }
     }
 
-    func encrypt(_ message: String) throws -> String {
+    public func encrypt(_ message: String) throws -> String {
         switch self {
         case .hs(let hashSize):
             return try HMAC(hashSize.shaHMACMethod, message.bytes)
@@ -77,7 +77,7 @@ extension Algorithm {
         }
     }
 
-    func verifySignature(_ signature: String, message: String) throws -> Bool {
+    public func verifySignature(_ signature: String, message: String) throws -> Bool {
         switch self {
         case .none: return true
         case .hs:

@@ -4,15 +4,15 @@ import Foundation
 import Hash
 import HMAC
 
-enum HashSize {
+public enum HashSize {
     case _256(String)
     case _384(String)
     case _512(String)
 }
 
-extension HashSize {
+public extension HashSize {
 
-    init(_ string: String, key: String) throws {
+    public init(_ string: String, key: String) throws {
         switch string {
         case "256": self = ._256(key)
         case "384": self = ._384(key)
@@ -22,7 +22,7 @@ extension HashSize {
         }
     }
 
-    var curve: Int32 {
+    public var curve: Int32 {
         switch self {
         case ._256: return NID_secp256k1
         case ._384: return NID_secp384r1
@@ -30,14 +30,14 @@ extension HashSize {
         }
     }
 
-    var key: String {
+    public var key: String {
         switch self {
         case ._256(let key), ._384(let key), ._512(let key):
             return key
         }
     }
 
-    var shaHashMethod: Hash.Method {
+    public var shaHashMethod: Hash.Method {
         switch self {
         case ._256: return .sha256
         case ._384: return .sha384
@@ -45,7 +45,7 @@ extension HashSize {
         }
     }
 
-    var shaHMACMethod: HMAC.Method {
+    public var shaHMACMethod: HMAC.Method {
         switch self {
         case ._256: return .sha256
         case ._384: return .sha384
@@ -53,7 +53,7 @@ extension HashSize {
         }
     }
 
-    var string: String {
+    public var string: String {
         switch self {
         case ._256: return "256"
         case ._384: return "384"

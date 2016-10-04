@@ -121,6 +121,15 @@ class VaporJWTTests: XCTestCase {
         }
     }
 
+    func testInvalidAlgorithm() {
+        XCTAssertThrowsError(try Algorithm("", key: "")) {
+            guard let error = $0 as? JWTError, case .unsupportedAlgorithm = error else {
+                XCTFail()
+                return
+            }
+        }
+    }
+
     static var allTests = [
         testEncodeWithoutEncryption,
         testEncodeWithHS256Encryption,

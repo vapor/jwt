@@ -18,10 +18,14 @@ extension Algorithm {
             return
         }
 
-        let hashSizeRange = string.index(string.startIndex, offsetBy: 2)..<string.endIndex
-        let hashSize = try HashSize(string[hashSizeRange], key: key)
+        guard let hashSizeStartIndex =
+            string.index(string.startIndex, offsetBy: 2, limitedBy: string.endIndex) else {
+                throw JWTError.unsupportedAlgorithm
+        }
 
-        switch string.substring(to: string.index(string.startIndex, offsetBy: 2)).lowercased() {
+        let hashSize = try HashSize(string[hashSizeStartIndex..<string.endIndex], key: key)
+
+        switch string.substring(to: hashSizeStartIndex).lowercased() {
         case "es":
             self = .es(hashSize)
         case "hs":

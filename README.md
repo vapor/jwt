@@ -20,6 +20,10 @@ import VaporJWT
 ```
 try JWT(payload: JSON(["user_id", .string("1")]), algorithm: .hs(._256("secret")))
 ```
+You can optionally add extra header fields like this:
+```
+try JWT(payload: JSON(["user_id", .string("1")]), algorithm: .hs(._256("secret")), extraHeaders: ["extra": "header"])
+```
 ### Validate an existing token string
 ```
 let jwt = try JWT(token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67/QGs52AzC8Ru8=")

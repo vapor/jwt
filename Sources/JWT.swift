@@ -33,7 +33,7 @@ struct JWT {
         signature = segments[2]
     }
 
-    func tokenString() throws -> String {
+    func token() throws -> String {
         return "\(try header.base64String()).\(try payload.base64String()).\(signature)"
     }
 

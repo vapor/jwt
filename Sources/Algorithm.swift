@@ -61,14 +61,14 @@ extension Algorithm {
             var byte: UnsafeMutablePointer<UInt8>? = nil
             let derLength = i2d_ECDSA_SIG(sig, &byte)
 
-            guard let byte2 = byte, derLength > 0 else {
+            guard let byteCopy = byte, derLength > 0 else {
                 throw JWTError.couldNotGenerateKey
             }
 
             var bytes: [UInt8] = [UInt8](repeating: 0, count: Int(derLength))
 
             for b in 0..<Int(derLength) {
-                bytes[b] = byte2[b]
+                bytes[b] = byteCopy[b]
             }
 
             return bytes.base64String

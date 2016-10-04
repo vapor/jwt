@@ -1,42 +1,6 @@
 import JSON
 
-private func + (lhs: [String: Node], rhs: [String: Node]) -> [String: Node] {
-    var result = lhs
-    rhs.forEach {
-        result[$0.key] = $0.value
-    }
-    return result
-}
-
 struct JWT {
-
-    enum Header {
-
-        static let algorithmKey = "alg"
-        static let typeKey = "typ"
-
-        case algorithm(Algorithm)
-        case type
-
-        var key: String {
-            switch self {
-            case .algorithm: return Header.algorithmKey
-            case .type: return Header.typeKey
-            }
-        }
-
-        var object: [String: Node] {
-            return [key: .string(value)]
-
-        }
-
-        var value: String {
-            switch self {
-            case .algorithm(let algorithm): return algorithm.headerValue
-            case .type: return "JWT"
-            }
-        }
-    }
 
     private let algorithmHeaderValue: String
     let header: JSON
@@ -79,5 +43,41 @@ struct JWT {
         let encodedHeaderAndPayload = "\(try header.base64String()).\(try payload.base64String())"
 
         return try algorithm.verifySignature(signature, message: encodedHeaderAndPayload)
+    }
+}
+
+private func + (lhs: [String: Node], rhs: [String: Node]) -> [String: Node] {
+    var result = lhs
+    rhs.forEach {
+        result[$0.key] = $0.value
+    }
+    return result
+}
+
+private enum Header {
+
+    static let algorithmKey = "alg"
+    static let typeKey = "typ"
+
+    case algorithm(Algorithm)
+    case type
+
+    var key: String {
+        switch self {
+        case .algorithm: return Header.algorithmKey
+        case .type: return Header.typeKey
+        }
+    }
+
+    var object: [String: Node] {
+        return [key: .string(value)]
+
+    }
+
+    var value: String {
+        switch self {
+        case .algorithm(let algorithm): return algorithm.headerValue
+        case .type: return "JWT"
+        }
     }
 }

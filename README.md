@@ -30,6 +30,15 @@ try JWT(payload: JSON(["user_id", .string("1")]), algorithm: .hs(._256(privateKe
 let jwt = try JWT(token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67/QGs52AzC8Ru8=")
 let isValid = jwt.verifySignature(key: "secret)
 ```
+## Encryption support
+Encryption type | In code
+--- | ---
+HS256 | `.hs(._256(privateKey))`
+HS384 | `.hs(._384(privateKey))`
+HS512 | `.hs(._512(privateKey))`
+ES256 | `.es(._256(privateKey))`
+ES384 | `.es(._384(privateKey))`
+ES512 | `.es(._512(privateKey))`
 
 ## Motivation
 Existing libraries were pretty great already but I wanted a library that felt more native to Vapor by supporting the JSON type for payloads. Further, I wanted better encryption support, with ES256 in particular because it is needed by for Apple's new [token based push notifications](https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/ApplePushService.html#//apple_ref/doc/uid/TP40008194-CH100-SW11).

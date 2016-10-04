@@ -97,9 +97,20 @@ class JWTTests: XCTestCase {
     func testCustomJWTHeaders() {
         do {
             let jwt = try JWT(payload: JSON([:]),
-                              algorithm: .none,
-                              extraHeaders: ["extra": "header"])
+                              extraHeaders: ["extra": "header"],
+                              algorithm: .none)
             XCTAssertEqual(jwt.header, JSON(["alg": "none", "typ": "JWT", "extra": "header"]))
+        } catch {
+            XCTFail()
+        }
+    }
+
+    func testSetFullHeader() {
+        do {
+            let jwt = try JWT(payload: JSON([:]),
+                              header: JSON(["extra": "header"]),
+                              algorithm: .none)
+            XCTAssertEqual(jwt.header, JSON(["extra": "header"]))
         } catch {
             XCTFail()
         }

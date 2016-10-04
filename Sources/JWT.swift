@@ -7,16 +7,21 @@ struct JWT {
     public let payload: JSON
     public let signature: String
 
-    public init(payload: JSON, algorithm: Algorithm, extraHeaders: [String: Node] = [:]) throws {
-        header = JSON(.object(
+    public init(payload: JSON, header: JSON, algorithm: Algorithm) throws {
+        self.payload = payload
+        self.header = header
+        self.algorithmHeaderValue = algorithm.headerValue
+        let encodedHeaderAndPayload = "\(try header.base64String()).\(try payload.base64String())"
+        signature = try algorithm.encrypt(encodedHeaderAndPayload)
+    }
+
+    public init(payload: JSON, extraHeaders: [String: Node] = [:], algorithm: Algorithm) throws {
+        let header = JSON(.object(
             Header.algorithm(algorithm).object +
             Header.type.object +
             extraHeaders))
 
-        self.algorithmHeaderValue = algorithm.headerValue
-        self.payload = payload
-        let encodedHeaderAndPayload = "\(try header.base64String()).\(try payload.base64String())"
-        signature = try algorithm.encrypt(encodedHeaderAndPayload)
+        try self.init(payload: payload, header: header, algorithm: algorithm)
     }
 
     public init(token: String) throws {

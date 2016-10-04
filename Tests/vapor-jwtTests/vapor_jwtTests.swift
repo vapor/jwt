@@ -42,7 +42,6 @@ struct JWToken {
     let payload: JSON
     let signature: String
 
-    // TODO: support extra header fields
     init(payload: JSON, algorithm: Algorithm) throws {
         header = JSON([Header.algorithm.rawValue: .string(algorithm.headerValue),
                        Header.type.rawValue: "JWT"])
@@ -361,11 +360,11 @@ class vapor_jwtTests: XCTestCase {
     }
 
     func testDecode() {
-        XCTAssertEqual(try decode("eyJhIjoiYiJ9"), message)
+        XCTAssertEqual(try JSON(base64Encoded: "eyJhIjoiYiJ9"), message)
     }
 
     func testNotBase64Encoded() {
-        XCTAssertThrowsError(try decode("0")) {
+        XCTAssertThrowsError(try JSON(base64Encoded: "0")) {
             guard let error = $0 as? JWTError, case .notBase64Encoded = error else {
                 XCTFail()
                 return

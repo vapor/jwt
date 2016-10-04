@@ -1,4 +1,4 @@
-enum JWTError: Error {
+public enum JWTError: Error {
     case couldNotGenerateKey
     case incorrectNumberOfSegments
     case missingAlgorithm

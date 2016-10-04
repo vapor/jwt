@@ -52,7 +52,7 @@ extension Algorithm {
                 .authenticate(key: hashSize.key.bytes).base64String
         case .es(let hashSize):
             var digest = try Hash(hashSize.shaHashMethod, message.bytes).hash()
-            let ecKey = try newECKeyPair(hashSize)
+            let ecKey = try hashSize.newECKeyPair()
 
             guard let sig = ECDSA_do_sign(&digest, Int32(digest.count), ecKey) else {
                 throw JWTError.couldNotGenerateKey
@@ -90,7 +90,7 @@ extension Algorithm {
             var derBytesPointer: UnsafePointer? = UnsafePointer(derBytes)
             let signature = d2i_ECDSA_SIG(nil, &derBytesPointer, derBytes.count)
             let digest = try Hash(hashSize.shaHashMethod, message.bytes).hash()
-            let ecKey = try newECPublicKey(hashSize)
+            let ecKey = try hashSize.newECPublicKey()
             let verified = ECDSA_do_verify(digest, Int32(digest.count), signature, ecKey)
             return verified == 1
         }

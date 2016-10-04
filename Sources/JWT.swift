@@ -1,6 +1,6 @@
 import JSON
 
-struct JWT {
+public struct JWT {
 
     private let algorithmHeaderValue: String
     public let header: JSON

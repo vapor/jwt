@@ -1,4 +1,4 @@
-# jwt-token
+# VaporJWT
 JWT implementation for Vapor
 
 # Resources / Acknowledgements

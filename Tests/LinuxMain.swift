@@ -1,6 +1,6 @@
 import XCTest
-@testable import vapor_jwtTests
+@testable import VaporJWTTests
 
 XCTMain([
-     testCase(vapor_jwtTests.allTests),
+     testCase(VaporJWTTests.allTests),
 ])

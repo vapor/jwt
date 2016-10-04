@@ -1,4 +1,4 @@
-@testable import vapor_jwt
+@testable import VaporJWT
 import CLibreSSL
 import Core
 import Foundation
@@ -275,7 +275,7 @@ extension Algorithm {
     }
 }
 
-class vapor_jwtTests: XCTestCase {
+class VaporJWTTests: XCTestCase {
 
     let message = JSON(["a": .string("b")])
 
@@ -363,16 +363,6 @@ class vapor_jwtTests: XCTestCase {
         XCTAssertEqual(try JSON(base64Encoded: "eyJhIjoiYiJ9"), message)
     }
 
-    func testNotBase64Encoded() {
-        XCTAssertThrowsError(try JSON(base64Encoded: "0")) {
-            guard let error = $0 as? JWTError, case .notBase64Encoded = error else {
-                XCTFail()
-                return
-            }
-            return
-        }
-    }
-
     func testHeaderKeys() {
         let all: [Algorithm] = [
             .none,
@@ -391,6 +381,29 @@ class vapor_jwtTests: XCTestCase {
             "ES256",
             "ES384",
             "ES512"
-        ])
+            ])
     }
+
+    func testNotBase64Encoded() {
+        XCTAssertThrowsError(try JSON(base64Encoded: "0")) {
+            guard let error = $0 as? JWTError, case .notBase64Encoded = error else {
+                XCTFail()
+                return
+            }
+            return
+        }
+    }
+
+    static var allTests = [
+        testEncodeWithoutEncryption,
+        testEncodeWithHS256Encryption,
+        testEncodeWithHS384Encryption,
+        testEncodeWithHS512Encryption,
+        testEncodeWithES256Encryption,
+        testEncodeWithES384Encryption,
+        testEncodeWithES512Encryption,
+        testDecode,
+        testHeaderKeys,
+        testNotBase64Encoded,
+    ]
 }

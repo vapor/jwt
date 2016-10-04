@@ -1,10 +1,41 @@
 import JSON
 
+private func + (lhs: [String: Node], rhs: [String: Node]) -> [String: Node] {
+    var result = lhs
+    rhs.forEach {
+        result[$0.key] = $0.value
+    }
+    return result
+}
+
 struct JWT {
 
-    enum Header: String {
-        case algorithm = "alg"
-        case type = "typ"
+    enum Header {
+
+        static let algorithmKey = "alg"
+        static let typeKey = "typ"
+
+        case algorithm(Algorithm)
+        case type
+
+        var key: String {
+            switch self {
+            case .algorithm: return Header.algorithmKey
+            case .type: return Header.typeKey
+            }
+        }
+
+        var object: [String: Node] {
+            return [key: .string(value)]
+
+        }
+
+        var value: String {
+            switch self {
+            case .algorithm(let algorithm): return algorithm.headerValue
+            case .type: return "JWT"
+            }
+        }
     }
 
     private let algorithmHeaderValue: String
@@ -12,9 +43,12 @@ struct JWT {
     let payload: JSON
     let signature: String
 
-    init(payload: JSON, algorithm: Algorithm, extraHeaders: JSON = JSON([:])) throws {
-        header = JSON([Header.algorithm.rawValue: .string(algorithm.headerValue),
-                       Header.type.rawValue: "JWT"])
+    init(payload: JSON, algorithm: Algorithm, extraHeaders: [String: Node] = [:]) throws {
+        header = JSON(.object(
+            Header.algorithm(algorithm).object +
+            Header.type.object +
+            extraHeaders))
+
         self.algorithmHeaderValue = algorithm.headerValue
         self.payload = payload
         let encodedHeaderAndPayload = "\(try header.base64String()).\(try payload.base64String())"
@@ -27,7 +61,7 @@ struct JWT {
             throw JWTError.incorrectNumberOfSegments
         }
         header = try JSON(base64Encoded: segments[0])
-        guard let alg = header.object?[Header.algorithm.rawValue]?.string else {
+        guard let alg = header.object?[Header.algorithmKey]?.string else {
             throw JWTError.missingAlgorithm
         }
         algorithmHeaderValue = alg

@@ -130,6 +130,15 @@ class VaporJWTTests: XCTestCase {
         }
     }
 
+    func testCustomJWTHeaders() {
+        do {
+            let jwt = try JWT(payload: JSON([:]), algorithm: .none, extraHeaders: ["extra": "header"])
+            XCTAssertEqual(jwt.header, JSON(["alg": "none", "typ": "JWT", "extra": "header"]))
+        } catch {
+            XCTFail()
+        }
+    }
+
     static var allTests = [
         testEncodeWithoutEncryption,
         testEncodeWithHS256Encryption,

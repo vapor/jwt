@@ -7,44 +7,57 @@ class VaporJWTTests: XCTestCase {
     let message = JSON(["a": .string("b")])
 
     func testEncodeWithoutEncryption() {
+        let secret = ""
+        let tokenString = "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0=.eyJhIjoiYiJ9."
+
         do {
             let token = try JWT(payload: message, algorithm: .none)
-            XCTAssertEqual(try token.tokenString(),
-                           "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0=.eyJhIjoiYiJ9.")
-            XCTAssertTrue(try token.verifySignature(key: ""))
+
+            XCTAssertEqual(try token.tokenString(), tokenString)
+            XCTAssertTrue(try JWT(token: tokenString).verifySignature(key: secret))
         } catch {
             XCTFail()
         }
     }
 
     func testEncodeWithHS256Encryption() {
+        let secret = "secret"
+        let tokenString = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67/QGs52AzC8Ru8="
+
         do {
-            let token = try JWT(payload: message, algorithm: .hs(._256("secret")))
-            XCTAssertEqual(try token.tokenString(),
-                           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67/QGs52AzC8Ru8=")
-            XCTAssertTrue(try token.verifySignature(key: "secret"))
+            let token = try JWT(payload: message, algorithm: .hs(._256(secret)))
+
+            XCTAssertEqual(try token.tokenString(), tokenString)
+            XCTAssertTrue(try JWT(token: tokenString).verifySignature(key: secret))
+
         } catch {
             XCTFail()
         }
     }
 
     func testEncodeWithHS384Encryption() {
+        let secret = "secret"
+        let tokenString = "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.TgJIRKof/BR1EVkcRXV/xt8IxffTwQKUyOZIUUWFrC6sFAGIDe1HZksCbSIhKyoD"
+
         do {
-            let token = try JWT(payload: message, algorithm: .hs(._384("secret")))
-            XCTAssertEqual(try token.tokenString(),
-                           "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.TgJIRKof/BR1EVkcRXV/xt8IxffTwQKUyOZIUUWFrC6sFAGIDe1HZksCbSIhKyoD")
-            XCTAssertTrue(try token.verifySignature(key: "secret"))
+            let token = try JWT(payload: message, algorithm: .hs(._384(secret)))
+
+            XCTAssertEqual(try token.tokenString(), tokenString)
+            XCTAssertTrue(try JWT(token: tokenString).verifySignature(key: secret))
         } catch {
             XCTFail()
         }
     }
 
     func testEncodeWithHS512Encryption() {
+        let secret = "secret"
+        let tokenString = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.NEvauwy77uvgEvKOlGLmLJJEseamUKhAAPaGaWlD5P5qLHkLiHC9eQOy4YwR+L3BjNN1lumBhg8eEHus23CflQ=="
+
         do {
-            let token = try JWT(payload: message, algorithm: .hs(._512("secret")))
-            XCTAssertEqual(try token.tokenString(),
-                           "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.NEvauwy77uvgEvKOlGLmLJJEseamUKhAAPaGaWlD5P5qLHkLiHC9eQOy4YwR+L3BjNN1lumBhg8eEHus23CflQ==")
-            XCTAssertTrue(try token.verifySignature(key: "secret"))
+            let token = try JWT(payload: message, algorithm: .hs(._512(secret)))
+
+            XCTAssertEqual(try token.tokenString(), tokenString)
+            XCTAssertTrue(try JWT(token: tokenString).verifySignature(key: secret))
         } catch {
             XCTFail()
         }
@@ -56,7 +69,9 @@ class VaporJWTTests: XCTestCase {
 
         do {
             let token = try JWT(payload: message, algorithm: .es(._256(privateKey)))
-            XCTAssertTrue(try token.verifySignature(key: publicKey))
+            let tokenString = try token.tokenString()
+
+            XCTAssertTrue(try JWT(token: tokenString).verifySignature(key: publicKey))
         } catch {
             XCTFail()
         }
@@ -68,7 +83,9 @@ class VaporJWTTests: XCTestCase {
 
         do {
             let token = try JWT(payload: message, algorithm: .es(._384(privateKey)))
-            XCTAssertTrue(try token.verifySignature(key: publicKey))
+            let tokenString = try token.tokenString()
+
+            XCTAssertTrue(try JWT(token: tokenString).verifySignature(key: publicKey))
         } catch {
             XCTFail()
         }
@@ -80,7 +97,9 @@ class VaporJWTTests: XCTestCase {
 
         do {
             let token = try JWT(payload: message, algorithm: .es(._512(privateKey)))
-            XCTAssertTrue(try token.verifySignature(key: publicKey))
+            let tokenString = try token.tokenString()
+            
+            XCTAssertTrue(try JWT(token: tokenString).verifySignature(key: publicKey))
         } catch {
             XCTFail()
         }

@@ -3,16 +3,16 @@ import Foundation
 import Hash
 import HMAC
 
-enum Algorithm {
+public enum Algorithm {
     case none
     case es(HashSize)
     case hs(HashSize)
     //    case rs(HashSize)
 }
 
-extension Algorithm {
+public extension Algorithm {
 
-    init(_ string: String, key: String) throws {
+    public init(_ string: String, key: String) throws {
         guard string != "none" else {
             self = .none
             return

@@ -4,7 +4,7 @@ import Foundation
 import Hash
 import HMAC
 
-enum HashSize {
+public enum HashSize {
     case _256(String)
     case _384(String)
     case _512(String)
@@ -12,7 +12,7 @@ enum HashSize {
 
 extension HashSize {
 
-    init(_ string: String, key: String) throws {
+    public init(_ string: String, key: String) throws {
         switch string {
         case "256": self = ._256(key)
         case "384": self = ._384(key)

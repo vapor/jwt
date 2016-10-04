@@ -7,25 +7,26 @@ JWT implementation for Vapor
 
 ##  Installation (Swift package manager)
 Add the following package to `Package.swift`
-```
+```swift
 .Package(url:"https://github.com/siemensikkema/vapor-jwt.git", majorVersion: 0)
 ```
 
 ## Usage
 Import the library:
-```
+```swift
 import VaporJWT
 ```
 ### Create a new token
-```
-try JWT(payload: JSON(["user_id", .string("1")]), algorithm: .hs(._256("secret")))
+```swift
+let privateKey = ...
+try JWT(payload: JSON(["user_id", .string("1")]), algorithm: .hs(._256(privateKey)))
 ```
 You can optionally add extra header fields like this:
-```
-try JWT(payload: JSON(["user_id", .string("1")]), algorithm: .hs(._256("secret")), extraHeaders: ["extra": "header"])
+```swift
+try JWT(payload: JSON(["user_id", .string("1")]), algorithm: .hs(._256(privateKey)), extraHeaders: ["extra": "header"])
 ```
 ### Validate an existing token string
-```
+```swift
 let jwt = try JWT(token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67/QGs52AzC8Ru8=")
 let isValid = jwt.verifySignature(key: "secret)
 ```

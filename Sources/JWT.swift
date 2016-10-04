@@ -1,13 +1,13 @@
 import JSON
 
-struct JWT {
+public struct JWT {
 
     private let algorithmHeaderValue: String
     let header: JSON
     let payload: JSON
     let signature: String
 
-    init(payload: JSON, algorithm: Algorithm, extraHeaders: [String: Node] = [:]) throws {
+    public init(payload: JSON, algorithm: Algorithm, extraHeaders: [String: Node] = [:]) throws {
         header = JSON(.object(
             Header.algorithm(algorithm).object +
             Header.type.object +
@@ -19,7 +19,7 @@ struct JWT {
         signature = try algorithm.encrypt(encodedHeaderAndPayload)
     }
 
-    init(token: String) throws {
+    public init(token: String) throws {
         let segments = token.components(separatedBy: ".")
         guard segments.count == 3 else {
             throw JWTError.incorrectNumberOfSegments
@@ -33,11 +33,11 @@ struct JWT {
         signature = segments[2]
     }
 
-    func tokenString() throws -> String {
+    public func tokenString() throws -> String {
         return "\(try header.base64String()).\(try payload.base64String()).\(signature)"
     }
 
-    func verifySignature(key: String) throws -> Bool {
+    public func verifySignature(key: String) throws -> Bool {
         let algorithm = try Algorithm(algorithmHeaderValue, key: key)
 
         let encodedHeaderAndPayload = "\(try header.base64String()).\(try payload.base64String())"

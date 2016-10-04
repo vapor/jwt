@@ -1,6 +1,6 @@
 import JSON
 
-struct JWToken {
+struct JWT {
 
     enum Header: String {
         case algorithm = "alg"
@@ -12,7 +12,7 @@ struct JWToken {
     let payload: JSON
     let signature: String
 
-    init(payload: JSON, algorithm: Algorithm) throws {
+    init(payload: JSON, algorithm: Algorithm, extraHeaders: JSON = JSON([:])) throws {
         header = JSON([Header.algorithm.rawValue: .string(algorithm.headerValue),
                        Header.type.rawValue: "JWT"])
         self.algorithmHeaderValue = algorithm.headerValue

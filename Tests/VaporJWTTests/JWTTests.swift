@@ -57,7 +57,7 @@ class JWTTests: XCTestCase {
 
     func testES256Encryption() {
         let privateKey = "AL3BRa7llckPgUw3Si2KCy1kRUZJ/pxJ29nlr86xlm0="
-        let publicKey = "BPtT5aOJu133UmfZNr6J0xYifrtknN0sk0VbuB/xqdQHCFpzpWmm8c9HnesXRvu21o37MkzkO6hKxGFNzO73UGc="
+        let publicKey = "BIMulrzGbr8b4Dzj/lR5/m69XXLXfFCU0hkXr9jvpsXzNovbyb0gJYkMxrrCyYqd9ofDcTSSIWxxEtL8h5KcNBY="
 
         XCTAssert(doesNotThrow(try check(algorithm: .es(._256(privateKey)), publicKey: publicKey)))
     }

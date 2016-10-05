@@ -24,7 +24,7 @@ extension HashSize {
 
     var curve: Int32 {
         switch self {
-        case ._256: return NID_secp256k1
+        case ._256: return NID_X9_62_prime256v1
         case ._384: return NID_secp384r1
         case ._512: return NID_secp521r1
         }

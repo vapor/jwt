@@ -25,5 +25,10 @@ final class EncodingTests: XCTestCase {
         XCTAssertEqual(try Encoding.base64URL.decode(message), JSON(["a": .string("abc+-/_=")]))
     }
 
-    static var all = [testEncodeBase64, testEncodeBase64URL, testDecodeBase64, testDecodeBase64URL]
+    static var all = [
+        testEncodeBase64,
+        testEncodeBase64URL,
+        testDecodeBase64,
+        testDecodeBase64URL,
+    ]
 }

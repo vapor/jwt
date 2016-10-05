@@ -109,4 +109,19 @@ class JWTTests: XCTestCase {
             XCTFail()
         }
     }
+
+    static var all = [
+        testNoEncryption,
+        testHS256Encryption,
+        testHS384Encryption,
+        testHS512Encryption,
+        testES256Encryption,
+        testES384Encryption,
+        testES512Encryption,
+        testParseTokenWithMissingAlgorithm,
+        testNonBase64Signature,
+        testIncorrectNumberOfSegments,
+        testCustomJWTHeaders,
+        testSetFullHeader,
+    ]
 }

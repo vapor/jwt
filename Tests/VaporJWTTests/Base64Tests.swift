@@ -11,5 +11,8 @@ final class Base64Tests: XCTestCase {
         XCTAssertEqual("abc-_".base64, "abc+/===")
     }
 
-    static var all = [testBase64ToBase64URL, testBase64URLToBase64]
+    static var all = [
+        testBase64ToBase64URL,
+        testBase64URLToBase64
+    ]
 }

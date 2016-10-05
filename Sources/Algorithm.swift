@@ -1,4 +1,5 @@
 import CLibreSSL
+import Core
 import Foundation
 import Hash
 import HMAC
@@ -45,11 +46,11 @@ public extension Algorithm {
         }
     }
 
-    func encrypt(_ message: String) throws -> String {
+    func encrypt(_ message: String) throws -> Bytes {
         switch self {
         case .hs(let hashSize):
             return try HMAC(hashSize.shaHMACMethod, message.bytes)
-                .authenticate(key: hashSize.key.bytes).base64String
+                .authenticate(key: hashSize.key.bytes)
         case .es(let hashSize):
             var digest = try Hash(hashSize.shaHashMethod, message.bytes).hash()
             let ecKey = try hashSize.newECKeyPair()
@@ -71,21 +72,19 @@ public extension Algorithm {
                 bytes[b] = byteCopy[b]
             }
 
-            return bytes.base64String
+            return bytes
         default:
-            return ""
+            return []
         }
     }
 
-    func verifySignature(_ signature: String, message: String) throws -> Bool {
+    func verifySignature(_ signature: Bytes, message: String) throws -> Bool {
         switch self {
         case .none: return true
         case .hs:
             return try encrypt(message) == signature
         case .es(let hashSize):
-            guard let der = Data(base64Encoded: signature) else {
-                throw JWTError.notBase64Encoded
-            }
+            let der = Data(bytes: signature)
             let derBytes = try der.makeBytes()
             var derBytesPointer: UnsafePointer? = UnsafePointer(derBytes)
             let signature = d2i_ECDSA_SIG(nil, &derBytesPointer, derBytes.count)

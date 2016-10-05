@@ -33,6 +33,15 @@ extension StringBase64URL {
                 return char
             }
         }
-        return StringBase64(utf8String: &converted)
+        guard let unpadded = StringBase64(utf8String: &converted) else {
+            return nil
+        }
+
+        let characterCount = unpadded.utf8CString.count - 1 // ignore last /0
+
+        let paddingCount = 4 - (characterCount % 4)
+        let padding = Array(repeating: "=", count: paddingCount).joined()
+
+        return unpadded + padding
     }
 }

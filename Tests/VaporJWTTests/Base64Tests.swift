@@ -4,12 +4,11 @@ import XCTest
 final class Base64Tests: XCTestCase {
 
     func testBase64ToBase64URL() {
-        XCTAssertEqual("abc+/=".base64URL, "abc-_")
+        XCTAssertEqual("abc+/===".base64URL, "abc-_")
     }
 
     func testBase64URLToBase64() {
-        // FIXME: add padding
-        XCTAssertEqual("abc-_".base64, "abc+/")
+        XCTAssertEqual("abc-_".base64, "abc+/===")
     }
 
     static var all = [testBase64ToBase64URL, testBase64URLToBase64]

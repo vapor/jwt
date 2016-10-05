@@ -5,8 +5,10 @@ import JSON
 public struct JWT {
 
     private static let separator = "."
+
     private let algorithmHeaderValue: String
     private let encoding: Encoding
+
     public let header: JSON
     public let payload: JSON
     public let signature: String
@@ -20,10 +22,10 @@ public struct JWT {
         self.algorithmHeaderValue = algorithm.headerValue
         self.encoding = encoding
 
-        signature = try algorithm.encrypt(
-            [header, payload]
-            .map(encoding.encode)
-            .joined(separator: JWT.separator))
+        let encoded = try [header, payload].map(encoding.encode)
+        let message = encoded.joined(separator: JWT.separator)
+        let bytes = try algorithm.encrypt(message)
+        signature = try encoding.encode(bytes)
     }
 
     public init(payload: JSON,
@@ -58,16 +60,20 @@ public struct JWT {
     }
 
     public func token() throws -> String {
-        return try ([header, payload].map(encoding.encode) + [signature])
-            .joined(separator: JWT.separator)
+        let encoded = try [header, payload].map(encoding.encode)
+
+        return (encoded + [signature]).joined(separator: JWT.separator)
     }
 
     public func verifySignature(key: String) throws -> Bool {
-        return try Algorithm(algorithmHeaderValue, key: key)
-            .verifySignature(signature,
-                             message: [header, payload]
-                                .map(encoding.encode)
-                                .joined(separator: JWT.separator))
+        let algorithm = try Algorithm(algorithmHeaderValue, key: key)
+        let message = try [header, payload]
+            .map(encoding.encode)
+            .joined(separator: JWT.separator)
+
+        return try algorithm
+            .verifySignature(encoding.decode(signature),
+                             message: message)
     }
 }
 

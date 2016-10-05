@@ -1,53 +1,73 @@
+import Core
+import Foundation
 import JSON
 
 public struct JWT {
 
+    private static let separator = "."
     private let algorithmHeaderValue: String
+    private let encoding: Encoding
     public let header: JSON
     public let payload: JSON
     public let signature: String
 
-    public init(payload: JSON, header: JSON, algorithm: Algorithm) throws {
+    public init(payload: JSON,
+                header: JSON,
+                algorithm: Algorithm,
+                encoding: Encoding = .base64) throws {
         self.payload = payload
         self.header = header
         self.algorithmHeaderValue = algorithm.headerValue
-        let encodedHeaderAndPayload = "\(try header.base64String()).\(try payload.base64String())"
-        signature = try algorithm.encrypt(encodedHeaderAndPayload)
+        self.encoding = encoding
+
+        signature = try algorithm.encrypt(
+            [header, payload]
+            .map(encoding.encode)
+            .joined(separator: JWT.separator))
     }
 
-    public init(payload: JSON, extraHeaders: [String: Node] = [:], algorithm: Algorithm) throws {
+    public init(payload: JSON,
+                extraHeaders: [String: Node] = [:],
+                algorithm: Algorithm,
+                encoding: Encoding = .base64) throws {
         let header = JSON(.object(
             Header.algorithm(algorithm).object +
             Header.type.object +
             extraHeaders))
 
-        try self.init(payload: payload, header: header, algorithm: algorithm)
+        try self.init(payload: payload, header: header, algorithm: algorithm, encoding: encoding)
     }
 
-    public init(token: String) throws {
-        let segments = token.components(separatedBy: ".")
+    public init(token: String, encoding: Encoding = .base64) throws {
+        let segments = token.components(separatedBy: JWT.separator)
+
         guard segments.count == 3 else {
             throw JWTError.incorrectNumberOfSegments
         }
-        header = try JSON(base64Encoded: segments[0])
+
+        header = try encoding.decode(segments[0])
+
         guard let alg = header.object?[Header.algorithmKey]?.string else {
             throw JWTError.missingAlgorithm
         }
+
         algorithmHeaderValue = alg
-        payload = try JSON(base64Encoded: segments[1])
+        payload = try encoding.decode(segments[1])
         signature = segments[2]
+        self.encoding = encoding
     }
 
     public func token() throws -> String {
-        return "\(try header.base64String()).\(try payload.base64String()).\(signature)"
+        return try ([header, payload].map(encoding.encode) + [signature])
+            .joined(separator: JWT.separator)
     }
 
     public func verifySignature(key: String) throws -> Bool {
-        let algorithm = try Algorithm(algorithmHeaderValue, key: key)
-
-        let encodedHeaderAndPayload = "\(try header.base64String()).\(try payload.base64String())"
-
-        return try algorithm.verifySignature(signature, message: encodedHeaderAndPayload)
+        return try Algorithm(algorithmHeaderValue, key: key)
+            .verifySignature(signature,
+                             message: [header, payload]
+                                .map(encoding.encode)
+                                .joined(separator: JWT.separator))
     }
 }
 
@@ -76,7 +96,6 @@ private enum Header {
 
     var object: [String: Node] {
         return [key: .string(value)]
-
     }
 
     var value: String {

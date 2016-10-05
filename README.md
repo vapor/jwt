@@ -3,7 +3,9 @@
 ![Swift](http://img.shields.io/badge/swift-3.0-brightgreen.svg)
 ![Vapor](https://img.shields.io/badge/Vapor-1.0-green.svg)
 
-JWT implementation for Vapor
+JWT* implementation for Vapor
+
+\* _pronounced "jot"_
 
 ##  Installation (Swift package manager)
 Add the following package to `Package.swift`

@@ -42,5 +42,10 @@ class AlgorithmTests: XCTestCase {
             for: try Algorithm("ES123", key: "")))
     }
 
-    static var all = [testHeaderKeys, testEmptyAlgorithm, testInvalidAlgorithm, testInvalidHashSize]
+    static var all = [
+        testHeaderKeys,
+        testEmptyAlgorithm,
+        testInvalidAlgorithm,
+        testInvalidHashSize,
+    ]
 }

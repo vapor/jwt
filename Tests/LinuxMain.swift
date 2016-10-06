@@ -4,6 +4,7 @@ import XCTest
 XCTMain([
      testCase(AlgorithmTests.all),
      testCase(Base64Tests.all),
+     testCase(ClaimTests.all),
      testCase(EncodingTests.all),
      testCase(JWTTests.all),
 ])

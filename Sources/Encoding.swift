@@ -9,8 +9,8 @@ public enum Encoding {
 
 extension Encoding {
 
-    func encode(_ json: JSON) throws -> String {
-        return try encode(try json.makeBytes())
+    func encode(_ value: BytesRepresentable) throws -> String {
+        return try encode(try value.makeBytes())
     }
 
     func encode(_ bytes: Bytes) throws -> String {

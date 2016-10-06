@@ -1,34 +1,33 @@
 @testable import VaporJWT
+import Core
 import JSON
 import XCTest
 
-// FIXME: Improve these tests with representative data
 final class EncodingTests: XCTestCase {
 
-    func testEncodeBase64() {
-        let message = JSON(["a": .string("abc+-/_=")])
-        XCTAssertEqual(try Encoding.base64.encode(message), "eyJhIjoiYWJjKy1cL189In0=")
+    let valueB64 = "////++++abc="
+    let valueB64URL = "____----abc"
+
+    func testBase64ToBase64URL() {
+        do {
+            let valueB64Bytes = try Encoding.base64.decode(valueB64) as Bytes
+            XCTAssertEqual(try Encoding.base64URL.encode(valueB64Bytes), valueB64URL)
+        } catch {
+            XCTFail("\(error)")
+        }
     }
 
-    func testEncodeBase64URL() {
-        let message = JSON(["a": .string("abc+-/_=")])
-        XCTAssertEqual(try Encoding.base64URL.encode(message), "eyJhIjoiYWJjKy1cL189In0")
-    }
-
-    func testDecodeBase64() {
-        let message = "eyJhIjoiYWJjKy1cL189In0="
-        XCTAssertEqual(try Encoding.base64.decode(message), JSON(["a": .string("abc+-/_=")]))
-    }
-
-    func testDecodeBase64URL() {
-        let message = "eyJhIjoiYWJjKy1cL189In0="
-        XCTAssertEqual(try Encoding.base64URL.decode(message), JSON(["a": .string("abc+-/_=")]))
+    func testBase64URLToBase64() {
+        do {
+            let valueB64URLBytes = try Encoding.base64URL.decode(valueB64URL) as Bytes
+            XCTAssertEqual(try Encoding.base64.encode(valueB64URLBytes), valueB64)
+        } catch {
+            XCTFail("\(error)")
+        }
     }
 
     static var all = [
-        testEncodeBase64,
-        testEncodeBase64URL,
-        testDecodeBase64,
-        testDecodeBase64URL,
+        testBase64ToBase64URL,
+        testBase64URLToBase64,
     ]
 }

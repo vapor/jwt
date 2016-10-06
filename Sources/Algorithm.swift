@@ -36,7 +36,7 @@ public extension Algorithm {
         }
     }
 
-    var headerValue: String {
+    var name: String {
         switch self {
         case .none: return "none"
         case .hs(let hashSize):

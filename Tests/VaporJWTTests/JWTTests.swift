@@ -88,23 +88,39 @@ class JWTTests: XCTestCase {
             for: try JWT(token: ".")))
     }
 
-    func testCustomJWTHeaders() {
+    func testDefaultHeaders() {
         do {
             let jwt = try JWT(payload: JSON([:]),
-                              extraHeaders: ["extra": "header"],
                               algorithm: .none)
-            XCTAssertEqual(jwt.header, JSON(["alg": "none", "typ": "JWT", "extra": "header"]))
+            XCTAssertEqual(jwt.headers, JSON(["alg": "none", "typ": "JWT"]))
+        } catch {
+            XCTFail()
+        }
+    }
+    
+    func testCustomHeaders() {
+
+        struct TestHeader: Header {
+            static let headerKey = "test"
+            let headerValue = "header"
+        }
+
+        do {
+            let jwt = try JWT(payload: JSON([:]),
+                              headers: [TestHeader()],
+                              algorithm: .none)
+            XCTAssertEqual(jwt.headers, JSON(["test": "header"]))
         } catch {
             XCTFail()
         }
     }
 
-    func testSetFullHeader() {
+    func testCustomJSONHeaders() {
         do {
             let jwt = try JWT(payload: JSON([:]),
-                              header: JSON(["extra": "header"]),
+                              headers: JSON(["extra": "header"]),
                               algorithm: .none)
-            XCTAssertEqual(jwt.header, JSON(["extra": "header"]))
+            XCTAssertEqual(jwt.headers, JSON(["extra": "header"]))
         } catch {
             XCTFail()
         }
@@ -121,7 +137,7 @@ class JWTTests: XCTestCase {
         testParseTokenWithMissingAlgorithm,
         testNonBase64Signature,
         testIncorrectNumberOfSegments,
-        testCustomJWTHeaders,
-        testSetFullHeader,
+        testCustomHeaders,
+        testCustomJSONHeaders,
     ]
 }

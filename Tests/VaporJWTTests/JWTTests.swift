@@ -4,7 +4,7 @@ import XCTest
 
 let testMessage = JSON(["a": .string("b")])
 
-class JWTTests: XCTestCase {
+final class JWTTests: XCTestCase {
 
     func tokenUsing(_ algorithm: Algorithm) throws -> String {
         return try JWT(payload: testMessage, algorithm: algorithm).token()

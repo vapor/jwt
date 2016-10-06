@@ -84,8 +84,6 @@ public struct JWT {
             .map(encoding.encode)
             .joined(separator: JWT.separator)
 
-        return try algorithm
-            .verifySignature(encoding.decode(signature),
-                             message: message)
+        return try algorithm.verifySignature(encoding.decode(signature), message: message)
     }
 }

@@ -1,7 +1,7 @@
 @testable import VaporJWT
 import XCTest
 
-class AlgorithmTests: XCTestCase {
+final class AlgorithmTests: XCTestCase {
 
     func testHeaderKeys() {
         let all: [Algorithm] = [

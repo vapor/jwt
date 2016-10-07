@@ -1,7 +1,7 @@
 import Core
 import Foundation
 
-struct Base64: Encoding {
+struct Base64Encoding: Encoding {
 
     func encode(_ bytes: Bytes) throws -> String {
         return bytes.base64String

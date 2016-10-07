@@ -1,7 +1,7 @@
 import Foundation
 import Node
 
-public struct IssuedAt: DateBacked, EqualityClaim {
+public struct IssuedAtClaim: DateBacked, EqualityClaim {
 
     public static var name = "iat"
 

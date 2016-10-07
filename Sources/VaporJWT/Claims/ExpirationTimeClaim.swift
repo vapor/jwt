@@ -1,18 +1,19 @@
 import Foundation
 import Node
 
-public struct NotBefore: DateWithLeewayClaim {
-    public static var name = "nbf"
+public struct ExpirationTimeClaim: DateWithLeewayClaim {
+
+    public static var name = "exp"
 
     public let leeway: TimeInterval
     public let value: Date
 
-    public init(_ value: Date, leeway: TimeInterval = 0) {
+    public init(_ value: Date, leeway: TimeInterval) {
         self.value = value
         self.leeway = leeway
     }
 
     public func verify(_ other: Date) -> Bool {
-        return other.addingTimeInterval(leeway) >= value
+        return other <= value.addingTimeInterval(leeway)
     }
 }

@@ -1,7 +1,7 @@
 import Foundation
 import Node
 
-public struct Audience {
+public struct AudienceClaim {
 
     fileprivate let value: Set<String>
 
@@ -31,7 +31,7 @@ public struct Audience {
     }
 }
 
-extension Audience: ExpressibleByStringLiteral {
+extension AudienceClaim: ExpressibleByStringLiteral {
 
     public init(stringLiteral value: String) {
         self.init(value)
@@ -46,19 +46,19 @@ extension Audience: ExpressibleByStringLiteral {
     }
 }
 
-extension Audience: ExpressibleByArrayLiteral {
+extension AudienceClaim: ExpressibleByArrayLiteral {
 
     public init(arrayLiteral elements: String...) {
         self.init(Set(elements))
     }
 }
 
-extension Audience: Claim {
+extension AudienceClaim: Claim {
 
     public static let name = "aud"
 
     public func verify(_ node: Node) -> Bool {
-        guard let other = Audience(node) else {
+        guard let other = AudienceClaim(node) else {
             return false
         }
 

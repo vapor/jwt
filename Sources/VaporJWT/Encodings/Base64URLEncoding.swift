@@ -1,7 +1,7 @@
 import Core
 import Foundation
 
-struct Base64URL: Encoding {
+struct Base64URLEncoding: Encoding {
 
     private let base64URLTranscoder: Base64URLTranscoding
 

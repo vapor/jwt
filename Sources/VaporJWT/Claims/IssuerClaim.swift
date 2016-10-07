@@ -1,6 +1,6 @@
 import Node
 
-public struct Issuer: EqualityClaim, StringBacked {
+public struct IssuerClaim: EqualityClaim, StringBacked {
 
     public static var name = "iss"
 

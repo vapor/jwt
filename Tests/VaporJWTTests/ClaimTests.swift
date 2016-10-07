@@ -20,42 +20,46 @@ final class ClaimTests: XCTestCase {
     let date = Date(timeIntervalSince1970: 1000)
 
     func testMissingClaim() {
-        XCTAssertFalse(Node([:]).verify([TestClaim(verified: true)]))
+        XCTAssertFalse(Node([:]).verifyClaims([TestClaim(verified: true)]))
     }
 
     func testFailingClaim() {
-        XCTAssertFalse(Node(["tst": ""]).verify([TestClaim(verified: false)]))
+        XCTAssertFalse(Node(["tst": ""]).verifyClaims([TestClaim(verified: false)]))
     }
 
     func testValidClaim() {
-        XCTAssertTrue(Node(["tst": ""]).verify([TestClaim(verified: true)]))
+        XCTAssertTrue(Node(["tst": ""]).verifyClaims([TestClaim(verified: true)]))
     }
 
     func testMultipleValidClaims() {
-        XCTAssertTrue(Node(["tst": ""]).verify([TestClaim(verified: true),
-                                                TestClaim(verified: true)]))
+        XCTAssertTrue(Node(["tst": ""]).verifyClaims([TestClaim(verified: true),
+                                                      TestClaim(verified: true)]))
     }
 
     func testMixedClaims() {
-        XCTAssertFalse(Node(["tst": ""]).verify([TestClaim(verified: true),
-                                                 TestClaim(verified: false)]))
+        XCTAssertFalse(Node(["tst": ""]).verifyClaims([TestClaim(verified: true),
+                                                       TestClaim(verified: false)]))
+    }
+
+    func testVerifyInvalidPayloadFails() {
+        XCTAssertFalse(Node(.string("")).verifyClaims([]))
     }
 
     func testAudienceClaim() {
-        XCTAssertEqual([Audience.name], ["aud"])
+        XCTAssertEqual([AudienceClaim.name], ["aud"])
 
-        XCTAssertTrue(Audience("a").verify("a"))
-        XCTAssertFalse(Audience("a").verify("b"))
-        XCTAssertTrue(Audience(["a", "b"]).verify("b"))
-        XCTAssertFalse(Audience(["a", "b"]).verify("c"))
-        XCTAssertTrue(Audience(["a", "b", "c"]).verify(["b", "c"]))
-        XCTAssertFalse(Audience(["a", "b", "c"]).verify(["c", "d"]))
+        XCTAssertTrue(AudienceClaim("a").verify("a"))
+        XCTAssertFalse(AudienceClaim("a").verify("b"))
+        XCTAssertTrue(AudienceClaim(["a", "b"]).verify("b"))
+        XCTAssertFalse(AudienceClaim(["a", "b"]).verify("c"))
+        XCTAssertTrue(AudienceClaim(["a", "b", "c"]).verify(["b", "c"]))
+        XCTAssertFalse(AudienceClaim(["a", "b", "c"]).verify(["c", "d"]))
     }
 
     func testExpirationTimeClaim() {
-        XCTAssertEqual([ExpirationTime.name], ["exp"])
+        XCTAssertEqual([ExpirationTimeClaim.name], ["exp"])
 
-        let claim = ExpirationTime(date, leeway: 1)
+        let claim = ExpirationTimeClaim(date, leeway: 1)
 
         XCTAssertTrue(claim.verify(.number(Node.Number(date.timeIntervalSince1970))))
         XCTAssertTrue(claim.verify(.number(Node.Number(date.timeIntervalSince1970 + 1))))
@@ -63,32 +67,32 @@ final class ClaimTests: XCTestCase {
     }
 
     func testIssuedAtClaim() {
-        XCTAssertEqual([IssuedAt.name], ["iat"])
+        XCTAssertEqual([IssuedAtClaim.name], ["iat"])
 
-        let claim = IssuedAt(date)
+        let claim = IssuedAtClaim(date)
 
         XCTAssertTrue(claim.verify(.number(Node.Number(date.timeIntervalSince1970))))
         XCTAssertFalse(claim.verify(.number(Node.Number(date.timeIntervalSince1970 + 1))))
     }
 
     func testIssuerClaim() {
-        XCTAssertEqual([Issuer.name], ["iss"])
+        XCTAssertEqual([IssuerClaim.name], ["iss"])
 
-        XCTAssertTrue(Issuer("a").verify("a"))
-        XCTAssertFalse(Issuer("a").verify("b"))
+        XCTAssertTrue(IssuerClaim("a").verify("a"))
+        XCTAssertFalse(IssuerClaim("a").verify("b"))
     }
 
     func testJWTIDClaim() {
-        XCTAssertEqual([JWTID.name], ["jti"])
+        XCTAssertEqual([JWTIDClaim.name], ["jti"])
 
-        XCTAssertTrue(JWTID("a").verify("a"))
-        XCTAssertFalse(JWTID("a").verify("b"))
+        XCTAssertTrue(JWTIDClaim("a").verify("a"))
+        XCTAssertFalse(JWTIDClaim("a").verify("b"))
     }
 
     func testNotBeforeClaim() {
-        XCTAssertEqual([NotBefore.name], ["nbf"])
+        XCTAssertEqual([NotBeforeClaim.name], ["nbf"])
 
-        let claim = NotBefore(date, leeway: 1)
+        let claim = NotBeforeClaim(date, leeway: 1)
 
         XCTAssertTrue(claim.verify(.number(Node.Number(date.timeIntervalSince1970))))
         XCTAssertTrue(claim.verify(.number(Node.Number(date.timeIntervalSince1970 - 1))))
@@ -96,21 +100,25 @@ final class ClaimTests: XCTestCase {
     }
 
     func testSubjectClaim() {
-        XCTAssertEqual([Subject.name], ["sub"])
+        XCTAssertEqual([SubjectClaim.name], ["sub"])
 
-        XCTAssertTrue(Subject("a").verify("a"))
-        XCTAssertFalse(Subject("a").verify("b"))
+        XCTAssertTrue(SubjectClaim("a").verify("a"))
+        XCTAssertFalse(SubjectClaim("a").verify("b"))
     }
 
     static var all = [
         testMissingClaim,
         testFailingClaim,
         testValidClaim,
+        testMultipleValidClaims,
+        testMixedClaims,
+        testVerifyInvalidPayloadFails,
         testAudienceClaim,
+        testExpirationTimeClaim,
         testIssuedAtClaim,
         testIssuerClaim,
         testJWTIDClaim,
         testNotBeforeClaim,
         testSubjectClaim,
-    ]
+        ]
 }

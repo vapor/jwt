@@ -1,8 +1,10 @@
 enum JWTError: Error {
-    case couldNotGenerateKey
+    case createKey
+    case createPublicKey
     case decoding
     case encoding
     case incorrectNumberOfSegments
     case missingAlgorithm
-    case unsupportedAlgorithm
+    case signing
+    case wrongAlgorithm
 }

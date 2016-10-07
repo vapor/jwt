@@ -1,10 +1,16 @@
 @testable import VaporJWT
+import XCTest
 
-func throwsError<T>(_ expected: JWTError, for expression: @autoclosure () throws -> T) -> Bool {
-    do {
-        _ = try expression()
-    } catch {
-        return (error as? JWTError) == expected
-    }
-    return false
+func assert<E: Error>(_ expression: @autoclosure () throws -> Any,
+    throws expected: E,
+    file: StaticString = #file,
+    line: UInt = #line)
+    where E: Equatable {
+        do {
+            _ = try expression()
+            XCTFail(file: file, line: line)
+        } catch {
+            XCTAssertEqual(error as? E, expected, file: file, line: line)
+        }
 }
+

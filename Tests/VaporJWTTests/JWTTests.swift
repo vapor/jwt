@@ -71,21 +71,13 @@ final class JWTTests: XCTestCase {
     }
 
     func testParseTokenWithMissingAlgorithm() {
-        XCTAssert(throwsError(
-            .missingAlgorithm,
-            for: try JWT(token: "eyJhIjoiYiJ9.eyJhIjoiYiJ9.eyJhIjoiYiJ9")))
-    }
-
-    func testNonBase64Signature() {
-        XCTAssert(throwsError(
-            .notBase64Encoded,
-            for: try JWT(token: "eyJhbGciOiJFUzI1NiJ9.eyJhIjoiYiJ9.\0").verifySignature(key: "")))
+        assert(try JWT(token: "eyJhIjoiYiJ9.eyJhIjoiYiJ9.eyJhIjoiYiJ9"),
+               throws: JWTError.missingAlgorithm)
     }
 
     func testIncorrectNumberOfSegments() {
-        XCTAssert(throwsError(
-            .incorrectNumberOfSegments,
-            for: try JWT(token: ".")))
+        assert(try JWT(token: "."),
+               throws: JWTError.incorrectNumberOfSegments)
     }
 
     func testDefaultHeaders() {
@@ -135,7 +127,6 @@ final class JWTTests: XCTestCase {
         testES384Encryption,
         testES512Encryption,
         testParseTokenWithMissingAlgorithm,
-        testNonBase64Signature,
         testIncorrectNumberOfSegments,
         testCustomHeaders,
         testCustomJSONHeaders,

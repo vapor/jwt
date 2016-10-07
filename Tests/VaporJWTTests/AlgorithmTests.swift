@@ -25,21 +25,15 @@ final class AlgorithmTests: XCTestCase {
     }
 
     func testEmptyAlgorithm() {
-        XCTAssertTrue(throwsError(
-            .unsupportedAlgorithm,
-            for: try Algorithm("", key: "")))
+        assert(try Algorithm("", key: ""), throws: JWTError.unsupportedAlgorithm)
     }
 
     func testInvalidAlgorithm() {
-        XCTAssertTrue(throwsError(
-            .unsupportedAlgorithm,
-            for: try Algorithm("AB256", key: "")))
+        assert(try Algorithm("AB256", key: ""), throws: JWTError.unsupportedAlgorithm)
     }
 
     func testInvalidHashSize() {
-        XCTAssertTrue(throwsError(
-            .unsupportedAlgorithm,
-            for: try Algorithm("ES123", key: "")))
+        assert(try Algorithm("ES123", key: ""), throws: JWTError.unsupportedAlgorithm)
     }
 
     static var all = [

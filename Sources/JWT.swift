@@ -16,7 +16,7 @@ public struct JWT {
     public init(payload: JSON,
                 headers: JSON,
                 algorithm: Algorithm,
-                encoding: Encoding = .base64) throws {
+                encoding: Encoding = Base64()) throws {
         self.payload = payload
         self.headers = headers
         self.algorithmName = algorithm.name
@@ -31,7 +31,7 @@ public struct JWT {
     public init(payload: JSON,
                 headers: [Header],
                 algorithm: Algorithm,
-                encoding: Encoding = .base64) throws {
+                encoding: Encoding = Base64()) throws {
         let headerObject = headers.reduce([:]) { (dict: [String: Node], header: Header) in
             var result = dict
             result[type(of: header).headerKey] = .string(header.headerValue)
@@ -46,14 +46,15 @@ public struct JWT {
 
     public init(payload: JSON,
                 algorithm: Algorithm,
-                encoding: Encoding = .base64) throws {
+                encoding: Encoding = Base64()) throws {
         try self.init(payload: payload,
                       headers: [Type(), algorithm],
                       algorithm: algorithm,
                       encoding: encoding)
     }
 
-    public init(token: String, encoding: Encoding = .base64) throws {
+    public init(token: String,
+                encoding: Encoding = Base64()) throws {
         let segments = token.components(separatedBy: JWT.separator)
 
         guard segments.count == 3 else {

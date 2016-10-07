@@ -1,14 +1,14 @@
 @testable import VaporJWT
 import XCTest
 
-final class Base64Tests: XCTestCase {
+final class Base64TranscoderTests: XCTestCase {
 
     func testBase64ToBase64URL() {
-        XCTAssertEqual("abc+/===".base64URL, "abc-_")
+        XCTAssertEqual(Base64URLTranscoder().base64URLEncode("abc+/==="), "abc-_")
     }
 
     func testBase64URLToBase64() {
-        XCTAssertEqual("abc-_".base64, "abc+/===")
+        XCTAssertEqual(Base64URLTranscoder().base64Encode("abc-_"), "abc+/===")
     }
 
     static var all = [

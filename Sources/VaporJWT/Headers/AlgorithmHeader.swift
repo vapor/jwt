@@ -1,10 +1,11 @@
+import Node
+
 public struct AlgorithmHeader: Header {
 
-    public static let headerKey = "alg"
-
-    public let headerValue: String
+    public static let name = "alg"
+    public let node: Node
 
     init(signer: Signer) {
-        self.headerValue = signer.name
+        node = .string(signer.name)
     }
 }

@@ -7,7 +7,7 @@ public protocol NodeFailableInitializable {
 
 public protocol StringBacked: NodeFailableInitializable {
     var value: String { get }
-    init(_ value: String)
+    init(_ : String)
 }
 
 extension StringBacked {
@@ -19,11 +19,15 @@ extension StringBacked {
 
         self.init(string)
     }
+
+    public var node: Node {
+        return .string(value)
+    }
 }
 
 public protocol DateBacked: NodeFailableInitializable {
     var value: Date { get }
-    init(_ value: Date)
+    init(_ : Date)
 }
 
 extension DateBacked {
@@ -34,5 +38,9 @@ extension DateBacked {
         }
 
         self.init(Date(timeIntervalSince1970: number.double))
+    }
+
+    public var node: Node {
+        return .number(.double(value.timeIntervalSince1970))
     }
 }

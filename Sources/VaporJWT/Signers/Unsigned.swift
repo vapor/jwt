@@ -4,6 +4,8 @@ public struct Unsigned: Signer {
 
     public let name = "none"
 
+    public init() {}
+
     public func sign(_ message: Bytes) throws -> Bytes {
         return []
     }

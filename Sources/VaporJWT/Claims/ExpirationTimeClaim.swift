@@ -8,7 +8,7 @@ public struct ExpirationTimeClaim: DateWithLeewayClaim {
     public let leeway: TimeInterval
     public let value: Date
 
-    public init(_ value: Date, leeway: TimeInterval) {
+    public init(_ value: Date = Date(), leeway: TimeInterval = 0) {
         self.value = value
         self.leeway = leeway
     }

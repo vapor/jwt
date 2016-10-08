@@ -1,5 +1,7 @@
+import Node
+
 public struct TypeHeader: Header {
 
-    public static let headerKey = "typ"
-    public let headerValue = "JWT"
+    public static let name = "typ"
+    public let node: Node = "JWT"
 }

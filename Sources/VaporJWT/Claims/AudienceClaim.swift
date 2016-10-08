@@ -64,4 +64,8 @@ extension AudienceClaim: Claim {
 
         return value.intersection(other.value).count == other.value.count
     }
+
+    public var node: Node {
+        return .array(value.array.map(Node.string))
+    }
 }

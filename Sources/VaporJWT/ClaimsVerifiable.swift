@@ -1,6 +1,6 @@
 import JSON
 
-public protocol ClaimsVerifiable {
+protocol ClaimsVerifiable {
     var node: Node { get }
 }
 

@@ -8,7 +8,6 @@ public protocol Signer {
 }
 
 extension Signer {
-
     public var name: String {
         return String(describing: Self.self)
     }
@@ -16,4 +15,11 @@ extension Signer {
 
 public protocol Key {
     var key: Bytes { get }
+    init(key: Bytes)
+}
+
+extension Key {
+    public init(key: String) {
+        self.init(key: key.bytes)
+    }
 }

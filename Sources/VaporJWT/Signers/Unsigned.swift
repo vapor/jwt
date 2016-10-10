@@ -1,7 +1,6 @@
 import Core
 
 public struct Unsigned: Signer {
-
     public let name = "none"
 
     public init() {}

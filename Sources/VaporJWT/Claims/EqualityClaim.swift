@@ -6,7 +6,6 @@ public protocol EqualityClaim: Claim, NodeFailableInitializable {
 }
 
 extension EqualityClaim {
-
     public func verify(_ node: Node) -> Bool {
         guard let other = type(of: self).init(node) else {
             return false

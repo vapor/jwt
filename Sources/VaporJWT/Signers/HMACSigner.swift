@@ -2,7 +2,6 @@ import Core
 import HMAC
 
 public struct HS256: HMACSigner {
-
     public let key: Bytes
     public let method = HMAC.Method.sha256
 
@@ -12,7 +11,6 @@ public struct HS256: HMACSigner {
 }
 
 public struct HS384: HMACSigner {
-
     public let key: Bytes
     public let method = HMAC.Method.sha384
 
@@ -22,7 +20,6 @@ public struct HS384: HMACSigner {
 }
 
 public struct HS512: HMACSigner {
-
     public let key: Bytes
     public let method = HMAC.Method.sha256
 
@@ -36,7 +33,6 @@ public protocol HMACSigner: Signer, Key {
 }
 
 extension HMACSigner {
-
     public func sign(_ message: Bytes) throws -> Bytes {
         return try HMAC.make(method, message, key: key)
     }

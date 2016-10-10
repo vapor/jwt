@@ -3,7 +3,6 @@ import Core
 import XCTest
 
 final class SignerTests: XCTestCase {
-
     let encoder = Base64Encoding()
 
     func testUnsigned() {

@@ -39,7 +39,6 @@ struct PeriodToCommaEncoding: Encoding {
 }
 
 final class JWTTests: XCTestCase {
-
     func testSignature() {
         do {
             let jwt = try JWT(headers: JSON(["header"]),

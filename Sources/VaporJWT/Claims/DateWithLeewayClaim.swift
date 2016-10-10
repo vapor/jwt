@@ -8,14 +8,12 @@ public protocol DateWithLeewayClaim: DateBacked, Claim {
 }
 
 extension DateWithLeewayClaim {
-
     public init(_ value: Date) {
         self.init(value, leeway: 0)
     }
 }
 
 extension DateWithLeewayClaim {
-
     public func verify(_ node: Node) -> Bool {
         guard let other = Self(node) else {
             return false

@@ -11,7 +11,6 @@ public protocol StringBacked: NodeFailableInitializable {
 }
 
 extension StringBacked {
-
     public init?(_ node: Node) {
         guard case .string(let string) = node else {
             return nil
@@ -31,7 +30,6 @@ public protocol DateBacked: NodeFailableInitializable {
 }
 
 extension DateBacked {
-
     public init?(_ node: Node) {
         guard case .number(let number) = node else {
             return nil

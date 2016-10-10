@@ -2,7 +2,6 @@ import Foundation
 import Node
 
 public struct ExpirationTimeClaim: DateWithLeewayClaim {
-
     public static var name = "exp"
 
     public let leeway: TimeInterval

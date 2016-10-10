@@ -4,7 +4,6 @@ import JSON
 
 /// JSON web token (JWT)
 public struct JWT {
-
     fileprivate static let separator = "."
 
     fileprivate let encoding: Encoding
@@ -101,20 +100,23 @@ public struct JWT {
         self.encoding = encoding
     }
 
+    /// Creates a token from the provided header and payload (claims), using the provided encoder and signed by
+    ///
+    /// - throws: Any error thrown while encoding
+    ///
+    /// - returns: An encoded and signed token string
     public func createToken() throws -> String {
         return [try createMessage().string(), signature].joined(separator: JWT.separator)
     }
 }
 
 extension JWT: ClaimsVerifiable {
-
     var node: Node {
         return payload.node
     }
 }
 
 extension JWT: SignatureVerifiable {
-
     var algorithmName: String? {
         return headers.object?[AlgorithmHeader.name]?.string
     }
@@ -126,7 +128,7 @@ extension JWT: SignatureVerifiable {
             .bytes
     }
 
-    public func createSignature() throws -> Bytes {
+    func createSignature() throws -> Bytes {
         return try encoding.decode(signature)
     }
 }

@@ -16,7 +16,6 @@ struct TestClaim: Claim {
 }
 
 final class ClaimTests: XCTestCase {
-
     let date = Date(timeIntervalSince1970: 1000)
 
     func testMissingClaim() {

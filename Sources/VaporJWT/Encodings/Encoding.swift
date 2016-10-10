@@ -7,7 +7,6 @@ public protocol Encoding {
 }
 
 extension Encoding {
-
     func decode(_ string: String) throws -> JSON {
         return try JSON(bytes: decode(string))
     }

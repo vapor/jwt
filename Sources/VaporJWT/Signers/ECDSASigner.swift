@@ -4,7 +4,6 @@ import Foundation
 import Hash
 
 public struct ES256: ECDSASigner {
-
     public let curve = NID_X9_62_prime256v1
     public let key: Bytes
     public let method = Hash.Method.sha256
@@ -15,7 +14,6 @@ public struct ES256: ECDSASigner {
 }
 
 public struct ES384: ECDSASigner {
-
     public let curve = NID_secp384r1
     public let key: Bytes
     public let method = Hash.Method.sha384
@@ -26,7 +24,6 @@ public struct ES384: ECDSASigner {
 }
 
 public struct ES512: ECDSASigner {
-
     public let curve = NID_secp521r1
     public let key: Bytes
     public let method = Hash.Method.sha512
@@ -42,7 +39,6 @@ public protocol ECDSASigner: Signer, Key {
 }
 
 extension ECDSASigner {
-
     public func sign(_ message: Bytes) throws -> Bytes {
         var digest = try Hash(method, message).hash()
         let ecKey = try newECKeyPair()
@@ -78,7 +74,6 @@ extension ECDSASigner {
 }
 
 fileprivate extension ECDSASigner {
-
     func newECKey() throws -> OpaquePointer {
         guard let ecKey = EC_KEY_new_by_curve_name(curve) else {
             throw JWTError.createKey

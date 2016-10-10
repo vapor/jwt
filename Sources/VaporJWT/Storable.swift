@@ -7,7 +7,6 @@ public protocol JWTStorable {
 }
 
 extension JSON {
-
     init(_ storables: [JWTStorable]) {
         let dict = storables.reduce([:]) { (dict: [String: Node], storable: JWTStorable) in
             var result = dict

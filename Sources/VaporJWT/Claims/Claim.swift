@@ -6,8 +6,7 @@ public protocol Claim: JWTStorable {
 }
 
 extension Claim {
-
-    public func verify(_ dict: [String: Node]) -> Bool {
+    func verify(_ dict: [String: Node]) -> Bool {
         return dict[type(of: self).name].map(verify) ?? false
     }
 }

@@ -4,7 +4,6 @@ import JSON
 import XCTest
 
 private struct TestBase64URLTranscoder: Base64URLTranscoding {
-
     fileprivate func base64Encode(_: String) -> String? {
         return nil
     }
@@ -15,7 +14,6 @@ private struct TestBase64URLTranscoder: Base64URLTranscoding {
 }
 
 final class EncodingTests: XCTestCase {
-
     let valueB64 = "////++++abc="
     let valueB64URL = "____----abc"
 
@@ -55,5 +53,7 @@ final class EncodingTests: XCTestCase {
         testBase64ToBase64URL,
         testBase64URLToBase64,
         testBase64DecodeThrowsErrorForInvalidString,
+        testBase64URLEncodeThrowsErrorForInvalidString,
+        testBase64URLDecodeThrowsErrorForInvalidString,
     ]
 }

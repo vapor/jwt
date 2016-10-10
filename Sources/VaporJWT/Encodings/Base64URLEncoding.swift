@@ -2,7 +2,6 @@ import Core
 import Foundation
 
 struct Base64URLEncoding: Encoding {
-
     private let base64URLTranscoder: Base64URLTranscoding
 
     init(base64URLTranscoder: Base64URLTranscoding = Base64URLTranscoder()) {
@@ -32,7 +31,6 @@ protocol Base64URLTranscoding {
 }
 
 struct Base64URLTranscoder: Base64URLTranscoding {
-
     func base64Encode(_ string: String) -> String? {
         var converted = string.utf8CString.map { char -> CChar in
             switch char {

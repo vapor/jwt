@@ -4,6 +4,7 @@ import XCTest
 
 struct TestClaim: Claim {
     static var name = "tst"
+    let node: Node = .null
     let verified: Bool
 
     init(verified: Bool = true) {

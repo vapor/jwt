@@ -1,21 +1,25 @@
 import Core
 import Foundation
 
-struct Base64URLEncoding: Encoding {
+public struct Base64URLEncoding: Encoding {
     private let base64URLTranscoder: Base64URLTranscoding
 
-    init(base64URLTranscoder: Base64URLTranscoding = Base64URLTranscoder()) {
+    public init() {
+        self.init(base64URLTranscoder: Base64URLTranscoder())
+    }
+
+    init(base64URLTranscoder: Base64URLTranscoding) {
         self.base64URLTranscoder = base64URLTranscoder
     }
 
-    func encode(_ bytes: Bytes) throws -> String {
+    public func encode(_ bytes: Bytes) throws -> String {
         guard let base64URL = base64URLTranscoder.base64URLEncode( bytes.base64String) else {
             throw JWTError.encoding
         }
         return base64URL
     }
 
-    func decode(_ base64URLEncoded: String) throws -> Bytes {
+    public func decode(_ base64URLEncoded: String) throws -> Bytes {
         guard
             let base64Encoded = base64URLTranscoder.base64Encode(base64URLEncoded),
             let data = Data(base64Encoded: base64Encoded) else {

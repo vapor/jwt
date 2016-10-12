@@ -1,2 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<playground version='6.0' target-platform='macos' display-mode='rendered'/>
+<playground version='6.0' target-platform='macos' display-mode='rendered'>
+    <pages>
+        <page name='Basic usage'/>
+        <page name='Headers and payload'/>
+        <page name='Claims'/>
+        <page name='Signing'/>
+        <page name='Encoding'/>
+    </pages>
+</playground>

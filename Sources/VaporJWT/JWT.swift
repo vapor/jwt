@@ -39,8 +39,8 @@ public struct JWT {
 
     /// Creates a JWT with claims and custom headers
     ///
-    /// - parameter headers:  Array of headers
-    /// - parameter claims:   Array of claims
+    /// - parameter headers:  Array of JWTStorables (eg. Headers)
+    /// - parameter claims:   Array of JWTStorables (eg. Claims)
     /// - parameter encoding: Encoding to use for the headers, payload, and signature when creating
     ///                       the token string
     /// - parameter signer:   Signer that creates the signature
@@ -48,19 +48,19 @@ public struct JWT {
     /// - throws: Any error thrown while encoding or signing
     ///
     /// - returns: A JWT value
-    public init(headers: [Header],
-                claims: [Claim],
+    public init(headers: [JWTStorable],
+                payload: [JWTStorable],
                 encoding: Encoding = Base64Encoding(),
                 signer: Signer) throws {
         try self.init(headers: JSON(headers),
-                      payload: JSON(claims),
+                      payload: JSON(payload),
                       encoding: encoding,
                       signer: signer)
     }
 
     /// Creates a JWT with claims and default headers ("typ", and "alg")
     ///
-    /// - parameter claims:   Array of claims
+    /// - parameter payload:  Array of JWTStorables (eg. Claims)
     /// - parameter encoding: Encoding to use for the headers, payload, and signature when creating
     ///                       the token string
     /// - parameter signer:   Signer that creates the signature
@@ -68,11 +68,11 @@ public struct JWT {
     /// - throws: Any error thrown while encoding or signing
     ///
     /// - returns: A JWT value
-    public init(claims: [Claim],
+    public init(payload: [JWTStorable],
                 encoding: Encoding = Base64Encoding(),
                 signer: Signer) throws {
         try self.init(headers: [TypeHeader(), AlgorithmHeader(signer: signer)],
-                      claims: claims,
+                      payload: payload,
                       encoding: encoding,
                       signer: signer)
     }

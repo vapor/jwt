@@ -72,7 +72,7 @@ final class JWTTests: XCTestCase {
 
     func testDefaultHeaders() {
         do {
-            let jwt = try JWT(claims: [], signer: TildeSigner())
+            let jwt = try JWT(payload: [], signer: TildeSigner())
             XCTAssertEqual(jwt.headers, JSON(["alg": "tilde", "typ": "JWT"]))
         } catch {
             XCTFail()
@@ -88,7 +88,7 @@ final class JWTTests: XCTestCase {
 
         do {
             let jwt = try JWT(headers: [TestHeader()],
-                              claims: [],
+                              payload: [],
                               signer: TildeSigner())
             XCTAssertEqual(jwt.headers, JSON(["test": "header"]))
         } catch {
@@ -109,7 +109,7 @@ final class JWTTests: XCTestCase {
 
     func testJWTClaimsCanBeVerified() {
         do {
-            let jwt = try JWT(claims: [], signer: TildeSigner())
+            let jwt = try JWT(payload: [], signer: TildeSigner())
             XCTAssertTrue(jwt.verifyClaims([]))
         } catch {
             XCTFail("\(error)")

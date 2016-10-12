@@ -3,8 +3,7 @@ import Core
 public protocol Signer {
     var name: String { get }
     func sign(_ message: Bytes) throws -> Bytes
-    func verifySignature(_ signature: Bytes,
-                         message: Bytes) throws -> Bool
+    func verifySignature(_ signature: Bytes, message: Bytes) throws -> Bool
 }
 
 extension Signer {

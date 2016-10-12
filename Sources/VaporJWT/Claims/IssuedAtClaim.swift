@@ -6,7 +6,7 @@ public struct IssuedAtClaim: DateBacked, EqualityClaim {
 
     public let value: Date
 
-    public init(_ value: Date) {
+    public init(_ value: Date = Date()) {
         self.value = value
     }
 }

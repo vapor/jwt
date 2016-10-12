@@ -10,40 +10,81 @@ JWT* implementation for Vapor
 ##  Installation (Swift package manager)
 Add the following package to `Package.swift`
 ```swift
-.Package(url:"https://github.com/siemensikkema/vapor-jwt.git", majorVersion: 0)
+.Package(url:"https://github.com/siemensikkema/vapor-jwt.git", majorVersion: 0, minor: 3)
 ```
 
 ## Usage
+For detailed info on how to use this library see the [tests](https://github.com/siemensikkema/vapor-jwt/tree/master/Tests/VaporJWTTests) and the [included playground](https://github.com/siemensikkema/vapor-jwt/tree/master/Playground) if you run macOS.
+
+### Playground
+To run the playground:
+* run `vapor xcode`
+* open the workspace 'Playground/VaporJWT.xcworkspace' in Xcode
+* select the playground
+* build the 'VaporJWT' scheme
+
+### Create a new token
 Import the library:
 ```swift
 import VaporJWT
 ```
-### Create a new token
+Create an signed token that expires 1 minute from now.
 ```swift
-let privateKey = ...
-try JWT(payload: JSON(["user_id", .string("1")]), algorithm: .hs(._256(privateKey)))
+let jwt = try JWT(claims: [ExpirationTimeClaim(Date() + 60)],
+                  signer: HS256(key: "secret"))
+let token = try jwt.createToken()
 ```
-You can optionally add extra header fields like this:
+VaporJWT creates default headers ("typ" and "alg") when none are provided. VaporJWT provides convenient ways to configure a JWT with custom headers and claims. For full control you can set the headers and payload as JSON.
 ```swift
-try JWT(payload: JSON(["user_id", .string("1")]), algorithm: .hs(._256(privateKey)), extraHeaders: ["extra": "header"])
+let jwt = try JWT(headers: JSON(["my": .string("header")]),
+                  payload: JSON(["user_id": .number(.int(42))]),
+                  signer: Unsigned())
 ```
+
 ### Validate an existing token string
 ```swift
-let jwt = try JWT(token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67/QGs52AzC8Ru8=")
-let isValid = jwt.verifySignature(key: "secret)
+let jwt3 = try JWT(token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67/QGs52AzC8Ru8=")
+let isValid = try jwt3.verifySignatureWith(HS256(key: "secret"))
 ```
-## Encryption support
-Encryption type | In code
---- | ---
-HS256 | `.hs(._256(privateKey))`
-HS384 | `.hs(._384(privateKey))`
-HS512 | `.hs(._512(privateKey))`
-ES256 | `.es(._256(privateKey))`
-ES384 | `.es(._384(privateKey))`
-ES512 | `.es(._512(privateKey))`
+
+## Signing support
+VaporJWT currently support HMAC and ECDSA signing. The available signers are:
+* HS256
+* HS284
+* HS512
+* ES256
+* ES384
+* ES512
+
+Besides the included signers it is possible to create your own by adhering to the `Signer` protocol:
+
+```swift
+public protocol Signer {
+    var name: String { get }
+    func sign(_ message: Bytes) throws -> Bytes
+    func verifySignature(_ signature: Bytes, message: Bytes) throws -> Bool
+}
+```
+
+## Encoding support
+By default VaporJWT uses Base64 encoding. A Base64URL encoder/decoder is also available and can be used like so:
+
+```swift
+let jwt = try JWT(claims: [],
+                  encoding: Base64URLEncoding(),
+                  signer: Unsigned())
+```
+Any custom encoding that adheres to the `Encoding` protocol can be used
+
+```swift
+public protocol Encoding {
+    func decode(_ : String) throws -> Bytes
+    func encode(_ : Bytes) throws -> String
+}
+```
 
 ## Motivation
-Existing libraries were pretty great already but I wanted a library that felt more native to Vapor by supporting the JSON type for payloads. Further, I wanted better encryption support, with ES256 in particular because it is needed by for Apple's new [token based push notifications](https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/ApplePushService.html#//apple_ref/doc/uid/TP40008194-CH100-SW11).
+Existing libraries were pretty great already but I wanted a more extensible library that felt native to Vapor. I also wanted better encryption support, with ES256 in particular because it is needed by for Apple's new [token based push notifications](https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/ApplePushService.html#//apple_ref/doc/uid/TP40008194-CH100-SW11), see [VaporAPNS](https://github.com/matthijs2704/vapor-apns).
 
 ## Roadmap
 See [the project board](https://github.com/siemensikkema/vapor-jwt/projects/1).

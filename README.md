@@ -34,7 +34,7 @@ let jwt = try JWT(claims: [ExpirationTimeClaim(Date() + 60)],
                   signer: HS256(key: "secret"))
 let token = try jwt.createToken()
 ```
-VaporJWT creates default headers ("typ" and "alg") when none are provided. VaporJWT provides convenient ways to configure a JWT with custom headers and claims. For full control you can set the headers and payload as JSON.
+VaporJWT creates default headers (*"typ"* and *"alg"*) when none are provided. VaporJWT provides convenient ways to configure a JWT with custom headers and claims. For full control you can set the headers and payload as JSON.
 ```swift
 let jwt = try JWT(headers: JSON(["my": .string("header")]),
                   payload: JSON(["user_id": .number(.int(42))]),
@@ -55,6 +55,12 @@ VaporJWT currently support HMAC and ECDSA signing. The available signers are:
 * ES256
 * ES384
 * ES512
+
+The HMAC (HS\*) signers take the same private key for both signing and verifying. The ECDSA (ES\*) signers on the other hand take a private key for signing and a matching public key for verifying. A private/public key pair for ECDSA can be generated using the `openssl` command line tool. To create a new key pair for ES256 issue the following command:
+```
+openssl ecparam -name prime256v1 -genkey | openssl ec -in /dev/stdin -text -noout`
+```
+The resulting keys should be encoded (eg. using Base64) to enable storing them in a text file. This can be done using this [handy online tool](http://tomeko.net/online_tools/hex_to_base64.php).
 
 Besides the included signers it is possible to create your own by adhering to the `Signer` protocol:
 

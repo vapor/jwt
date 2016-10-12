@@ -3,18 +3,28 @@
 ![Swift](http://img.shields.io/badge/swift-3.0-brightgreen.svg)
 ![Vapor](https://img.shields.io/badge/Vapor-1.0-green.svg)
 
-JWT* implementation for Vapor
+VaporJWT is a library for JSON Web Tokens (JWT) designed with the following goals in mind:
+- clean API
+- native to Vapor
+- many features
+- highly extensible
 
-\* _pronounced "jot"_
+## What is a JWT and when should I use it?
+A JWT (pronounced *"jot"*) provides a secure way to grant access to a resource based on certain constraints. The constraints are expressed as unencrypted claims and can be used to constrain access to a certain time or audience among other things. Tokens are signed to protect against tampering.
 
-##  Installation (Swift package manager)
+The unencrypted nature of the claims makes it possible for the validity of the token to be evaluated on the client without having access to the private key or having to access the server. When the server receives a JWT (e.g. in the bearer Authorization header), it can quickly reject any invalid tokens without having to do a database lookup.
+
+The structure of a JWT is `base64Encoded(headerJSON).base64Encoded(payloadJSON).signature`.
+
+## Installation (Swift package manager)
+
 Add the following package to `Package.swift`
 ```swift
 .Package(url:"https://github.com/siemensikkema/vapor-jwt.git", majorVersion: 0, minor: 3)
 ```
 
 ## Usage
-For detailed info on how to use this library see the [tests](https://github.com/siemensikkema/vapor-jwt/tree/master/Tests/VaporJWTTests) and the [included playground](https://github.com/siemensikkema/vapor-jwt/tree/master/Playground) if you run macOS.
+For detailed info on how to use this library see the [tests](https://github.com/siemensikkema/vapor-jwt/tree/master/Tests/VaporJWTTests) and, if you run macOS, the [included playground](https://github.com/siemensikkema/vapor-jwt/tree/master/Playground).
 
 ### Playground
 To run the playground:

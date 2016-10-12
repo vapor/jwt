@@ -1,1 +1,1 @@
-public protocol Header: JWTStorable {}
+public protocol Header: Storable {}

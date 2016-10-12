@@ -37,30 +37,9 @@ public struct JWT {
         signature = try encoding.encode(bytes)
     }
 
-    /// Creates a JWT with claims and custom headers
-    ///
-    /// - parameter headers:  Array of JWTStorables (eg. Headers)
-    /// - parameter claims:   Array of JWTStorables (eg. Claims)
-    /// - parameter encoding: Encoding to use for the headers, payload, and signature when creating
-    ///                       the token string
-    /// - parameter signer:   Signer that creates the signature
-    ///
-    /// - throws: Any error thrown while encoding or signing
-    ///
-    /// - returns: A JWT value
-    public init(headers: [JWTStorable],
-                payload: [JWTStorable],
-                encoding: Encoding = Base64Encoding(),
-                signer: Signer) throws {
-        try self.init(headers: JSON(headers),
-                      payload: JSON(payload),
-                      encoding: encoding,
-                      signer: signer)
-    }
-
     /// Creates a JWT with claims and default headers ("typ", and "alg")
     ///
-    /// - parameter payload:  Array of JWTStorables (eg. Claims)
+    /// - parameter payload:  Payload object in JSON format
     /// - parameter encoding: Encoding to use for the headers, payload, and signature when creating
     ///                       the token string
     /// - parameter signer:   Signer that creates the signature
@@ -68,7 +47,7 @@ public struct JWT {
     /// - throws: Any error thrown while encoding or signing
     ///
     /// - returns: A JWT value
-    public init(payload: [JWTStorable],
+    public init(payload: JSON,
                 encoding: Encoding = Base64Encoding(),
                 signer: Signer) throws {
         try self.init(headers: [TypeHeader(), AlgorithmHeader(signer: signer)],

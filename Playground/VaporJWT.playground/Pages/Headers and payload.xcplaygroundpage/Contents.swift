@@ -1,6 +1,6 @@
 //: [Previous](@previous)
 //: ## Headers and payload
-//: JWTs can be created from raw `JSON` or from arrays of `JWTStorable`s. `Claim`s and `Header`s conform to `JWTStorable` but it is also possible to store your own values that conform to `JWTStorable` in either the header or the payload.
+//: JWTs can be created from raw `JSON` or from arrays of `Storable`s. `Claim`s and `Header`s conform to `Storable` but it is also possible to store your own values that conform to `Storable` in either the header or the payload.
 import JSON
 import VaporJWT
 //: Using a custom Header
@@ -12,8 +12,8 @@ struct MyHeader: Header {
 let jwt1 = try JWT(headers: [MyHeader()],
                    payload: [],
                    signer: Unsigned())
-//: Using a custom JWTStorable in the payload
-struct User: JWTStorable {
+//: Using a custom Storable in the payload
+struct User: Storable {
     static let name = "user_id"
     let node = Node.number(.int(42))
 }

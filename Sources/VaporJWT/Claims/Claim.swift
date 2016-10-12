@@ -1,7 +1,7 @@
 import Foundation
 import Node
 
-public protocol Claim: JWTStorable {
+public protocol Claim: Storable {
     func verify(_ : Node) -> Bool
 }
 

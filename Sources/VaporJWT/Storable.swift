@@ -1,19 +1,25 @@
 import JSON
 import Node
 
-public protocol JWTStorable {
+public protocol Storable {
     static var name: String { get }
     var node: Node { get }
 }
 
 extension JSON {
-    init(_ storables: [JWTStorable]) {
-        let dict = storables.reduce([:]) { (dict: [String: Node], storable: JWTStorable) in
+    init(_ storables: [Storable]) {
+        let dict = storables.reduce([:]) { (dict: [String: Node], storable: Storable) in
             var result = dict
             result[type(of: storable).name] = storable.node
             return result
         }
 
         self.init(Node(dict))
+    }
+}
+
+extension JSON: ExpressibleByArrayLiteral {
+    public init(arrayLiteral elements: Storable...) {
+        self.init(elements)
     }
 }

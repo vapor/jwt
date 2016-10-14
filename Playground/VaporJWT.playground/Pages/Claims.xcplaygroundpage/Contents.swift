@@ -15,7 +15,7 @@ let claims: [Claim] = [
     SubjectClaim("some subject")
 ]
 
-let jwt = try JWT(payload: claims, signer: Unsigned())
+let jwt = try JWT(payload: Node(claims), signer: Unsigned())
 jwt.verifyClaims([AudienceClaim("some audience")])
 jwt.verifyClaims([SubjectClaim("another subject")])
 //: Like with signers, headers, and encodings it is possible to create your own claims.

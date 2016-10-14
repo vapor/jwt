@@ -20,7 +20,7 @@ final class ClaimTests: XCTestCase {
     let date = Date(timeIntervalSince1970: 1000)
 
     func testMissingClaim() {
-        XCTAssertFalse(Node([:]).verifyClaims([TestClaim(verified: true)]))
+        XCTAssertFalse(EmptyNode.verifyClaims([TestClaim(verified: true)]))
     }
 
     func testFailingClaim() {

@@ -1,9 +1,9 @@
 @testable import VaporJWT
 import Core
-import JSON
+import Node
 import XCTest
 
-let testMessage = JSON(["a": .string("b")])
+let testMessage = Node(["a": .string("b")])
 
 /// Surrounds message with tildes (~)
 struct TildeSigner: Signer {
@@ -41,8 +41,8 @@ struct PeriodToCommaEncoding: Encoding {
 final class JWTTests: XCTestCase {
     func testSignature() {
         do {
-            let jwt = try JWT(headers: JSON(["header"]),
-                              payload: JSON(["payload"]),
+            let jwt = try JWT(headers: .array(["header"]),
+                              payload: .array(["payload"]),
                               encoding: PeriodToCommaEncoding(),
                               signer: TildeSigner())
             XCTAssertEqual(try jwt.createToken(),
@@ -72,25 +72,24 @@ final class JWTTests: XCTestCase {
 
     func testDefaultHeaders() {
         do {
-            let jwt = try JWT(payload: [], signer: TildeSigner())
-            XCTAssertEqual(jwt.headers, JSON(["alg": "tilde", "typ": "JWT"]))
+            let jwt = try JWT(payload: EmptyNode, signer: TildeSigner())
+            XCTAssertEqual(jwt.headers, Node(["alg": "tilde", "typ": "JWT"]))
         } catch {
             XCTFail()
         }
     }
     
     func testCustomHeaders() {
-
         struct TestHeader: Header {
             static let name = "test"
             let node = Node.string("header")
         }
 
         do {
-            let jwt = try JWT(headers: [TestHeader()],
-                              payload: [],
+            let jwt = try JWT(headers: Node(TestHeader()),
+                              payload: EmptyNode,
                               signer: TildeSigner())
-            XCTAssertEqual(jwt.headers, JSON(["test": "header"]))
+            XCTAssertEqual(jwt.headers, Node(["test": "header"]))
         } catch {
             XCTFail()
         }
@@ -98,10 +97,10 @@ final class JWTTests: XCTestCase {
 
     func testCustomJSONHeaders() {
         do {
-            let jwt = try JWT(headers: JSON(["extra": "header"]),
-                              payload: JSON([:]),
+            let jwt = try JWT(headers: Node(["extra": "header"]),
+                              payload: EmptyNode,
                               signer: TildeSigner())
-            XCTAssertEqual(jwt.headers, JSON(["extra": "header"]))
+            XCTAssertEqual(jwt.headers, Node(["extra": "header"]))
         } catch {
             XCTFail()
         }
@@ -109,7 +108,7 @@ final class JWTTests: XCTestCase {
 
     func testJWTClaimsCanBeVerified() {
         do {
-            let jwt = try JWT(payload: [], signer: TildeSigner())
+            let jwt = try JWT(payload: EmptyNode, signer: TildeSigner())
             XCTAssertTrue(jwt.verifyClaims([]))
         } catch {
             XCTFail("\(error)")

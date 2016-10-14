@@ -7,11 +7,11 @@ public protocol Encoding {
 }
 
 extension Encoding {
-    func decode(_ string: String) throws -> JSON {
-        return try JSON(bytes: decode(string))
+    func decode(_ string: String) throws -> Node {
+        return try JSON(bytes: decode(string)).node
     }
 
-    func encode(_ value: BytesRepresentable) throws -> String {
-        return try encode(try value.makeBytes())
+    func encode(_ value: Node) throws -> String {
+        return try encode(try JSON(value).makeBytes())
     }
 }

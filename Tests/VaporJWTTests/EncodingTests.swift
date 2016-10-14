@@ -1,6 +1,6 @@
 @testable import VaporJWT
 import Core
-import JSON
+import Node
 import XCTest
 
 private struct TestBase64URLTranscoder: Base64URLTranscoding {

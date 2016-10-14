@@ -1,6 +1,6 @@
 import Core
 import Foundation
-import JSON
+import Node
 
 /// JSON web token (JWT)
 public struct JWT {
@@ -8,14 +8,14 @@ public struct JWT {
 
     fileprivate let encoding: Encoding
 
-    public let headers: JSON
-    public let payload: JSON
+    public let headers: Node
+    public let payload: Node
     public let signature: String
 
-    /// Creates a JWT with custom JSON headers and payload
+    /// Creates a JWT with custom headers and payload
     ///
-    /// - parameter headers:  Headers object in JSON format
-    /// - parameter payload:  Payload object in JSON format
+    /// - parameter headers:  Headers object as Node
+    /// - parameter payload:  Payload object as Node
     /// - parameter encoding: Encoding to use for the headers, payload, and signature when creating
     ///                       the token string
     /// - parameter signer:   Signer that creates the signature
@@ -23,8 +23,8 @@ public struct JWT {
     /// - throws: Any error thrown while encoding or signing
     ///
     /// - returns: A JWT value
-    public init(headers: JSON,
-                payload: JSON,
+    public init(headers: Node,
+                payload: Node,
                 encoding: Encoding = Base64Encoding(),
                 signer: Signer) throws {
         self.headers = headers
@@ -39,7 +39,7 @@ public struct JWT {
 
     /// Creates a JWT with claims and default headers ("typ", and "alg")
     ///
-    /// - parameter payload:  Payload object in JSON format
+    /// - parameter payload:  Payload object as Node
     /// - parameter encoding: Encoding to use for the headers, payload, and signature when creating
     ///                       the token string
     /// - parameter signer:   Signer that creates the signature
@@ -47,10 +47,10 @@ public struct JWT {
     /// - throws: Any error thrown while encoding or signing
     ///
     /// - returns: A JWT value
-    public init(payload: JSON,
+    public init(payload: Node,
                 encoding: Encoding = Base64Encoding(),
                 signer: Signer) throws {
-        try self.init(headers: [TypeHeader(), AlgorithmHeader(signer: signer)],
+        try self.init(headers: Node([TypeHeader(), AlgorithmHeader(signer: signer)]),
                       payload: payload,
                       encoding: encoding,
                       signer: signer)
@@ -79,7 +79,8 @@ public struct JWT {
         self.encoding = encoding
     }
 
-    /// Creates a token from the provided header and payload (claims), using the provided encoder and signed by
+    /// Creates a token from the provided header and payload (claims), encoded using the JWT's 
+    /// encoder and signed by the signature.
     ///
     /// - throws: Any error thrown while encoding
     ///
@@ -91,7 +92,7 @@ public struct JWT {
 
 extension JWT: ClaimsVerifiable {
     var node: Node {
-        return payload.node
+        return payload
     }
 }
 

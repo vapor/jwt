@@ -39,6 +39,7 @@ public struct JWT {
 
     /// Creates a JWT with claims and default headers ("typ", and "alg")
     ///
+    /// - parameter additionalHeaders: Headers to add besides the defaults ones
     /// - parameter payload:  Payload object as Node
     /// - parameter encoding: Encoding to use for the headers, payload, and signature when creating
     ///                       the token string
@@ -47,13 +48,16 @@ public struct JWT {
     /// - throws: Any error thrown while encoding or signing
     ///
     /// - returns: A JWT value
-    public init(payload: Node,
+    public init(additionalHeaders: [Header] = [],
+                payload: Node,
                 encoding: Encoding = Base64Encoding(),
                 signer: Signer) throws {
-        try self.init(headers: Node([TypeHeader(), AlgorithmHeader(signer: signer)]),
-                      payload: payload,
-                      encoding: encoding,
-                      signer: signer)
+        let headers: [Header] = [TypeHeader(), AlgorithmHeader(signer: signer)] + additionalHeaders
+        try self.init(
+            headers: Node(headers),
+            payload: payload,
+            encoding: encoding,
+            signer: signer)
     }
 
     /// Decodes a token string into a JWT

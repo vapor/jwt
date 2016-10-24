@@ -18,7 +18,7 @@ public protocol Key {
 }
 
 extension Key {
-    public init(key: String) {
-        self.init(key: key.bytes)
+    public init(key: String, encoding: Encoding = Base64Encoding()) throws {
+        try self.init(key: encoding.decode(key))
     }
 }

@@ -1,18 +1,18 @@
 import Foundation
 import Node
 
-public struct ExpirationTimeClaim: DateWithLeewayClaim {
+public struct ExpirationTimeClaim: SecondsWithLeewayClaim {
     public static var name = "exp"
 
-    public let leeway: TimeInterval
-    public let value: Date
+    public let leeway: Seconds
+    public let value: Seconds
 
-    public init(_ value: Date = Date(), leeway: TimeInterval = 0) {
+    public init(_ value: Seconds, leeway: Seconds = 0) {
         self.value = value
         self.leeway = leeway
     }
 
-    public func verify(_ other: Date) -> Bool {
-        return other <= value.addingTimeInterval(leeway)
+    public func verify(_ other: Seconds) -> Bool {
+        return other <= value + leeway
     }
 }

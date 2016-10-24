@@ -24,21 +24,27 @@ extension StringBacked {
     }
 }
 
-public protocol DateBacked: NodeFailableInitializable {
-    var value: Date { get }
-    init(_ : Date)
+public typealias Seconds = Int
+
+public protocol SecondsBacked: NodeFailableInitializable {
+    var value: Seconds { get }
+    init(_ : Seconds)
 }
 
-extension DateBacked {
+extension SecondsBacked {
     public init?(_ node: Node) {
         guard case .number(let number) = node else {
             return nil
         }
 
-        self.init(Date(timeIntervalSince1970: number.double))
+        self.init(number.int)
+    }
+
+    public init(_ date: Date) {
+        self.init(Int(date.timeIntervalSince1970))
     }
 
     public var node: Node {
-        return .number(.double(value.timeIntervalSince1970))
+        return Node(value)
     }
 }

@@ -115,13 +115,13 @@ final class JWTTests: XCTestCase {
         }
     }
 
-    static var all = [
-        testSignature,
-        testInitWithToken,
-        testIncorrectNumberOfSegments,
-        testDefaultHeaders,
-        testCustomHeaders,
-        testCustomJSONHeaders,
-        testJWTClaimsCanBeVerified,
+    static let all = [
+        ("testSignature", testSignature),
+        ("testInitWithToken", testInitWithToken),
+        ("testIncorrectNumberOfSegments", testIncorrectNumberOfSegments),
+        ("testDefaultHeaders", testDefaultHeaders),
+        ("testCustomHeaders", testCustomHeaders),
+        ("testCustomJSONHeaders", testCustomJSONHeaders),
+        ("testJWTClaimsCanBeVerified", testJWTClaimsCanBeVerified),
     ]
 }

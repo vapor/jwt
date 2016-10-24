@@ -85,13 +85,13 @@ final class SignerTests: XCTestCase {
                          publicKey: "BACJKkoouMqhbgZtTSyQJHECDf/V2ArN7VwuaIUIKsx/OFiF79ccrzCSZ1MrGOmQgPAez6pqjUIjhwoHr5tRH65BggEUhC7SNvRvfMeElOrZNac9uTVnfGJ1DywnL+JtD49ytuD9GjifUPHJi4RcN36RHLXyBpF0u1+RRFbKCNhnJ132Pw==")
     }
 
-    static var all = [
-        testUnsigned,
-        testHS256,
-        testHS384,
-        testHS512,
-        testES256,
-        testES384,
-        testES512,
+    static let all = [
+        ("testUnsigned", testUnsigned),
+        ("testHS256", testHS256),
+        ("testHS384", testHS384),
+        ("testHS512", testHS512),
+        ("testES256", testES256),
+        ("testES384", testES384),
+        ("testES512", testES512),
     ]
 }

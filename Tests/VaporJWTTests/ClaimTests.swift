@@ -107,19 +107,19 @@ final class ClaimTests: XCTestCase {
         XCTAssertFalse(SubjectClaim("a").verify("b"))
     }
 
-    static var all = [
-        testMissingClaim,
-        testFailingClaim,
-        testValidClaim,
-        testMultipleValidClaims,
-        testMixedClaims,
-        testVerifyInvalidPayloadFails,
-        testAudienceClaim,
-        testExpirationTimeClaim,
-        testIssuedAtClaim,
-        testIssuerClaim,
-        testJWTIDClaim,
-        testNotBeforeClaim,
-        testSubjectClaim,
+    static let all = [
+        ("testMissingClaim", testMissingClaim),
+        ("testFailingClaim", testFailingClaim),
+        ("testValidClaim", testValidClaim),
+        ("testMultipleValidClaims", testMultipleValidClaims),
+        ("testMixedClaims", testMixedClaims),
+        ("testVerifyInvalidPayloadFails", testVerifyInvalidPayloadFails),
+        ("testAudienceClaim", testAudienceClaim),
+        ("testExpirationTimeClaim", testExpirationTimeClaim),
+        ("testIssuedAtClaim", testIssuedAtClaim),
+        ("testIssuerClaim", testIssuerClaim),
+        ("testJWTIDClaim", testJWTIDClaim),
+        ("testNotBeforeClaim", testNotBeforeClaim),
+        ("testSubjectClaim", testSubjectClaim),
         ]
 }

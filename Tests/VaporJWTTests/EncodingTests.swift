@@ -49,11 +49,13 @@ final class EncodingTests: XCTestCase {
                throws: JWTError.decoding)
     }
 
-    static var all = [
-        testBase64ToBase64URL,
-        testBase64URLToBase64,
-        testBase64DecodeThrowsErrorForInvalidString,
-        testBase64URLEncodeThrowsErrorForInvalidString,
-        testBase64URLDecodeThrowsErrorForInvalidString,
+    static let all = [
+        ("testBase64ToBase64URL", testBase64ToBase64URL),
+        ("testBase64URLToBase64", testBase64URLToBase64),
+        ("testBase64DecodeThrowsErrorForInvalidString", testBase64DecodeThrowsErrorForInvalidString),
+        ("testBase64URLEncodeThrowsErrorForInvalidString",
+        testBase64URLEncodeThrowsErrorForInvalidString),
+        ("testBase64URLDecodeThrowsErrorForInvalidString",
+        testBase64URLDecodeThrowsErrorForInvalidString),
     ]
 }

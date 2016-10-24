@@ -10,8 +10,8 @@ final class Base64TranscoderTests: XCTestCase {
         XCTAssertEqual(Base64URLTranscoder().base64Encode("abc-_"), "abc+/===")
     }
 
-    static var all = [
-        testBase64ToBase64URL,
-        testBase64URLToBase64
+    static let all = [
+        ("testBase64ToBase64URL", testBase64ToBase64URL),
+        ("testBase64URLToBase64", testBase64URLToBase64),
     ]
 }

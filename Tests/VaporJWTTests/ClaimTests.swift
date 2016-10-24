@@ -1,4 +1,5 @@
 @testable import VaporJWT
+import Foundation
 import Node
 import XCTest
 

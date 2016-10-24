@@ -1,7 +1,7 @@
 # VaporJWT
 
 ![Swift](http://img.shields.io/badge/swift-3.0-brightgreen.svg)
-![Vapor](https://img.shields.io/badge/Vapor-1.0-green.svg)
+[![Vapor](https://img.shields.io/badge/Vapor-1.1-green.svg)](http://vapor.codes)
 [![Build Status](https://travis-ci.org/siemensikkema/vapor-jwt.svg?branch=master)](https://travis-ci.org/siemensikkema/vapor-jwt)
 [![Code Coverage](https://codecov.io/gh/siemensikkema/vapor-jwt/branch/master/graph/badge.svg)](https://codecov.io/gh/siemensikkema/vapor-jwt)
 

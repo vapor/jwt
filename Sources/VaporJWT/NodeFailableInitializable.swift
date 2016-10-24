@@ -40,7 +40,7 @@ extension SecondsBacked {
         self.init(number.int)
     }
 
-    public init(_ date: Date) {
+    public init(_ date: Date = Date()) {
         self.init(Int(date.timeIntervalSince1970))
     }
 

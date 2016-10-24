@@ -13,6 +13,6 @@ public struct NotBeforeClaim: SecondsWithLeewayClaim {
     }
 
     public func verify(_ other: Int) -> Bool {
-        return other + leeway >= value
+        return other - leeway <= value
     }
 }

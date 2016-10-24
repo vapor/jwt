@@ -61,9 +61,9 @@ final class ClaimTests: XCTestCase {
 
         let claim = ExpirationTimeClaim(date, leeway: 1)
 
-        XCTAssertTrue(claim.verify(.number(Node.Number(date.timeIntervalSince1970))))
-        XCTAssertTrue(claim.verify(.number(Node.Number(date.timeIntervalSince1970 + 1))))
-        XCTAssertFalse(claim.verify(.number(Node.Number(date.timeIntervalSince1970 + 2))))
+        XCTAssertTrue(claim.verify(Node(date.timeIntervalSince1970)))
+        XCTAssertTrue(claim.verify(Node(date.timeIntervalSince1970 - 1)))
+        XCTAssertFalse(claim.verify(Node(date.timeIntervalSince1970 - 2)))
     }
 
     func testIssuedAtClaim() {
@@ -71,8 +71,8 @@ final class ClaimTests: XCTestCase {
 
         let claim = IssuedAtClaim(date)
 
-        XCTAssertTrue(claim.verify(.number(Node.Number(date.timeIntervalSince1970))))
-        XCTAssertFalse(claim.verify(.number(Node.Number(date.timeIntervalSince1970 + 1))))
+        XCTAssertTrue(claim.verify(Node(date.timeIntervalSince1970)))
+        XCTAssertFalse(claim.verify(Node(date.timeIntervalSince1970 + 1)))
     }
 
     func testIssuerClaim() {
@@ -94,9 +94,9 @@ final class ClaimTests: XCTestCase {
 
         let claim = NotBeforeClaim(date, leeway: 1)
 
-        XCTAssertTrue(claim.verify(.number(Node.Number(date.timeIntervalSince1970))))
-        XCTAssertTrue(claim.verify(.number(Node.Number(date.timeIntervalSince1970 - 1))))
-        XCTAssertFalse(claim.verify(.number(Node.Number(date.timeIntervalSince1970 - 2))))
+        XCTAssertTrue(claim.verify(Node(date.timeIntervalSince1970)))
+        XCTAssertTrue(claim.verify(Node(date.timeIntervalSince1970 + 1)))
+        XCTAssertFalse(claim.verify(Node(date.timeIntervalSince1970 + 2)))
     }
 
     func testSubjectClaim() {

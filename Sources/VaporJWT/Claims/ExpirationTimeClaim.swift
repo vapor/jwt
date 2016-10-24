@@ -13,6 +13,6 @@ public struct ExpirationTimeClaim: SecondsWithLeewayClaim {
     }
 
     public func verify(_ other: Seconds) -> Bool {
-        return other <= value + leeway
+        return other + leeway >= value
     }
 }

@@ -52,7 +52,8 @@ struct Base64URLTranscoder: Base64URLTranscoding {
 
         let characterCount = unpadded.utf8CString.count - 1 // ignore last /0
 
-        let paddingCount = 4 - (characterCount % 4)
+        let paddingRemainder = (characterCount % 4)
+        let paddingCount = paddingRemainder > 0 ? 4 - paddingRemainder : 0
         let padding = Array(repeating: "=", count: paddingCount).joined()
 
         return unpadded + padding

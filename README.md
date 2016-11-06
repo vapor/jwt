@@ -42,14 +42,14 @@ import VaporJWT
 ```
 Create an signed token that expires 1 minute from now.
 ```swift
-let jwt = try JWT(claims: [ExpirationTimeClaim(Date() + 60)],
+let jwt = try JWT(payload: Node(ExpirationTimeClaim(Date() + 60)),
                   signer: HS256(key: "secret"))
 let token = try jwt.createToken()
 ```
-VaporJWT creates default headers (*"typ"* and *"alg"*) when none are provided. VaporJWT provides convenient ways to configure a JWT with custom headers and claims. For full control you can set the headers and payload as JSON.
+VaporJWT creates default headers (*"typ"* and *"alg"*) when none are provided. VaporJWT provides convenient ways to configure a JWT with custom headers and claims. For full control you can set the headers and payload as `Node`s.
 ```swift
-let jwt = try JWT(headers: JSON(["my": .string("header")]),
-                  payload: JSON(["user_id": .number(.int(42))]),
+let jwt = try JWT(headers: Node(["my": .string("header")]),
+                  payload: Node(["user_id": .number(.int(42))]),
                   signer: Unsigned())
 ```
 
@@ -88,7 +88,7 @@ public protocol Signer {
 By default VaporJWT uses Base64 encoding. A Base64URL encoder/decoder is also available and can be used like so:
 
 ```swift
-let jwt = try JWT(claims: [],
+let jwt = try JWT(payload: [],
                   encoding: Base64URLEncoding(),
                   signer: Unsigned())
 ```

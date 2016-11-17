@@ -101,18 +101,18 @@ extension JWT: ClaimsVerifiable {
 }
 
 extension JWT: SignatureVerifiable {
-    var algorithmName: String? {
+    public var algorithmName: String? {
         return headers.object?[AlgorithmHeader.name]?.string
     }
 
-    func createMessage() throws -> Bytes {
+    public func createMessage() throws -> Bytes {
         return try [headers, payload]
             .map(encoding.encode)
             .joined(separator: JWT.separator)
             .bytes
     }
 
-    func createSignature() throws -> Bytes {
+    public func createSignature() throws -> Bytes {
         return try encoding.decode(signature)
     }
 }

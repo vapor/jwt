@@ -33,7 +33,7 @@ public struct ES512: ECDSASigner {
     }
 }
 
-public protocol ECDSASigner: Signer, Key {
+public protocol ECDSASigner: Key, Signer {
     var curve: Int32 { get }
     var method: Hash.Method { get }
 }

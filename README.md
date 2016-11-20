@@ -60,19 +60,57 @@ let isValid = try jwt3.verifySignatureWith(HS256(key: "secret"))
 ```
 
 ## Signing support
-VaporJWT currently support HMAC and ECDSA signing. The available signers are:
+VaporJWT supports HMAC, ECDSA, and RSA signing. The available signers are:
 * HS256
 * HS284
 * HS512
 * ES256
 * ES384
 * ES512
+* RS256
+* RS384
+* RS512
 
-The HMAC (HS\*) signers take the same private key for both signing and verifying. The ECDSA (ES\*) signers on the other hand take a private key for signing and a matching public key for verifying. A private/public key pair for ECDSA can be generated using the `openssl` command line tool. To create a new key pair for ES256 issue the following command:
+The HMAC (HS\*) signers take the same private key for both signing and verifying. The ECDSA and RSA (ES\*/RS\*) signers on the other hand take a private key for signing and a matching public key for verifying.
+
+### Creating ECDSA keys
+
+Create a new key pair for ES256:
 ```
-openssl ecparam -name prime256v1 -genkey | openssl ec -in /dev/stdin -text -noout`
+openssl ecparam -name prime256v1 -genkey -out private.pem
 ```
-The resulting keys should be encoded (eg. using Base64) to enable storing them in a text file. This can be done using this [handy online tool](http://tomeko.net/online_tools/hex_to_base64.php).
+
+(For the ES384 signer substitute `prime256v1` with `secp384r1` and for ES512 use `secp521r1`.)
+
+Extract the private key:
+```
+openssl ec -in private.pem -outform der -out private.der
+openssl base64 -in private.der -out /dev/stdout
+```
+Extract the public key:
+```
+openssl ec -in private.pem -outform der -pubout -out public.der
+openssl base64 -in public.der -out /dev/stdout
+```
+
+### Creating RSA keys
+
+To generate a 4096 bit private/public key pair for RSA use the following command:
+```
+openssl genrsa -out private.pem 4096
+```
+Extract the private key:
+```
+openssl rsa -in private.pem -outform der -out private.der
+openssl base64 -in private.der -out /dev/stdout
+```
+Extract the public key:
+```
+openssl rsa -in private.pem -outform der -pubout -out public.der
+openssl base64 -in public.der -out /dev/stdout
+```
+
+### Custom
 
 Besides the included signers it is possible to create your own by adhering to the `Signer` protocol:
 
@@ -92,7 +130,7 @@ let jwt = try JWT(payload: [],
                   encoding: Base64URLEncoding(),
                   signer: Unsigned())
 ```
-Any custom encoding that adheres to the `Encoding` protocol can be used
+Any custom encoding that adheres to the `Encoding` protocol can be used as well.
 
 ```swift
 public protocol Encoding {

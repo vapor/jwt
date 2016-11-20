@@ -22,7 +22,7 @@ The structure of a JWT is `base64Encoded(headerJSON).base64Encoded(payloadJSON).
 
 Add the following package to `Package.swift`
 ```swift
-.Package(url:"https://github.com/siemensikkema/vapor-jwt.git", majorVersion: 0, minor: 5)
+.Package(url:"https://github.com/siemensikkema/vapor-jwt.git", majorVersion: 0, minor: 6)
 ```
 
 ## Usage

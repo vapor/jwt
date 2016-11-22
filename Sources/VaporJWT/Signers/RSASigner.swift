@@ -2,9 +2,33 @@ import CLibreSSL
 import Core
 import Hash
 
+public enum HashMethod {
+    case sha256
+    case sha384
+    case sha512
+}
+
+extension HashMethod {
+    var type: Int32 {
+        switch self {
+        case .sha256: return NID_sha256
+        case .sha384: return NID_sha384
+        case .sha512: return NID_sha512
+        }
+    }
+
+    var method: Hash.Method {
+        switch self {
+        case .sha256: return .sha256
+        case .sha384: return .sha384
+        case .sha512: return .sha512
+        }
+    }
+}
+
 public struct RS256: RSASigner {
     public let key: Bytes
-    public let type = NID_sha256
+    public let hashMethod = HashMethod.sha256
 
     public init(key: Bytes) {
         self.key = key
@@ -13,7 +37,7 @@ public struct RS256: RSASigner {
 
 public struct RS384: RSASigner {
     public let key: Bytes
-    public let type = NID_sha384
+    public let hashMethod = HashMethod.sha384
 
     public init(key: Bytes) {
         self.key = key
@@ -22,7 +46,7 @@ public struct RS384: RSASigner {
 
 public struct RS512: RSASigner {
     public let key: Bytes
-    public let type = NID_sha512
+    public let hashMethod = HashMethod.sha512
 
     public init(key: Bytes) {
         self.key = key
@@ -30,7 +54,7 @@ public struct RS512: RSASigner {
 }
 
 public protocol RSASigner: Key, Signer {
-    var type: Int32 { get }
+    var hashMethod: HashMethod { get }
 }
 
 extension RSASigner {
@@ -45,7 +69,9 @@ extension RSASigner {
         var siglen: UInt32 = 0
         var sig = Bytes(repeating: 0, count: Int(RSA_size(rsa)))
 
-        RSA_sign(type, message, UInt32(message.count), &sig, &siglen, rsa)
+        let digest = try Hash(hashMethod.method, message).hash()
+
+        RSA_sign(hashMethod.type, digest, UInt32(digest.count), &sig, &siglen, rsa)
 
         return sig
     }
@@ -58,7 +84,9 @@ extension RSASigner {
             throw JWTError.createPublicKey
         }
 
-        return RSA_verify(type, message, UInt32(message.count), signature,
+        let digest = try Hash(hashMethod.method, message).hash()
+
+        return RSA_verify(hashMethod.type, digest, UInt32(digest.count), signature,
                           UInt32(signature.count), rsa) == 1
     }
 }

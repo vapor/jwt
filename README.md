@@ -98,7 +98,8 @@ pub:
     04:48:7c:4f:92
 ASN1 OID: prime256v1
 ```
-Extracting the keys. For each section ('priv' and 'pub'):
+#### Extracting the keys
+For each section ('priv' and 'pub'):
 * copy the hex data (don't worry about multiple lines or white space) (eg. "30:04 ... 1f:7c")
 * use [this tool](http://tomeko.net/online_tools/hex_to_base64.php) to convert the key to base64
 

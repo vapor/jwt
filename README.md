@@ -77,21 +77,30 @@ The HMAC (HS\*) signers take the same private key for both signing and verifying
 
 Create a new key pair for ES256:
 ```
-openssl ecparam -name prime256v1 -genkey -out private.pem
+openssl ecparam -name prime256v1 -genkey | openssl ec -in /dev/stdin -noout -text
 ```
 
 (For the ES384 signer substitute `prime256v1` with `secp384r1` and for ES512 use `secp521r1`.)
 
-Extract the private key:
+The output will be something like:
 ```
-openssl ec -in private.pem -outform der -out private.der
-openssl base64 -in private.der -out /dev/stdout
+read EC key
+Private-Key: (256 bit)
+priv:
+    30:04:6d:98:63:e4:4c:8c:b2:37:88:c4:bc:f3:c2:
+    5c:f9:5e:f1:d8:d3:69:81:96:ed:0f:54:d1:53:66:
+    1f:7c
+pub: 
+    04:01:b8:4e:8e:76:1d:b3:bf:76:c5:f4:61:8f:58:
+    38:d6:93:db:72:3c:32:5e:43:d6:64:95:75:43:da:
+    7d:0d:00:38:53:b1:16:c6:89:56:56:08:f1:09:35:
+    5f:9d:7f:16:5d:40:f7:d0:13:ff:b1:ae:47:ec:b6:
+    04:48:7c:4f:92
+ASN1 OID: prime256v1
 ```
-Extract the public key:
-```
-openssl ec -in private.pem -outform der -pubout -out public.der
-openssl base64 -in public.der -out /dev/stdout
-```
+Extracting the keys. For each section ('priv' and 'pub'):
+* copy the hex data (don't worry about multiple lines or white space) (eg. "30:04 ... 1f:7c")
+* use [this tool](http://tomeko.net/online_tools/hex_to_base64.php) to convert the key to base64
 
 ### Creating RSA keys
 

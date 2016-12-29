@@ -1,4 +1,4 @@
-enum JWTError: Error {
+public enum JWTError: Error {
     case createKey
     case createPublicKey
     case decoding

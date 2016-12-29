@@ -95,7 +95,7 @@ public struct JWT {
 }
 
 extension JWT: ClaimsVerifiable {
-    var node: Node {
+    public var node: Node {
         return payload
     }
 }

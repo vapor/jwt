@@ -2,8 +2,8 @@ import Core
 
 public protocol SignatureVerifiable {
     var algorithmName: String? { get }
-    func createSignature() throws -> Bytes
     func createMessage() throws -> Bytes
+    func createSignature() throws -> Bytes
 }
 
 extension SignatureVerifiable {

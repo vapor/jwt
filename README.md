@@ -56,7 +56,7 @@ let jwt = try JWT(headers: Node(["my": .string("header")]),
 ### Validate an existing token string
 ```swift
 let jwt3 = try JWT(token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67/QGs52AzC8Ru8=")
-let isValid = try jwt3.verifySignatureWith(HS256(key: "secret"))
+let isValid = try jwt3.verifySignature(using: HS256(key: "secret"))
 ```
 
 ## Signing support

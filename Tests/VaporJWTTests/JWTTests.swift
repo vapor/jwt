@@ -59,7 +59,7 @@ final class JWTTests: XCTestCase {
                           encoding: PeriodToCommaEncoding())
             XCTAssertEqual(jwt.algorithmName, "tilde")
             XCTAssertEqual(try jwt.createToken(), token)
-            XCTAssertTrue(try jwt.verifySignatureWith(TildeSigner()))
+            XCTAssertTrue(try jwt.verifySignature(using: TildeSigner()))
         } catch {
             XCTFail("\(error)")
         }
@@ -78,7 +78,7 @@ final class JWTTests: XCTestCase {
             XCTFail()
         }
     }
-    
+
     func testCustomHeaders() {
         struct TestHeader: Header {
             static let name = "test"

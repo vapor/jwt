@@ -16,12 +16,12 @@ let receivedJWT = try JWT(token: token)
 
 //: Try to verify signature using a `Signer` with an incorrect algorithm.
 do {
-    try receivedJWT.verifySignatureWith(Unsigned())
+    try receivedJWT.verifySignature(using: Unsigned())
 } catch {
     error
 }
 //: Verify against correct `Signer` (algorithm + key).
-try receivedJWT.verifySignatureWith(HS256(key: "secret"))
+try receivedJWT.verifySignature(using: HS256(key: "secret"))
 //: Trying to verify claims against expiration time claim that expires now will fail.
 receivedJWT.verifyClaims([ExpirationTimeClaim()])
 //: However, if we add a leeway of 2 minutes, it passes.

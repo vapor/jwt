@@ -90,7 +90,7 @@ priv:
     30:04:6d:98:63:e4:4c:8c:b2:37:88:c4:bc:f3:c2:
     5c:f9:5e:f1:d8:d3:69:81:96:ed:0f:54:d1:53:66:
     1f:7c
-pub: 
+pub:
     04:01:b8:4e:8e:76:1d:b3:bf:76:c5:f4:61:8f:58:
     38:d6:93:db:72:3c:32:5e:43:d6:64:95:75:43:da:
     7d:0d:00:38:53:b1:16:c6:89:56:56:08:f1:09:35:
@@ -164,3 +164,7 @@ Yes please! Issues and pull requests are more than welcome.
 * http://davidederosa.com/basic-blockchain-programming/elliptic-curve-digital-signatures/
 * https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-25
 * https://kjur.github.io/jsrsasign/sample-ecdsa.html
+
+## Author
+
+Siemen Sikkema - https://github.com/siemensikkema

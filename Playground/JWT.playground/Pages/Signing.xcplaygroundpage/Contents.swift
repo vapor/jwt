@@ -1,9 +1,9 @@
 //: [Previous](@previous)
 //: ## Signing
 import Core
-import VaporJWT
+import JWT
 
-//: `VaporJWT` includes 7 signers:
+//: `JWT` includes 7 signers:
 //: * HS256
 //: * HS384
 //: * HS512

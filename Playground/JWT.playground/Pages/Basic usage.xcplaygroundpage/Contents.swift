@@ -1,11 +1,11 @@
 /*:
- # VaporJWT
+ # JWT
  ## Basic usage
  Learn how to create and verify signed tokens with expiration time claims.
  */
 import Foundation
+import JWT
 import Node
-import VaporJWT
 
 //: Create an signed token that expires 1 minute from now.
 let jwt = try JWT(payload: Node(ExpirationTimeClaim(Date() + 60)),

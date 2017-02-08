@@ -2,9 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:VaporJWT.playground">
+      location = "group:JWT.playground">
    </FileRef>
    <FileRef
-      location = "group:../VaporJWT.xcodeproj">
+      location = "group:../JWT.xcodeproj">
    </FileRef>
 </Workspace>

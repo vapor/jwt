@@ -1,4 +1,4 @@
-@testable import VaporJWT
+@testable import JWT
 import Foundation
 import Node
 import XCTest

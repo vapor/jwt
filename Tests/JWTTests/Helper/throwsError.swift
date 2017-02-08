@@ -1,4 +1,4 @@
-@testable import VaporJWT
+@testable import JWT
 import XCTest
 
 func assert<E: Error>(_ expression: @autoclosure () throws -> Any,

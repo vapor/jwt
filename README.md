@@ -1,11 +1,11 @@
-# VaporJWT
+# JWT
 
 ![Swift](http://img.shields.io/badge/swift-3.0-brightgreen.svg)
 [![Vapor](https://img.shields.io/badge/Vapor-1.1-green.svg)](http://vapor.codes)
 [![Build Status](https://travis-ci.org/siemensikkema/vapor-jwt.svg?branch=master)](https://travis-ci.org/siemensikkema/vapor-jwt)
 [![Code Coverage](https://codecov.io/gh/siemensikkema/vapor-jwt/branch/master/graph/badge.svg)](https://codecov.io/gh/siemensikkema/vapor-jwt)
 
-VaporJWT is a library for JSON Web Tokens (JWT) designed with the following goals in mind:
+JWT is a library for JSON Web Tokens (JWT) designed with the following goals in mind:
 - clean API
 - native to Vapor
 - many features
@@ -22,23 +22,23 @@ The structure of a JWT is `base64Encoded(headerJSON).base64Encoded(payloadJSON).
 
 Add the following package to `Package.swift`
 ```swift
-.Package(url:"https://github.com/siemensikkema/vapor-jwt.git", majorVersion: 0, minor: 6)
+.Package(url:"https://github.com/vapor/jwt.git", majorVersion: 0, minor: 6)
 ```
 
 ## Usage
-For detailed info on how to use this library see the [tests](https://github.com/siemensikkema/vapor-jwt/tree/master/Tests/VaporJWTTests) and, if you run macOS, the [included playground](https://github.com/siemensikkema/vapor-jwt/tree/master/Playground).
+For detailed info on how to use this library see the [tests](https://github.com/vapor/jwt/tree/master/Tests/JWTTests) and, if you run macOS, the [included playground](https://github.com/vapor/jwt/tree/master/Playground).
 
 ### Playground
 To run the playground:
 * run `vapor xcode`
-* open the workspace 'Playground/VaporJWT.xcworkspace' in Xcode
+* open the workspace 'Playground/JWT.xcworkspace' in Xcode
 * select the playground
-* build the 'VaporJWT' scheme
+* build the 'JWT' scheme
 
 ### Create a new token
 Import the library:
 ```swift
-import VaporJWT
+import JWT
 ```
 Create an signed token that expires 1 minute from now.
 ```swift
@@ -46,7 +46,7 @@ let jwt = try JWT(payload: Node(ExpirationTimeClaim(Date() + 60)),
                   signer: HS256(key: "secret"))
 let token = try jwt.createToken()
 ```
-VaporJWT creates default headers (*"typ"* and *"alg"*) when none are provided. VaporJWT provides convenient ways to configure a JWT with custom headers and claims. For full control you can set the headers and payload as `Node`s.
+JWT creates default headers (*"typ"* and *"alg"*) when none are provided. JWT provides convenient ways to configure a JWT with custom headers and claims. For full control you can set the headers and payload as `Node`s.
 ```swift
 let jwt = try JWT(headers: Node(["my": .string("header")]),
                   payload: Node(["user_id": .number(.int(42))]),
@@ -60,7 +60,7 @@ let isValid = try jwt3.verifySignature(using: HS256(key: "secret"))
 ```
 
 ## Signing support
-VaporJWT supports HMAC, ECDSA, and RSA signing. The available signers are:
+JWT supports HMAC, ECDSA, and RSA signing. The available signers are:
 * HS256
 * HS284
 * HS512
@@ -133,7 +133,7 @@ public protocol Signer {
 ```
 
 ## Encoding support
-By default VaporJWT uses Base64 encoding. A Base64URL encoder/decoder is also available and can be used like so:
+By default JWT uses Base64 encoding. A Base64URL encoder/decoder is also available and can be used like so:
 
 ```swift
 let jwt = try JWT(payload: [],
@@ -153,7 +153,7 @@ public protocol Encoding {
 Existing libraries were pretty great already but I wanted a more extensible library that felt native to Vapor. I also wanted better encryption support, with ES256 in particular because it is needed by for Apple's new [token based push notifications](https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/ApplePushService.html#//apple_ref/doc/uid/TP40008194-CH100-SW11), see [VaporAPNS](https://github.com/matthijs2704/vapor-apns).
 
 ## Roadmap
-See [the project board](https://github.com/siemensikkema/vapor-jwt/projects/1).
+See [the project board](https://github.com/vapor/jwt/projects/1).
 
 ## Contribute
 Yes please! Issues and pull requests are more than welcome.

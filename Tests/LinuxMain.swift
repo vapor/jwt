@@ -1,5 +1,5 @@
 import XCTest
-@testable import VaporJWTTests
+@testable import JWTTests
 
 XCTMain([
      testCase(Base64TranscoderTests.all),

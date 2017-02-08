@@ -1,4 +1,4 @@
-@testable import VaporJWT
+@testable import JWT
 import Core
 import XCTest
 

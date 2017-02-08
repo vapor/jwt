@@ -1,15 +1,15 @@
 //: [Previous](@previous)
 //: ## Claims
 //: `Claim`s are used to constrain the validity of a token.
-import VaporJWT
+import JWT
 import Foundation
 import Node
-//: These are all the claims that come with `VaporJWT`
+//: These are all the claims that come with `JWT`
 let claims: [Claim] = [
     AudienceClaim("some audience"),
     ExpirationTimeClaim(Date() + 300), // valid until 5 minutes from now
     IssuedAtClaim(),
-    IssuerClaim("VaporJWT"),
+    IssuerClaim("JWT"),
     JWTIDClaim(UUID().uuidString),
     NotBeforeClaim(Date() + 60), // valid in 1 minute from now
     SubjectClaim("some subject")

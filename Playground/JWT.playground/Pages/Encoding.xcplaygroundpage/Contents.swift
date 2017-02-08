@@ -1,6 +1,6 @@
 //: [Previous](@previous)
 //: ## Encoding
-import VaporJWT
+import JWT
 import Core
 import Foundation
 

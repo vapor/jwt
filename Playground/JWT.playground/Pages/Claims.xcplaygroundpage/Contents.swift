@@ -1,8 +1,8 @@
 //: [Previous](@previous)
 //: ## Claims
 //: `Claim`s are used to constrain the validity of a token.
-import JWT
 import Foundation
+import JWT
 import Node
 //: These are all the claims that come with `JWT`
 let claims: [Claim] = [

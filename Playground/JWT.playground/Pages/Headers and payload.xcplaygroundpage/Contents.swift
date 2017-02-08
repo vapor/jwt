@@ -1,8 +1,8 @@
 //: [Previous](@previous)
 //: ## Headers and payload
 //: JWTs can be created from Nodes. Nodes in turn can be created from (arrays of) `Storable`s. `Claim`s and `Header`s conform to `Storable` but it is also possible to store your own values that conform to `Storable` in either the header or the payload.
-import Node
 import JWT
+import Node
 //: Using a custom Header
 struct MyHeader: Header {
     static let name = "my"

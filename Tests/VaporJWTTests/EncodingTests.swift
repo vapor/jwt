@@ -35,8 +35,8 @@ final class EncodingTests: XCTestCase {
         }
     }
 
-    func testBase64DecodeThrowsErrorForInvalidString() {
-        assert(try Base64Encoding().decode("\0"), throws: JWTError.decoding)
+    func testBase64DecodeIgnoresErrorForInvalidString() throws {
+        _ = try Base64Encoding().decode("\0")
     }
 
     func testBase64URLEncodeThrowsErrorForInvalidString() {
@@ -52,7 +52,7 @@ final class EncodingTests: XCTestCase {
     static let all = [
         ("testBase64ToBase64URL", testBase64ToBase64URL),
         ("testBase64URLToBase64", testBase64URLToBase64),
-        ("testBase64DecodeThrowsErrorForInvalidString", testBase64DecodeThrowsErrorForInvalidString),
+        ("testBase64DecodeIgnoresErrorForInvalidString", testBase64DecodeIgnoresErrorForInvalidString),
         ("testBase64URLEncodeThrowsErrorForInvalidString",
         testBase64URLEncodeThrowsErrorForInvalidString),
         ("testBase64URLDecodeThrowsErrorForInvalidString",

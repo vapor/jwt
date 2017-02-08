@@ -1,18 +1,14 @@
 import Core
-import Foundation
 
 public struct Base64Encoding: Encoding {
 
     public init() {}
 
     public func encode(_ bytes: Bytes) throws -> String {
-        return bytes.base64String
+        return bytes.base64Encoded.string
     }
 
     public func decode(_ base64Encoded: String) throws -> Bytes {
-        guard let data = Data(base64Encoded: base64Encoded) else {
-            throw JWTError.decoding
-        }
-        return try data.makeBytes()
+        return base64Encoded.bytes.base64Decoded
     }
 }

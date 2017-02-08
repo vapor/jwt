@@ -13,7 +13,7 @@ public struct Base64URLEncoding: Encoding {
     }
 
     public func encode(_ bytes: Bytes) throws -> String {
-        guard let base64URL = base64URLTranscoder.base64URLEncode( bytes.base64String) else {
+        guard let base64URL = base64URLTranscoder.base64URLEncode(bytes.base64Encoded.string) else {
             throw JWTError.encoding
         }
         return base64URL

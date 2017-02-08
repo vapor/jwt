@@ -22,11 +22,11 @@ The structure of a JWT is `base64Encoded(headerJSON).base64Encoded(payloadJSON).
 
 Add the following package to `Package.swift`
 ```swift
-.Package(url:"https://github.com/siemensikkema/vapor-jwt.git", majorVersion: 0, minor: 6)
+.Package(url:"https://github.com/vapor/jwt.git", majorVersion: 0, minor: 6)
 ```
 
 ## Usage
-For detailed info on how to use this library see the [tests](https://github.com/siemensikkema/vapor-jwt/tree/master/Tests/JWTTests) and, if you run macOS, the [included playground](https://github.com/siemensikkema/vapor-jwt/tree/master/Playground).
+For detailed info on how to use this library see the [tests](https://github.com/vapor/jwt/tree/master/Tests/JWTTests) and, if you run macOS, the [included playground](https://github.com/vapor/jwt/tree/master/Playground).
 
 ### Playground
 To run the playground:
@@ -153,7 +153,7 @@ public protocol Encoding {
 Existing libraries were pretty great already but I wanted a more extensible library that felt native to Vapor. I also wanted better encryption support, with ES256 in particular because it is needed by for Apple's new [token based push notifications](https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/ApplePushService.html#//apple_ref/doc/uid/TP40008194-CH100-SW11), see [VaporAPNS](https://github.com/matthijs2704/vapor-apns).
 
 ## Roadmap
-See [the project board](https://github.com/siemensikkema/vapor-jwt/projects/1).
+See [the project board](https://github.com/vapor/jwt/projects/1).
 
 ## Contribute
 Yes please! Issues and pull requests are more than welcome.

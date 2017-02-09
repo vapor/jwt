@@ -3,32 +3,32 @@ import Core
 import Foundation
 import Hash
 
-public class ES256: ECDSASigner {
+public final class ES256: ECDSASigner {
     public let curve = NID_X9_62_prime256v1
     public let key: Bytes
     public let method = Hash.Method.sha256
 
-    public required init(key: Bytes) {
+    public init(key: Bytes) {
         self.key = key
     }
 }
 
-public class ES384: ECDSASigner {
+public final class ES384: ECDSASigner {
     public let curve = NID_secp384r1
     public let key: Bytes
     public let method = Hash.Method.sha384
 
-    public required init(key: Bytes) {
+    public init(key: Bytes) {
         self.key = key
     }
 }
 
-public class ES512: ECDSASigner {
+public final class ES512: ECDSASigner {
     public let curve = NID_secp521r1
     public let key: Bytes
     public let method = Hash.Method.sha512
 
-    public required init(key: Bytes) {
+    public init(key: Bytes) {
         self.key = key
     }
 }

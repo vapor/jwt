@@ -33,19 +33,22 @@ public enum RSAKey {
     case `private`(CRSAKey)
 
     public init(_ rawKey: Bytes) throws {
-        if let rsa = rawKey.withUnsafeBufferPointer({ p -> CRSAKey! in
-            var baseAddress = p.baseAddress
-            return d2i_RSAPrivateKey(nil, &baseAddress, rawKey.count)
-        }) {
-            self = .private(rsa)
-        } else if let rsa = rawKey.withUnsafeBufferPointer({ p -> CRSAKey! in
-            var baseAddress = p.baseAddress
-            return d2i_RSA_PUBKEY(nil, &baseAddress, rawKey.count)
-        }) {
-            self = .public(rsa)
-        } else {
+        guard let rsa = rawKey.withUnsafeBufferPointer({ rawKeyPointer -> RSAKey? in
+            var base = rawKeyPointer.baseAddress
+            let count = rawKey.count
+
+            if let cPrivateKey = d2i_RSAPrivateKey(nil, &base, count) {
+                return .private(cPrivateKey)
+            } else if let cPublicKey = d2i_RSA_PUBKEY(nil, &base, count) {
+                return .public(cPublicKey)
+            } else {
+                return nil
+            }
+        }) else {
             throw JWTError.createKey
         }
+
+        self = rsa
     }
 
     var cKey: CRSAKey {
@@ -58,29 +61,29 @@ public enum RSAKey {
     }
 }
 
-public class RS256: RSASigner {
+public final class RS256: RSASigner {
     public let key: RSAKey
     public let hashMethod = HashMethod.sha256
 
-    public required init(key: Bytes) throws {
+    public init(key: Bytes) throws {
         self.key = try RSAKey(key)
     }
 }
 
-public class RS384: RSASigner {
+public final class RS384: RSASigner {
     public let key: RSAKey
     public let hashMethod = HashMethod.sha384
 
-    public required init(key: Bytes) throws {
+    public init(key: Bytes) throws {
         self.key = try RSAKey(key)
     }
 }
 
-public class RS512: RSASigner {
+public final class RS512: RSASigner {
     public let key: RSAKey
     public let hashMethod = HashMethod.sha512
 
-    public required init(key: Bytes) throws {
+    public init(key: Bytes) throws {
         self.key = try RSAKey(key)
     }
 }

@@ -5,9 +5,10 @@ public enum JWTError: Error {
     case encoding
     case incorrectNumberOfSegments
     case missingAlgorithm
+    case privateKeyRequired
     case signing
     case wrongAlgorithm
     case verificationFailed
-    case privateKeyRequired
+    // allow for future additions
     case unknown(Error)
 }

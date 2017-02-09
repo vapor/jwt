@@ -1,29 +1,29 @@
 import Core
 import HMAC
 
-public class HS256: HMACSigner {
+public final class HS256: HMACSigner {
     public let key: Bytes
     public let method = HMAC.Method.sha256
 
-    public required init(key: Bytes) {
+    public init(key: Bytes) {
         self.key = key
     }
 }
 
-public class HS384: HMACSigner {
+public final class HS384: HMACSigner {
     public let key: Bytes
     public let method = HMAC.Method.sha384
 
-    public required init(key: Bytes) {
+    public init(key: Bytes) {
         self.key = key
     }
 }
 
-public class HS512: HMACSigner {
+public final class HS512: HMACSigner {
     public let key: Bytes
     public let method = HMAC.Method.sha256
 
-    public required init(key: Bytes) {
+    public init(key: Bytes) {
         self.key = key
     }
 }

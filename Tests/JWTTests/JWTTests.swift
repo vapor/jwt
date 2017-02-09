@@ -9,12 +9,14 @@ let testMessage = Node(["a": .string("b")])
 struct TildeSigner: Signer {
     let name = "tilde"
 
-    func sign(_ message: Bytes) throws -> Bytes {
+    func sign(message: Bytes) throws -> Bytes {
         return [126] + message + [126]
     }
 
-    func verifySignature(_ signature: Bytes, message: Bytes) throws -> Bool {
-        return try signature == sign(message)
+    func verify(signature: Bytes, message: Bytes) throws {
+        guard try signature == sign(message: message) else {
+            throw JWTError.verificationFailed
+        }
     }
 }
 
@@ -59,15 +61,20 @@ final class JWTTests: XCTestCase {
                           encoding: PeriodToCommaEncoding())
             XCTAssertEqual(jwt.algorithmName, "tilde")
             XCTAssertEqual(try jwt.createToken(), token)
-            XCTAssertTrue(try jwt.verifySignature(using: TildeSigner()))
+            try jwt.verifySignature(using: TildeSigner())
         } catch {
             XCTFail("\(error)")
         }
     }
 
     func testIncorrectNumberOfSegments() {
-        assert(try JWT(token: "."),
-               throws: JWTError.incorrectNumberOfSegments)
+        do {
+            _ = try JWT(token: ".")
+        } catch JWTError.incorrectNumberOfSegments {
+            // pass
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
     }
 
     func testDefaultHeaders() {

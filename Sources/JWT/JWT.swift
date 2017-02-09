@@ -23,17 +23,19 @@ public struct JWT {
     /// - throws: Any error thrown while encoding or signing
     ///
     /// - returns: A JWT value
-    public init(headers: Node,
-                payload: Node,
-                encoding: Encoding = Base64Encoding(),
-                signer: Signer) throws {
+    public init(
+        headers: Node,
+        payload: Node,
+        encoding: Encoding = Base64Encoding(),
+        signer: Signer
+    ) throws {
         self.headers = headers
         self.payload = payload
         self.encoding = encoding
 
         let encoded = try [headers, payload].map(encoding.encode)
         let message = encoded.joined(separator: JWT.separator)
-        let bytes = try signer.sign(message.bytes)
+        let bytes = try signer.sign(message: message.bytes)
         signature = try encoding.encode(bytes)
     }
 
@@ -48,10 +50,12 @@ public struct JWT {
     /// - throws: Any error thrown while encoding or signing
     ///
     /// - returns: A JWT value
-    public init(additionalHeaders: [Header] = [],
-                payload: Node,
-                encoding: Encoding = Base64Encoding(),
-                signer: Signer) throws {
+    public init(
+        additionalHeaders: [Header] = [],
+        payload: Node,
+        encoding: Encoding = Base64Encoding(),
+        signer: Signer
+    ) throws {
         let headers: [Header] = [TypeHeader(), AlgorithmHeader(signer: signer)] + additionalHeaders
         try self.init(
             headers: Node(headers),
@@ -69,8 +73,10 @@ public struct JWT {
     ///           separated segments or any error thrown while decoding
     ///
     /// - returns: A JWT value
-    public init(token: String,
-                encoding: Encoding = Base64Encoding()) throws {
+    public init(
+        token: String,
+        encoding: Encoding = Base64Encoding()
+    ) throws {
         let segments = token.components(separatedBy: JWT.separator)
 
         guard segments.count == 3 else {

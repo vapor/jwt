@@ -7,4 +7,7 @@ public enum JWTError: Error {
     case missingAlgorithm
     case signing
     case wrongAlgorithm
+    case verificationFailed
+    case privateKeyRequired
+    case unknown(Error)
 }

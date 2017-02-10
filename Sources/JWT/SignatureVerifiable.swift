@@ -7,24 +7,22 @@ public protocol SignatureVerifiable {
 }
 
 extension SignatureVerifiable {
-
-    @available(*, deprecated, message: "Use `verifySignature(using:)` instead")
-    public func verifySignatureWith(_ signer: Signer) throws -> Bool {
-        return try verifySignature(using: signer)
-    }
-
     /// Verifies signature
     ///
     /// - parameter signer: used to verify the signature
     ///
-    /// - throws: JWTError.wrongAlgorithm if the algorithm does not match. Throws any error thrown while signing or encoding.
-    ///
-    /// - returns: True is the signature was verified, false otherwise.
-    public func verifySignature(using signer: Signer) throws -> Bool {
+    /// - throws: 
+    ///     - `JWTError.wrongAlgorithm` if the algorithm does not match.
+    ///     - `JWTError.verificationFailed` if the signer cannot verify the JWT.
+    ///     - Any error thrown while signing or encoding.
+    public func verifySignature(using signer: Signer) throws {
         guard signer.name == algorithmName else {
             throw JWTError.wrongAlgorithm
         }
-        return try signer.verifySignature(
-            try createSignature(), message: try createMessage())
+
+        try signer.verify(
+            signature: try createSignature(),
+            message: try createMessage()
+        )
     }
 }

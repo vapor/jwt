@@ -5,12 +5,11 @@ public struct Unsigned: Signer {
 
     public init() {}
 
-    public func sign(_ message: Bytes) throws -> Bytes {
+    public func sign(message: Bytes) throws -> Bytes {
         return []
     }
 
-    public func verifySignature(_ signature: Bytes,
-                                message: Bytes) throws -> Bool {
-        return true
+    public func verify(signature: Bytes, message: Bytes) throws {
+        // always pass
     }
 }

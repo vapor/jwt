@@ -3,43 +3,55 @@ import Core
 import Foundation
 import Hash
 
-public struct ES256: ECDSASigner {
-    public let curve = NID_X9_62_prime256v1
-    public let key: Bytes
-    public let method = Hash.Method.sha256
+public final class ES256: ECDSASigner {
+    let curve = NID_X9_62_prime256v1
+    let key: Bytes
+    let method = Hash.Method.sha256
 
     public init(key: Bytes) {
         self.key = key
     }
 }
 
-public struct ES384: ECDSASigner {
-    public let curve = NID_secp384r1
-    public let key: Bytes
-    public let method = Hash.Method.sha384
+public final class ES384: ECDSASigner {
+    let curve = NID_secp384r1
+    let key: Bytes
+    let method = Hash.Method.sha384
 
     public init(key: Bytes) {
         self.key = key
     }
 }
 
-public struct ES512: ECDSASigner {
-    public let curve = NID_secp521r1
-    public let key: Bytes
-    public let method = Hash.Method.sha512
+public final class ES512: ECDSASigner {
+    let curve = NID_secp521r1
+    let key: Bytes
+    let method = Hash.Method.sha512
 
     public init(key: Bytes) {
         self.key = key
     }
 }
 
-public protocol ECDSASigner: Key, Signer {
+protocol ECDSASigner: Signer, BytesConvertible {
+    init(key: Bytes)
+    var key: Bytes { get }
     var curve: Int32 { get }
     var method: Hash.Method { get }
 }
 
 extension ECDSASigner {
-    public func sign(_ message: Bytes) throws -> Bytes {
+    public init(bytes: Bytes) {
+        self.init(key: bytes)
+    }
+
+    public func makeBytes() -> Bytes {
+        return key
+    }
+}
+
+extension ECDSASigner {
+    public func sign(message: Bytes) throws -> Bytes {
         var digest = try Hash(method, message).hash()
         let ecKey = try newECKeyPair()
 
@@ -63,13 +75,15 @@ extension ECDSASigner {
         return derBytes
     }
 
-    public func verifySignature(_ der: Bytes, message: Bytes) throws -> Bool {
+    public func verify(signature der: Bytes, message: Bytes) throws {
         var signaturePointer: UnsafePointer? = UnsafePointer(der)
         let signature = d2i_ECDSA_SIG(nil, &signaturePointer, der.count)
         let digest = try Hash(method, message).hash()
         let ecKey = try newECPublicKey()
         let verified = ECDSA_do_verify(digest, Int32(digest.count), signature, ecKey)
-        return verified == 1
+        guard verified == 1 else {
+            throw JWTError.verificationFailed
+        }
     }
 }
 

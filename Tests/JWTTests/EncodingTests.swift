@@ -40,22 +40,34 @@ final class EncodingTests: XCTestCase {
     }
 
     func testBase64URLEncodeThrowsErrorForInvalidString() {
-        assert(try Base64URLEncoding(base64URLTranscoder: TestBase64URLTranscoder()).encode(""),
-               throws: JWTError.encoding)
+        do {
+            _ = try Base64URLEncoding(
+                base64URLTranscoder: TestBase64URLTranscoder()
+            ).encode("")
+        } catch JWTError.encoding {
+            // pass
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
     }
 
     func testBase64URLDecodeThrowsErrorForInvalidString() {
-        assert(try Base64URLEncoding(base64URLTranscoder: TestBase64URLTranscoder()).decode(""),
-               throws: JWTError.decoding)
+        do {
+            _ = try Base64URLEncoding(
+                base64URLTranscoder: TestBase64URLTranscoder()
+            ).decode("")
+        } catch JWTError.decoding {
+            // pass
+        } catch {
+            XCTFail("Wrong error: \(error)")
+        }
     }
 
     static let all = [
         ("testBase64ToBase64URL", testBase64ToBase64URL),
         ("testBase64URLToBase64", testBase64URLToBase64),
         ("testBase64DecodeIgnoresErrorForInvalidString", testBase64DecodeIgnoresErrorForInvalidString),
-        ("testBase64URLEncodeThrowsErrorForInvalidString",
-        testBase64URLEncodeThrowsErrorForInvalidString),
-        ("testBase64URLDecodeThrowsErrorForInvalidString",
-        testBase64URLDecodeThrowsErrorForInvalidString),
+        ("testBase64URLEncodeThrowsErrorForInvalidString", testBase64URLEncodeThrowsErrorForInvalidString),
+        ("testBase64URLDecodeThrowsErrorForInvalidString", testBase64URLDecodeThrowsErrorForInvalidString),
     ]
 }

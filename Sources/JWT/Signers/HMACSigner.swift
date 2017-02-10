@@ -21,7 +21,7 @@ public struct HS384: HMACSigner {
 
 public struct HS512: HMACSigner {
     public let key: Bytes
-    public let method = HMAC.Method.sha256
+    public let method = HMAC.Method.sha512
 
     public init(key: Bytes) {
         self.key = key

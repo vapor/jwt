@@ -4,9 +4,9 @@ import Foundation
 import Hash
 
 public final class ES256: ECDSASigner {
-    public let curve = NID_X9_62_prime256v1
-    public let key: Bytes
-    public let method = Hash.Method.sha256
+    let curve = NID_X9_62_prime256v1
+    let key: Bytes
+    let method = Hash.Method.sha256
 
     public init(key: Bytes) {
         self.key = key
@@ -14,9 +14,9 @@ public final class ES256: ECDSASigner {
 }
 
 public final class ES384: ECDSASigner {
-    public let curve = NID_secp384r1
-    public let key: Bytes
-    public let method = Hash.Method.sha384
+    let curve = NID_secp384r1
+    let key: Bytes
+    let method = Hash.Method.sha384
 
     public init(key: Bytes) {
         self.key = key
@@ -24,16 +24,16 @@ public final class ES384: ECDSASigner {
 }
 
 public final class ES512: ECDSASigner {
-    public let curve = NID_secp521r1
-    public let key: Bytes
-    public let method = Hash.Method.sha512
+    let curve = NID_secp521r1
+    let key: Bytes
+    let method = Hash.Method.sha512
 
     public init(key: Bytes) {
         self.key = key
     }
 }
 
-public protocol ECDSASigner: Signer, BytesConvertible {
+protocol ECDSASigner: Signer, BytesConvertible {
     init(key: Bytes)
     var key: Bytes { get }
     var curve: Int32 { get }

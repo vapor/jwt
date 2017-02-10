@@ -2,8 +2,8 @@ import Core
 import HMAC
 
 public final class HS256: HMACSigner {
-    public let key: Bytes
-    public let method = HMAC.Method.sha256
+    let key: Bytes
+    let method = HMAC.Method.sha256
 
     public init(key: Bytes) {
         self.key = key
@@ -11,8 +11,8 @@ public final class HS256: HMACSigner {
 }
 
 public final class HS384: HMACSigner {
-    public let key: Bytes
-    public let method = HMAC.Method.sha384
+    let key: Bytes
+    let method = HMAC.Method.sha384
 
     public init(key: Bytes) {
         self.key = key
@@ -20,15 +20,15 @@ public final class HS384: HMACSigner {
 }
 
 public final class HS512: HMACSigner {
-    public let key: Bytes
-    public let method = HMAC.Method.sha256
+    let key: Bytes
+    let method = HMAC.Method.sha256
 
     public init(key: Bytes) {
         self.key = key
     }
 }
 
-public protocol HMACSigner: Signer, BytesConvertible {
+protocol HMACSigner: Signer, BytesConvertible {
     init(key: Bytes)
     var key: Bytes { get }
     var method: HMAC.Method { get }

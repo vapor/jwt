@@ -52,9 +52,9 @@ final class SignerTests: XCTestCase {
 
     func testHS512() {
         checkHMACSigner(
-            createSigner: HS512.init,
-            name: "HS512",
-            signed: "i19IcCmVwVmMVz2x4hhmqbgl1KeU0WnXBgoDYFeWNgs="
+          createSigner: HS512.init,
+          name: "HS512",
+          signed: "G7pYfHMO7box9Tq7C2ylieCd5OiU7kVeYUCAc5l1mtqvoGnux8AWR7sXPcsX9V0ir0mhgHG3SMXC7df3qCnGMg=="
         )
     }
 

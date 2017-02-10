@@ -21,7 +21,7 @@ public final class HS384: HMACSigner {
 
 public final class HS512: HMACSigner {
     let key: Bytes
-    let method = HMAC.Method.sha256
+    let method = HMAC.Method.sha512
 
     public init(key: Bytes) {
         self.key = key

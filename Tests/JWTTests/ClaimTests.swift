@@ -21,29 +21,29 @@ final class ClaimTests: XCTestCase {
     let date = Date(timeIntervalSince1970: 1000)
 
     func testMissingClaim() {
-        XCTAssertFalse(EmptyNode.verifyClaims([TestClaim(verified: true)]))
+        XCTAssertNoThrow(try EmptyNode.verifyClaims([TestClaim(verified: true)]))
     }
 
     func testFailingClaim() {
-        XCTAssertFalse(Node(["tst": ""]).verifyClaims([TestClaim(verified: false)]))
+        XCTAssertNoThrow(try Node(["tst": ""]).verifyClaims([TestClaim(verified: false)]))
     }
 
     func testValidClaim() {
-        XCTAssertTrue(Node(["tst": ""]).verifyClaims([TestClaim(verified: true)]))
+        XCTAssertNoThrow(try Node(["tst": ""]).verifyClaims([TestClaim(verified: true)]))
     }
 
     func testMultipleValidClaims() {
-        XCTAssertTrue(Node(["tst": ""]).verifyClaims([TestClaim(verified: true),
+        XCTAssertNoThrow(try Node(["tst": ""]).verifyClaims([TestClaim(verified: true),
                                                       TestClaim(verified: true)]))
     }
 
     func testMixedClaims() {
-        XCTAssertFalse(Node(["tst": ""]).verifyClaims([TestClaim(verified: true),
+        XCTAssertNoThrow(try Node(["tst": ""]).verifyClaims([TestClaim(verified: true),
                                                        TestClaim(verified: false)]))
     }
 
     func testVerifyInvalidPayloadFails() {
-        XCTAssertFalse(Node(.string("")).verifyClaims([]))
+        XCTAssertNoThrow(try Node(.string("")).verifyClaims([]))
     }
 
     func testAudienceClaim() {
@@ -121,5 +121,5 @@ final class ClaimTests: XCTestCase {
         ("testJWTIDClaim", testJWTIDClaim),
         ("testNotBeforeClaim", testNotBeforeClaim),
         ("testSubjectClaim", testSubjectClaim),
-        ]
+    ]
 }

@@ -6,7 +6,15 @@ public protocol Claim: Storable {
 }
 
 extension Claim {
-    func verify(_ dict: [String: Node]) -> Bool {
-        return dict[type(of: self).name].map(verify) ?? false
+    func verify(_ dict: [String: Node]) throws {
+        let name = type(of: self).name
+
+        guard let claim = dict[name] else {
+            throw JWTError.missingClaim(withName: name)
+        }
+
+        guard verify(claim) else {
+            throw JWTError.verificationFailedForClaim(withName: name)
+        }
     }
 }

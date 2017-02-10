@@ -15,7 +15,7 @@ struct TildeSigner: Signer {
 
     func verify(signature: Bytes, message: Bytes) throws {
         guard try signature == sign(message: message) else {
-            throw JWTError.verificationFailed
+            throw JWTError.signatureVerificationFailed
         }
     }
 }
@@ -116,7 +116,7 @@ final class JWTTests: XCTestCase {
     func testJWTClaimsCanBeVerified() {
         do {
             let jwt = try JWT(payload: EmptyNode, signer: TildeSigner())
-            XCTAssertTrue(jwt.verifyClaims([]))
+            XCTAssertNoThrow(try jwt.verifyClaims([]))
         } catch {
             XCTFail("\(error)")
         }

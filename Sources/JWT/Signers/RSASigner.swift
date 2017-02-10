@@ -139,7 +139,7 @@ extension RSASigner {
         )
 
         guard result == 1 else {
-            throw JWTError.verificationFailed
+            throw JWTError.signatureVerificationFailed
         }
     }
 }

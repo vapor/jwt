@@ -1,14 +1,14 @@
 import Foundation
 import Node
 
-public struct ExpirationTimeClaim: SecondsWithLeewayClaim {
+public struct ExpirationTimeClaim: TimeBasedClaim {
     public static var name = "exp"
 
-    public let leeway: Seconds
-    public let value: Seconds
+    let createTimestamp: () -> Seconds
+    let leeway: Seconds
 
-    public init(_ value: Seconds, leeway: Seconds = 0) {
-        self.value = value
+    public init(createTimestamp: @escaping () -> Seconds, leeway: Seconds) {
+        self.createTimestamp = createTimestamp
         self.leeway = leeway
     }
 

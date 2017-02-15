@@ -7,7 +7,9 @@ public struct ExpirationTimeClaim: TimeBasedClaim {
     let createTimestamp: () -> Seconds
     let leeway: Seconds
 
-    public init(createTimestamp: @escaping () -> Seconds, leeway: Seconds) {
+    public init(
+        createTimestamp: @escaping () -> Seconds,
+        leeway: Seconds = 0) {
         self.createTimestamp = createTimestamp
         self.leeway = leeway
     }

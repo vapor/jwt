@@ -25,7 +25,7 @@ public struct Base64URLEncoding: Encoding {
             let data = Data(base64Encoded: base64Encoded) else {
                 throw JWTError.decoding
         }
-        return try data.makeBytes()
+        return data.makeBytes()
     }
 }
 

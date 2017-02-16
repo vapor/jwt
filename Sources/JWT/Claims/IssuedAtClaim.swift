@@ -6,7 +6,7 @@ public struct IssuedAtClaim: SecondsBacked, EqualityClaim {
 
     public let value: Seconds
 
-    public init(_ value: Seconds) {
-        self.value = value
+    public init(seconds: Seconds) {
+        self.value = seconds
     }
 }

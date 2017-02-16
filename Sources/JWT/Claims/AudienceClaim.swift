@@ -4,18 +4,18 @@ import Node
 public struct AudienceClaim {
     fileprivate let value: Set<String>
 
-    public init(_ string: String) {
+    public init(string: String) {
         self.value = [string]
     }
 
-    public init(_ strings: Set<String>) {
+    public init(strings: Set<String>) {
         self.value = strings
     }
 
     init?(_ node: Node) {
         switch node {
         case .string(let string):
-            self.init(string)
+            self.init(string: string)
         case .array(let nodes):
             let strings = nodes.flatMap { (node: Node) -> String? in
                 if case .string(let string) = node {
@@ -23,7 +23,7 @@ public struct AudienceClaim {
                 }
                 return nil
             }
-            self.init(Set(strings))
+            self.init(strings: Set(strings))
         default:
             return nil
         }
@@ -32,21 +32,21 @@ public struct AudienceClaim {
 
 extension AudienceClaim: ExpressibleByStringLiteral {
     public init(stringLiteral value: String) {
-        self.init(value)
+        self.init(string: value)
     }
 
     public init(unicodeScalarLiteral value: String) {
-        self.init(value)
+        self.init(string: value)
     }
 
     public init(extendedGraphemeClusterLiteral value: String) {
-        self.init(value)
+        self.init(string: value)
     }
 }
 
 extension AudienceClaim: ExpressibleByArrayLiteral {
     public init(arrayLiteral elements: String...) {
-        self.init(Set(elements))
+        self.init(strings: Set(elements))
     }
 }
 

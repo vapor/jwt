@@ -6,18 +6,23 @@ import JWT
 import Node
 //: These are all the claims that come with `JWT`
 let claims: [Claim] = [
-    AudienceClaim("some audience"),
-    ExpirationTimeClaim(Date() + 300), // valid until 5 minutes from now
+    AudienceClaim(string: "some audience"),
+    ExpirationTimeClaim(date: Date() + 300), // valid until 5 minutes from now
     IssuedAtClaim(),
-    IssuerClaim("JWT"),
-    JWTIDClaim(UUID().uuidString),
-    NotBeforeClaim(Date() + 60), // valid in 1 minute from now
-    SubjectClaim("some subject")
+    IssuerClaim(string: "JWT"),
+    JWTIDClaim(string: UUID().uuidString),
+    NotBeforeClaim(date: Date() + 60), // valid in 1 minute from now
+    SubjectClaim(string: "some subject")
 ]
 
 let jwt = try JWT(payload: Node(claims), signer: Unsigned())
-jwt.verifyClaims([AudienceClaim("some audience")])
-jwt.verifyClaims([SubjectClaim("another subject")])
+try jwt.verifyClaims([AudienceClaim(string: "some audience")])
+do {
+    try jwt.verifyClaims([SubjectClaim(string: "another subject")])
+} catch {
+    error
+}
+
 //: Like with signers, headers, and encodings it is possible to create your own claims.
 //: The following made-up claim only verifies `JWT`s with user ids below a given number.
 struct UserIDClaim: Claim {
@@ -42,6 +47,10 @@ struct UserIDClaim: Claim {
 }
 //: `Node`, like `JWT`, conforms to `ClaimsVerifying`
 let payload: Node = ["user_id": .number(.int(6))]
-payload.verifyClaims([UserIDClaim(userID: 10)])
-payload.verifyClaims([UserIDClaim(userID: 5)])
+try payload.verifyClaims([UserIDClaim(userID: 10)])
+do {
+    try payload.verifyClaims([UserIDClaim(userID: 5)])
+} catch {
+    error
+}
 //: [Next](@next)

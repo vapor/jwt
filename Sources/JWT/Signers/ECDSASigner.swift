@@ -82,7 +82,7 @@ extension ECDSASigner {
         let ecKey = try newECPublicKey()
         let verified = ECDSA_do_verify(digest, Int32(digest.count), signature, ecKey)
         guard verified == 1 else {
-            throw JWTError.verificationFailed
+            throw JWTError.signatureVerificationFailed
         }
     }
 }

@@ -10,15 +10,16 @@ extension ClaimsVerifiable {
     ///
     /// - parameter claims: Claims to verify
     ///
-    /// - returns: True if all claims where verified, false otherwise. Also returns false if node is
-    ///            not an object.
-    public func verifyClaims(_ claims: [Claim]) -> Bool {
+    /// - throws:
+    ///     - `JWTError.incorrectPayloadForClaimVerification` if the payload is not of type `[String: Node]`
+    ///     - `JWTError.verificationFailedForClaim` if any of the claims failed
+    public func verifyClaims(_ claims: [Claim]) throws {
         guard case .object(let object) = node else {
-            return false
+            throw JWTError.incorrectPayloadForClaimVerification
         }
 
-        return claims.reduce(true) { (verified, claim) -> Bool in
-            verified && claim.verify(object)
+        try claims.forEach { claim in
+            try claim.verify(object)
         }
     }
 }

@@ -3,10 +3,8 @@
 import JWT
 import Core
 import Foundation
-
 //: In order to use a different encoding than the included `Base64Encoding` and `Base64URLEncoding`, conform to `Encoding`. For example:
 struct URLEncoding: Encoding {
-
     let allowedCharacters: CharacterSet
 
     init(allowedCharacters: CharacterSet = .alphanumerics) {

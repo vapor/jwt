@@ -51,7 +51,7 @@ extension HMACSigner {
 
     public func verify(signature: Bytes, message: Bytes) throws {
         guard try sign(message: message) == signature else {
-            throw JWTError.verificationFailed
+            throw JWTError.signatureVerificationFailed
         }
     }
 }

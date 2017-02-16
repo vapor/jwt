@@ -17,22 +17,14 @@ final class EncodingTests: XCTestCase {
     let valueB64 = "////++++abc="
     let valueB64URL = "____----abc"
 
-    func testBase64ToBase64URL() {
-        do {
-            let valueB64Bytes = try Base64Encoding().decode(valueB64) as Bytes
-            XCTAssertEqual(try Base64URLEncoding().encode(valueB64Bytes), valueB64URL)
-        } catch {
-            XCTFail("\(error)")
-        }
+    func testBase64ToBase64URL() throws {
+        let valueB64Bytes = try Base64Encoding().decode(valueB64) as Bytes
+        XCTAssertEqual(try Base64URLEncoding().encode(valueB64Bytes), valueB64URL)
     }
 
-    func testBase64URLToBase64() {
-        do {
-            let valueB64URLBytes = try Base64URLEncoding().decode(valueB64URL) as Bytes
-            XCTAssertEqual(try Base64Encoding().encode(valueB64URLBytes), valueB64)
-        } catch {
-            XCTFail("\(error)")
-        }
+    func testBase64URLToBase64() throws {
+        let valueB64URLBytes = try Base64URLEncoding().decode(valueB64URL) as Bytes
+        XCTAssertEqual(try Base64Encoding().encode(valueB64URLBytes), valueB64)
     }
 
     func testBase64DecodeIgnoresErrorForInvalidString() throws {
@@ -40,26 +32,28 @@ final class EncodingTests: XCTestCase {
     }
 
     func testBase64URLEncodeThrowsErrorForInvalidString() {
-        do {
-            _ = try Base64URLEncoding(
+        XCTAssertThrowsError(
+            try Base64URLEncoding(
                 base64URLTranscoder: TestBase64URLTranscoder()
             ).encode("")
-        } catch JWTError.encoding {
-            // pass
-        } catch {
-            XCTFail("Wrong error: \(error)")
+        ) {
+            guard let error = $0 as? JWTError, case .encoding = error else {
+                XCTFail("Wrong error: \($0)")
+                return
+            }
         }
     }
 
     func testBase64URLDecodeThrowsErrorForInvalidString() {
-        do {
-            _ = try Base64URLEncoding(
+        XCTAssertThrowsError(
+            try Base64URLEncoding(
                 base64URLTranscoder: TestBase64URLTranscoder()
             ).decode("")
-        } catch JWTError.decoding {
-            // pass
-        } catch {
-            XCTFail("Wrong error: \(error)")
+        ) {
+            guard let error = $0 as? JWTError, case .decoding = error else {
+                XCTFail("Wrong error: \($0)")
+                return
+            }
         }
     }
 

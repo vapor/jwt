@@ -1,22 +1,22 @@
 import Foundation
 import Node
 
-public protocol NodeFailableInitializable {
-    init?(_ node: Node)
+protocol NodeFailableInitializable {
+    init?(node: Node)
 }
 
-public protocol StringBacked: NodeFailableInitializable {
+protocol StringBacked: NodeFailableInitializable {
     var value: String { get }
-    init(_ : String)
+    init(string: String)
 }
 
 extension StringBacked {
-    public init?(_ node: Node) {
+    init?(node: Node) {
         guard case .string(let string) = node else {
             return nil
         }
 
-        self.init(string)
+        self.init(string: string)
     }
 
     public var node: Node {
@@ -26,22 +26,22 @@ extension StringBacked {
 
 public typealias Seconds = Int
 
-public protocol SecondsBacked: NodeFailableInitializable {
+protocol SecondsBacked: NodeFailableInitializable {
     var value: Seconds { get }
-    init(_ : Seconds)
+    init(seconds: Seconds)
 }
 
 extension SecondsBacked {
-    public init?(_ node: Node) {
+    init?(node: Node) {
         guard case .number(let number) = node else {
             return nil
         }
 
-        self.init(number.int)
+        self.init(seconds: number.int)
     }
 
-    public init(_ date: Date = Date()) {
-        self.init(Int(date.timeIntervalSince1970))
+    public init(date: Date = Date()) {
+        self.init(seconds: Int(date.timeIntervalSince1970))
     }
 
     public var node: Node {

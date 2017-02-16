@@ -5,7 +5,7 @@ public struct SubjectClaim: EqualityClaim, StringBacked {
 
     public let value: String
 
-    public init(_ value: String) {
-        self.value = value
+    public init(string: String) {
+        self.value = string
     }
 }

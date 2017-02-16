@@ -9,19 +9,22 @@ struct MyHeader: Header {
     let node = Node.string("header")
 }
 
-let jwt1 = try JWT(headers: Node(MyHeader()),
-                   payload: EmptyNode,
-                   signer: Unsigned())
+let jwt1 = try JWT(
+    headers: Node(MyHeader()),
+    payload: EmptyNode,
+    signer: Unsigned())
 //: Using a custom Storable in the payload
 struct User: Storable {
     static let name = "user_id"
     let node: Node = 42
 }
 
-let jwt2 = try JWT(payload: Node(User()),
-                   signer: Unsigned())
+let jwt2 = try JWT(
+    payload: Node(User()),
+    signer: Unsigned())
 //: Using Node
-let jwt3 = try JWT(headers: Node(["my": .string("header")]),
-                   payload: Node(["user_id": .number(.int(42))]),
-                   signer: Unsigned())
+let jwt3 = try JWT(
+    headers: Node(["my": .string("header")]),
+    payload: Node(["user_id": .number(.int(42))]),
+    signer: Unsigned())
 //: [Next](@next)

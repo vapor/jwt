@@ -8,15 +8,15 @@ final class SignerTests: XCTestCase {
     func testUnsigned() throws {
         let signer = Unsigned()
         XCTAssertEqual(signer.name, "none")
-        XCTAssertEqual(try signer.sign(message: "a".bytes), [])
-        try signer.verify(signature: "a".bytes, message: "b".bytes)
+        XCTAssertEqual(try signer.sign(message: "a".makeBytes()), [])
+        try signer.verify(signature: "a".makeBytes(), message: "b".makeBytes())
     }
 
     func checkHMACSigner(
         createSigner: (Bytes) -> HMACSigner,
         name: String,
-        message: Bytes = "message".bytes,
-        key: Bytes = "secret".bytes,
+        message: Bytes = "message".makeBytes(),
+        key: Bytes = "secret".makeBytes(),
         signed: String,
         file: StaticString = #file,
         line: UInt = #line
@@ -62,13 +62,14 @@ final class SignerTests: XCTestCase {
         publicKey: String,
         file: StaticString = #file,
         line: UInt = #line
+
     ) throws {
         let signer = try createSigner(try encoder.decode(privateKey))
         let verifier = try createSigner(try encoder.decode(publicKey))
         XCTAssertEqual(signer.name, name, file: file, line: line)
 
-        let signature = try signer.sign(message: message.bytes)
-        try verifier.verify(signature: signature, message: message.bytes)
+        let signature = try signer.sign(message: message.makeBytes())
+        try verifier.verify(signature: signature, message: message.makeBytes())
     }
 
     func testES256() throws {

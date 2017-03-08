@@ -107,6 +107,12 @@ final class JWTTests: XCTestCase {
         try jwt.verifyClaims([])
     }
 
+    func testHS256VerificationOfWellKnownToken() throws {
+        let jwt = try JWT(token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE0ODkwMDE0MzIsImV4cCI6MTUyMDUzODA4NCwiYXVkIjoiIiwic3ViIjoiMTIzNDU2Nzg5MCIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjoidHJ1ZSJ9.wvd76NP4xKMPEL0Knu0l2mi-fZPiPW49o1nsP2aMSeo")
+
+        try jwt.verifySignature(using: HS256(key: "foobar".bytes))
+    }
+
     static let all = [
         ("testSignature", testSignature),
         ("testInitWithToken", testInitWithToken),
@@ -115,5 +121,6 @@ final class JWTTests: XCTestCase {
         ("testCustomHeaders", testCustomHeaders),
         ("testCustomJSONHeaders", testCustomJSONHeaders),
         ("testJWTClaimsCanBeVerified", testJWTClaimsCanBeVerified),
+        ("testHS256VerificationOfWellKnownToken", testHS256VerificationOfWellKnownToken)
     ]
 }

@@ -2,7 +2,7 @@ import Foundation
 import Node
 
 protocol NodeFailableInitializable {
-    init?(node: Node)
+    init?(_ node: Node)
 }
 
 protocol StringBacked: NodeFailableInitializable {
@@ -11,7 +11,7 @@ protocol StringBacked: NodeFailableInitializable {
 }
 
 extension StringBacked {
-    init?(node: Node) {
+    init?(_ node: Node) {
         guard let string = node.string else {
             return nil
         }
@@ -32,7 +32,7 @@ protocol SecondsBacked: NodeFailableInitializable {
 }
 
 extension SecondsBacked {
-    init?(node: Node) {
+    init?(_ node: Node) {
         guard let int = node.int else {
             return nil
         }

@@ -12,10 +12,10 @@ public struct AudienceClaim {
         self.value = strings
     }
 
-    init?(_ polymorphic: Polymorphic) {
-        if let string = polymorphic.string {
+    init?(node: Node) {
+        if let string = node.string {
             self.init(string: string)
-        } else if let array = polymorphic.array?.flatMap({ $0.string }) {
+        } else if let array = node.array?.flatMap({ $0.string }) {
             self.init(strings: Set(array))
         } else {
             return nil
@@ -46,8 +46,8 @@ extension AudienceClaim: ExpressibleByArrayLiteral {
 extension AudienceClaim: Claim {
     public static let name = "aud"
 
-    public func verify(_ polymorphic: Polymorphic) -> Bool {
-        guard let other = AudienceClaim(polymorphic) else {
+    public func verify(_ node: Node) -> Bool {
+        guard let other = AudienceClaim(node: node) else {
             return false
         }
 

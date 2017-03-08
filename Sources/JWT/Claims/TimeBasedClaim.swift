@@ -37,8 +37,8 @@ extension TimeBasedClaim {
         self.init(createTimestamp: { seconds }, leeway: 0)
     }
 
-    public func verify(_ polymorphic: Polymorphic) -> Bool {
-        guard let other = Self(polymorphic) else {
+    public func verify(_ node: Node) -> Bool {
+        guard let other = Self(node: node) else {
             return false
         }
 

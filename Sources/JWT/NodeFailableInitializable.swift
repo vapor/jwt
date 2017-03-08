@@ -1,18 +1,18 @@
 import Foundation
 import Node
 
-protocol PolymorphicInitializable {
-    init?(_ polymorphic: Polymorphic)
+protocol NodeFailableInitializable {
+    init?(node: Node)
 }
 
-protocol StringBacked: PolymorphicInitializable {
+protocol StringBacked: NodeFailableInitializable {
     var value: String { get }
     init(string: String)
 }
 
 extension StringBacked {
-    init?(_ polymorphic: Polymorphic) {
-        guard let string = polymorphic.string else {
+    init?(node: Node) {
+        guard let string = node.string else {
             return nil
         }
 
@@ -26,14 +26,14 @@ extension StringBacked {
 
 public typealias Seconds = Int
 
-protocol SecondsBacked: PolymorphicInitializable {
+protocol SecondsBacked: NodeFailableInitializable {
     var value: Seconds { get }
     init(seconds: Seconds)
 }
 
 extension SecondsBacked {
-    init?(_ polymorphic: Polymorphic) {
-        guard let int = polymorphic.int else {
+    init?(node: Node) {
+        guard let int = node.int else {
             return nil
         }
 

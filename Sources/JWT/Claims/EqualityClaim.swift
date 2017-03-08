@@ -1,13 +1,13 @@
 import Node
 
-protocol EqualityClaim: Claim, PolymorphicInitializable {
+protocol EqualityClaim: Claim, NodeFailableInitializable {
     associatedtype T: Equatable
     var value: T { get }
 }
 
 extension EqualityClaim {
-    public func verify(_ polymorphic: Polymorphic) -> Bool {
-        guard let other = type(of: self).init(polymorphic) else {
+    public func verify(_ node: Node) -> Bool {
+        guard let other = type(of: self).init(node: node) else {
             return false
         }
 

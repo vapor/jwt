@@ -14,7 +14,7 @@ struct TestClaim: Claim {
         self.verified = verified
     }
 
-    func verify(_ polymorphic: Polymorphic) -> Bool {
+    func verify(_ node: Node) -> Bool {
         return verified
     }
 }
@@ -86,8 +86,8 @@ final class ClaimTests: XCTestCase {
         XCTAssertFalse(AudienceClaim(string: "a").verify("b"))
         XCTAssertTrue(AudienceClaim(strings: ["a", "b"]).verify("b"))
         XCTAssertFalse(AudienceClaim(strings: ["a", "b"]).verify("c"))
-        XCTAssertTrue(AudienceClaim(strings: ["a", "b", "c"]).verify(node: ["b", "c"]))
-        XCTAssertFalse(AudienceClaim(strings: ["a", "b", "c"]).verify(node: ["c", "d"]))
+        XCTAssertTrue(AudienceClaim(strings: ["a", "b", "c"]).verify(["b", "c"]))
+        XCTAssertFalse(AudienceClaim(strings: ["a", "b", "c"]).verify(["c", "d"]))
     }
 
     func testExpirationTimeClaim() {

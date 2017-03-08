@@ -3,6 +3,8 @@ import Foundation
 import Node
 import XCTest
 
+public let EmptyNode = Node.object([:])
+
 struct TestClaim: Claim {
     static var name = "tst"
     let node: Node = .null
@@ -12,7 +14,7 @@ struct TestClaim: Claim {
         self.verified = verified
     }
 
-    func verify(_ node: Node) -> Bool {
+    func verify(_ polymorphic: Polymorphic) -> Bool {
         return verified
     }
 }
@@ -80,13 +82,12 @@ final class ClaimTests: XCTestCase {
 
     func testAudienceClaim() {
         XCTAssertEqual([AudienceClaim.name], ["aud"])
-
         XCTAssertTrue(AudienceClaim(string: "a").verify("a"))
         XCTAssertFalse(AudienceClaim(string: "a").verify("b"))
         XCTAssertTrue(AudienceClaim(strings: ["a", "b"]).verify("b"))
         XCTAssertFalse(AudienceClaim(strings: ["a", "b"]).verify("c"))
-        XCTAssertTrue(AudienceClaim(strings: ["a", "b", "c"]).verify(["b", "c"]))
-        XCTAssertFalse(AudienceClaim(strings: ["a", "b", "c"]).verify(["c", "d"]))
+        XCTAssertTrue(AudienceClaim(strings: ["a", "b", "c"]).verify(node: ["b", "c"]))
+        XCTAssertFalse(AudienceClaim(strings: ["a", "b", "c"]).verify(node: ["c", "d"]))
     }
 
     func testExpirationTimeClaim() {

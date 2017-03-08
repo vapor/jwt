@@ -12,19 +12,12 @@ public struct AudienceClaim {
         self.value = strings
     }
 
-    init?(_ node: Node) {
-        switch node {
-        case .string(let string):
+    init?(_ polymorphic: Polymorphic) {
+        if let string = polymorphic.string {
             self.init(string: string)
-        case .array(let nodes):
-            let strings = nodes.flatMap { (node: Node) -> String? in
-                if case .string(let string) = node {
-                    return string
-                }
-                return nil
-            }
-            self.init(strings: Set(strings))
-        default:
+        } else if let array = polymorphic.array?.flatMap({ $0.string }) {
+            self.init(strings: Set(array))
+        } else {
             return nil
         }
     }
@@ -53,8 +46,8 @@ extension AudienceClaim: ExpressibleByArrayLiteral {
 extension AudienceClaim: Claim {
     public static let name = "aud"
 
-    public func verify(_ node: Node) -> Bool {
-        guard let other = AudienceClaim(node) else {
+    public func verify(_ polymorphic: Polymorphic) -> Bool {
+        guard let other = AudienceClaim(polymorphic) else {
             return false
         }
 
@@ -62,6 +55,10 @@ extension AudienceClaim: Claim {
     }
 
     public var node: Node {
-        return .array(value.array.map(Node.string))
+        let strings = value.array.map(StructuredData.string)
+        return Node(
+            .array(strings),
+            in: nil
+        )
     }
 }

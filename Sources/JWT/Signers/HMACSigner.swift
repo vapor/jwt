@@ -1,5 +1,4 @@
-import Core
-import HMAC
+import Crypto
 
 public final class HS256: HMACSigner {
     let key: Bytes

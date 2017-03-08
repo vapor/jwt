@@ -2,11 +2,17 @@ import Foundation
 import Node
 
 public protocol Claim: Storable {
-    func verify(_ : Node) -> Bool
+    func verify(_ polymorphic: Polymorphic) -> Bool
 }
 
 extension Claim {
-    func verify(_ dict: [String: Node]) throws {
+    func verify(node: Node) -> Bool {
+        return verify(node)
+    }
+}
+
+extension Claim {
+    func verify(_ dict: [String: Polymorphic]) throws {
         let name = type(of: self).name
 
         guard let claim = dict[name] else {

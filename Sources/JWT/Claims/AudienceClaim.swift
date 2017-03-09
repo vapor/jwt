@@ -1,7 +1,7 @@
 import Foundation
 import Node
 
-public struct AudienceClaim {
+public struct AudienceClaim: NodeFailableInitializable {
     fileprivate let value: Set<String>
 
     public init(string: String) {
@@ -13,18 +13,11 @@ public struct AudienceClaim {
     }
 
     init?(_ node: Node) {
-        switch node {
-        case .string(let string):
+        if let string = node.string {
             self.init(string: string)
-        case .array(let nodes):
-            let strings = nodes.flatMap { (node: Node) -> String? in
-                if case .string(let string) = node {
-                    return string
-                }
-                return nil
-            }
-            self.init(strings: Set(strings))
-        default:
+        } else if let array = node.array?.flatMap({ $0.string }) {
+            self.init(strings: Set(array))
+        } else {
             return nil
         }
     }
@@ -62,6 +55,10 @@ extension AudienceClaim: Claim {
     }
 
     public var node: Node {
-        return .array(value.array.map(Node.string))
+        let strings = value.array.map(StructuredData.string)
+        return Node(
+            .array(strings),
+            in: nil
+        )
     }
 }

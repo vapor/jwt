@@ -1,6 +1,5 @@
-import CLibreSSL
-import Core
-import Hash
+import CTLS
+import Crypto
 
 public enum HashMethod {
     case sha256

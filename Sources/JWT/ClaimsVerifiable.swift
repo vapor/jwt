@@ -14,15 +14,23 @@ extension ClaimsVerifiable {
     ///     - `JWTError.incorrectPayloadForClaimVerification` if the payload is not of type `[String: Node]`
     ///     - `JWTError.verificationFailedForClaim` if any of the claims failed
     public func verifyClaims(_ claims: [Claim]) throws {
-        guard case .object(let object) = node else {
+        guard case .object = node.wrapped else {
             throw JWTError.incorrectPayloadForClaimVerification
         }
 
         try claims.forEach { claim in
-            try claim.verify(object)
+            try claim.verify(object: node)
         }
     }
 }
  
-extension JSON: ClaimsVerifiable {}
-extension Node: ClaimsVerifiable {}
+extension JSON: ClaimsVerifiable {
+    public var node: Node {
+        return makeNode(in: nil)
+    }
+}
+extension Node: ClaimsVerifiable {
+    public var node: Node {
+        return self
+    }
+}

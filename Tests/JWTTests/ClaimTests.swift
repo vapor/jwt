@@ -3,6 +3,8 @@ import Foundation
 import Node
 import XCTest
 
+public let EmptyNode = Node.object([:])
+
 struct TestClaim: Claim {
     static var name = "tst"
     let node: Node = .null
@@ -80,7 +82,6 @@ final class ClaimTests: XCTestCase {
 
     func testAudienceClaim() {
         XCTAssertEqual([AudienceClaim.name], ["aud"])
-
         XCTAssertTrue(AudienceClaim(string: "a").verify("a"))
         XCTAssertFalse(AudienceClaim(string: "a").verify("b"))
         XCTAssertTrue(AudienceClaim(strings: ["a", "b"]).verify("b"))

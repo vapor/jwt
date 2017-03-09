@@ -22,7 +22,7 @@ struct TildeSigner: Signer {
 
 struct PeriodToCommaEncoding: Encoding {
     func decode(_ string: String) throws -> Bytes {
-        return string.bytes.map {
+        return string.makeBytes().map {
             switch $0 {
             case 44: return 46
             default: return $0

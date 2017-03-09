@@ -1,9 +1,18 @@
+<p align="center">
+    <img 
+        src="https://cloud.githubusercontent.com/assets/1049951/22862150/fce4ecbe-f120-11e6-84c6-7a0282f3d015.png" 
+        align="center" 
+        alt="Form"
+        width="349px"
+    >
+</p>
+
 # JWT
 
-![Swift](http://img.shields.io/badge/swift-3.0-brightgreen.svg)
-[![Vapor](https://img.shields.io/badge/Vapor-1.1-green.svg)](http://vapor.codes)
-[![Build Status](https://travis-ci.org/siemensikkema/vapor-jwt.svg?branch=master)](https://travis-ci.org/siemensikkema/vapor-jwt)
-[![Code Coverage](https://codecov.io/gh/siemensikkema/vapor-jwt/branch/master/graph/badge.svg)](https://codecov.io/gh/siemensikkema/vapor-jwt)
+![Swift](https://img.shields.io/badge/swift-3.0-brightgreen.svg)
+[![Vapor](https://img.shields.io/badge/Vapor-1.+-green.svg)](http://vapor.codes)
+[![Build Status](https://travis-ci.org/vapor/jwt.svg?branch=master)](https://travis-ci.org/vapor/jwt)
+[![Code Coverage](https://codecov.io/gh/vapor/jwt/branch/master/graph/badge.svg)](https://codecov.io/gh/vapor/jwt)
 
 JWT is a library for JSON Web Tokens (JWT) designed with the following goals in mind:
 - clean API

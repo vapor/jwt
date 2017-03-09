@@ -9,6 +9,6 @@ public struct Base64Encoding: Encoding {
     }
 
     public func decode(_ base64Encoded: String) throws -> Bytes {
-        return base64Encoded.bytes.base64Decoded
+        return base64Encoded.makeBytes().base64Decoded
     }
 }

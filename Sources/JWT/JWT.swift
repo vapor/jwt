@@ -96,7 +96,7 @@ public struct JWT {
     ///
     /// - returns: An encoded and signed token string
     public func createToken() throws -> String {
-        return [try createMessage().string(), signature].joined(separator: JWT.separator)
+        return [try createMessage().makeString(), signature].joined(separator: JWT.separator)
     }
 }
 

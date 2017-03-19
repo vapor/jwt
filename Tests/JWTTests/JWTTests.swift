@@ -31,12 +31,12 @@ struct PeriodToCommaEncoding: Encoding {
     }
 
     func encode(_ bytes: Bytes) throws -> String {
-        return try bytes.map {
+        return bytes.map {
             switch $0 {
             case 46: return 44
             default: return $0
             }
-        }.string()
+        }.makeString()
     }
 }
 

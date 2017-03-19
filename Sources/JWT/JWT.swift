@@ -12,6 +12,14 @@ public struct JWT {
     public let payload: Node
     public let signature: String
 
+    /// Used to store the token that created this
+    /// JWT if it was parsed
+    public let rawToken: (
+        header: Bytes, 
+        payload: Bytes, 
+        signature: Bytes
+    )?
+
     /// Creates a JWT with custom headers and payload
     ///
     /// - parameter headers:  Headers object as Node
@@ -37,6 +45,7 @@ public struct JWT {
         let message = encoded.joined(separator: JWT.separator)
         let bytes = try signer.sign(message: message.makeBytes())
         signature = try encoding.encode(bytes)
+        rawToken = nil
     }
 
     /// Creates a JWT with claims and default headers ("typ", and "alg")
@@ -87,6 +96,12 @@ public struct JWT {
         payload = try encoding.decode(segments[1])
         signature = segments[2]
         self.encoding = encoding
+
+        self.rawToken = (
+            segments[0].makeBytes(),
+            segments[1].makeBytes(),
+            segments[2].makeBytes()
+        )
     }
 
     /// Creates a token from the provided header and payload (claims), encoded using the JWT's 
@@ -112,6 +127,12 @@ extension JWT: SignatureVerifiable {
     }
 
     public func createMessage() throws -> Bytes {
+        if let rawToken = self.rawToken {
+            return rawToken.header 
+                + JWT.separator.makeBytes() 
+                + rawToken.payload
+        }
+
         return try [headers, payload]
             .map(encoding.encode)
             .joined(separator: JWT.separator)

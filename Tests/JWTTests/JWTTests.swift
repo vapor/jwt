@@ -55,7 +55,8 @@ final class JWTTests: XCTestCase {
         let token = "{\"alg\":\"tilde\"}.[\"payload\"].~{\"alg\":\"tilde\"},[\"payload\"]~"
         let jwt = try JWT(
             token: token,
-            encoding: PeriodToCommaEncoding())
+            encoding: PeriodToCommaEncoding()
+        )
         XCTAssertEqual(jwt.algorithmName, "tilde")
         XCTAssertEqual(try jwt.createToken(), token)
         try jwt.verifySignature(using: TildeSigner())
@@ -107,6 +108,16 @@ final class JWTTests: XCTestCase {
         try jwt.verifyClaims([])
     }
 
+    func testHS256VerificationOfWellKnownToken() throws {
+        let jwt = try JWT(
+            token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE0ODkwMDE0MzIsImV4cCI6MTUyMDUzODA4NCwiYXVkIjoiIiwic3ViIjoiMTIzNDU2Nzg5MCIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjoidHJ1ZSJ9.wvd76NP4xKMPEL0Knu0l2mi-fZPiPW49o1nsP2aMSeo=",
+            encoding: Base64URLEncoding()
+        )
+
+        let signer = HS256(key: "foobar".makeBytes())
+        try jwt.verifySignature(using: signer)
+    }
+
     static let all = [
         ("testSignature", testSignature),
         ("testInitWithToken", testInitWithToken),
@@ -115,5 +126,6 @@ final class JWTTests: XCTestCase {
         ("testCustomHeaders", testCustomHeaders),
         ("testCustomJSONHeaders", testCustomJSONHeaders),
         ("testJWTClaimsCanBeVerified", testJWTClaimsCanBeVerified),
+        ("testHS256VerificationOfWellKnownToken", testHS256VerificationOfWellKnownToken)
     ]
 }

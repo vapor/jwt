@@ -1,5 +1,4 @@
 import Core
-import Foundation
 
 public struct Base64URLEncoding: Encoding {
     private let base64URLTranscoder: Base64URLTranscoding
@@ -13,19 +12,11 @@ public struct Base64URLEncoding: Encoding {
     }
 
     public func encode(_ bytes: Bytes) throws -> String {
-        guard let base64URL = base64URLTranscoder.base64URLEncode(bytes.base64Encoded.makeString()) else {
-            throw JWTError.encoding
-        }
-        return base64URL
+        return bytes.base64URLEncoded.makeString()
     }
 
     public func decode(_ base64URLEncoded: String) throws -> Bytes {
-        guard
-            let base64Encoded = base64URLTranscoder.base64Encode(base64URLEncoded),
-            let data = Data(base64Encoded: base64Encoded) else {
-                throw JWTError.decoding
-        }
-        return data.makeBytes()
+        return base64URLEncoded.makeBytes().base64URLDecoded
     }
 }
 

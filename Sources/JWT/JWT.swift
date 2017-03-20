@@ -34,7 +34,7 @@ public struct JWT {
     public init(
         headers: Node,
         payload: Node,
-        encoding: Encoding = Base64Encoding(),
+        encoding: Encoding = Base64URLEncoding(),
         signer: Signer
     ) throws {
         self.headers = headers
@@ -62,7 +62,7 @@ public struct JWT {
     public init(
         additionalHeaders: [Header] = [],
         payload: Node,
-        encoding: Encoding = Base64Encoding(),
+        encoding: Encoding = Base64URLEncoding(),
         signer: Signer
     ) throws {
         let headers: [Header] = [TypeHeader(), AlgorithmHeader(signer: signer)] + additionalHeaders
@@ -84,7 +84,7 @@ public struct JWT {
     /// - returns: A JWT value
     public init(
         token: String,
-        encoding: Encoding = Base64Encoding()
+        encoding: Encoding = Base64URLEncoding()
     ) throws {
         let segments = token.components(separatedBy: JWT.separator)
 

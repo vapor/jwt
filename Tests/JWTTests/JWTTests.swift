@@ -114,7 +114,7 @@ final class JWTTests: XCTestCase {
             encoding: Base64URLEncoding()
         )
 
-        let signer = HS256(key: "foobar".makeBytes())
+        let signer = HS256(key: try "foobar".makeBytes())
         try jwt.verifySignature(using: signer)
     }
 

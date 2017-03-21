@@ -98,9 +98,9 @@ public struct JWT {
         self.encoding = encoding
 
         self.rawToken = (
-            segments[0].makeBytes(),
-            segments[1].makeBytes(),
-            segments[2].makeBytes()
+            try segments[0].makeBytes(),
+            try segments[1].makeBytes(),
+            try segments[2].makeBytes()
         )
     }
 
@@ -127,9 +127,10 @@ extension JWT: SignatureVerifiable {
     }
 
     public func createMessage() throws -> Bytes {
+        let separator = try JWT.separator.makeBytes()
         if let rawToken = self.rawToken {
             return rawToken.header 
-                + JWT.separator.makeBytes() 
+                + separator
                 + rawToken.payload
         }
 

@@ -1,16 +1,10 @@
-import Core
-import Foundation
-import Node
-
 /// JSON web token (JWT)
 public struct JWT {
-    fileprivate static let separator = "."
+    fileprivate static let separator: Byte = .period
 
-    fileprivate let encoding: Encoding
-
-    public let headers: Node
-    public let payload: Node
-    public let signature: String
+    public let headers: JSON
+    public let payload: JSON
+    public let signature: Bytes
 
     /// Used to store the token that created this
     /// JWT if it was parsed
@@ -32,19 +26,21 @@ public struct JWT {
     ///
     /// - returns: A JWT value
     public init(
-        headers: Node,
-        payload: Node,
-        encoding: Encoding = Base64URLEncoding(),
+        headers: JSON,
+        payload: JSON,
         signer: Signer
     ) throws {
         self.headers = headers
         self.payload = payload
-        self.encoding = encoding
 
-        let encoded = try [headers, payload].map(encoding.encode)
-        let message = encoded.joined(separator: JWT.separator)
-        let bytes = try signer.sign(message: message.makeBytes())
-        signature = try encoding.encode(bytes)
+        let encoded = try [headers, payload].map { json in
+            return try json.makeBytes().base64URLEncoded
+        }
+        let message = encoded[0] + [JWT.separator] + encoded[1]
+
+        signature = try signer
+            .sign(message: message)
+
         rawToken = nil
     }
 
@@ -61,16 +57,15 @@ public struct JWT {
     /// - returns: A JWT value
     public init(
         additionalHeaders: [Header] = [],
-        payload: Node,
-        encoding: Encoding = Base64URLEncoding(),
+        payload: JSON,
         signer: Signer
     ) throws {
         let headers: [Header] = [TypeHeader(), AlgorithmHeader(signer: signer)] + additionalHeaders
         try self.init(
-            headers: Node(headers),
+            headers: JSON(headers),
             payload: payload,
-            encoding: encoding,
-            signer: signer)
+            signer: signer
+        )
     }
 
     /// Decodes a token string into a JWT
@@ -82,20 +77,24 @@ public struct JWT {
     ///           separated segments or any error thrown while decoding
     ///
     /// - returns: A JWT value
-    public init(
-        token: String,
-        encoding: Encoding = Base64URLEncoding()
-    ) throws {
-        let segments = token.components(separatedBy: JWT.separator)
+    public init(token: String) throws {
+        let segments = token.components(
+            separatedBy: [JWT.separator].makeString()
+        )
 
         guard segments.count == 3 else {
             throw JWTError.incorrectNumberOfSegments
         }
 
-        headers = try encoding.decode(segments[0])
-        payload = try encoding.decode(segments[1])
-        signature = segments[2]
-        self.encoding = encoding
+        let parsed = segments.map { string in
+            return string
+                .makeBytes()
+                .base64URLDecoded
+        }
+
+        headers = try JSON(bytes: parsed[0])
+        payload = try JSON(bytes: parsed[1])
+        signature = parsed[2]
 
         self.rawToken = (
             segments[0].makeBytes(),
@@ -111,13 +110,17 @@ public struct JWT {
     ///
     /// - returns: An encoded and signed token string
     public func createToken() throws -> String {
-        return [try createMessage().makeString(), signature].joined(separator: JWT.separator)
+        let tokenBytes = try createMessage()
+            + [JWT.separator]
+            + signature.base64URLEncoded
+
+        return tokenBytes.makeString()
     }
 }
 
 extension JWT: ClaimsVerifiable {
     public var node: Node {
-        return payload
+        return Node(payload.wrapped)
     }
 }
 
@@ -133,13 +136,12 @@ extension JWT: SignatureVerifiable {
                 + rawToken.payload
         }
 
-        return try [headers, payload]
-            .map(encoding.encode)
-            .joined(separator: JWT.separator)
-            .makeBytes()
+        return try headers.makeBytes().base64URLEncoded
+            + [JWT.separator]
+            + payload.makeBytes().base64URLEncoded
     }
 
     public func createSignature() throws -> Bytes {
-        return try encoding.decode(signature)
+        return signature
     }
 }

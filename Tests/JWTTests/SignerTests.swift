@@ -3,8 +3,6 @@ import Core
 import XCTest
 
 final class SignerTests: XCTestCase {
-    let encoder = Base64Encoding()
-
     func testUnsigned() throws {
         let signer = Unsigned()
         XCTAssertEqual(signer.name, "none")
@@ -23,9 +21,9 @@ final class SignerTests: XCTestCase {
     ) throws {
         let signer = createSigner(key)
         XCTAssertEqual(signer.name, name, file: file, line: line)
-        XCTAssertEqual(try encoder.encode(try signer.sign(message: message)), signed, file: file, line: line)
+        XCTAssertEqual(try signer.sign(message: message).base64URLEncoded.makeString(), signed, file: file, line: line)
         try signer.verify(
-            signature: try encoder.decode(signed),
+            signature: signed.makeBytes().base64URLDecoded,
             message: message
         )
     }
@@ -34,7 +32,7 @@ final class SignerTests: XCTestCase {
         try checkHMACSigner(
             createSigner: HS256.init,
             name: "HS256",
-            signed: "i19IcCmVwVmMVz2x4hhmqbgl1KeU0WnXBgoDYFeWNgs="
+            signed: "i19IcCmVwVmMVz2x4hhmqbgl1KeU0WnXBgoDYFeWNgs"
         )
     }
 
@@ -42,7 +40,7 @@ final class SignerTests: XCTestCase {
         try checkHMACSigner(
             createSigner: HS384.init,
             name: "HS384",
-            signed: "rQ706A2kJ7KjPURXyXK/dZ9Qdm+7ZlaQ1Qt8s43VIX21Wck+p8vuSOKuGltKr9NL"
+            signed: "rQ706A2kJ7KjPURXyXK_dZ9Qdm-7ZlaQ1Qt8s43VIX21Wck-p8vuSOKuGltKr9NL"
         )
     }
 
@@ -50,7 +48,7 @@ final class SignerTests: XCTestCase {
         try checkHMACSigner(
             createSigner: HS512.init,
             name: "HS512",
-            signed: "G7pYfHMO7box9Tq7C2ylieCd5OiU7kVeYUCAc5l1mtqvoGnux8AWR7sXPcsX9V0ir0mhgHG3SMXC7df3qCnGMg=="
+            signed: "G7pYfHMO7box9Tq7C2ylieCd5OiU7kVeYUCAc5l1mtqvoGnux8AWR7sXPcsX9V0ir0mhgHG3SMXC7df3qCnGMg"
         )
     }
 
@@ -64,8 +62,8 @@ final class SignerTests: XCTestCase {
         line: UInt = #line
 
     ) throws {
-        let signer = try createSigner(try encoder.decode(privateKey))
-        let verifier = try createSigner(try encoder.decode(publicKey))
+        let signer = try createSigner(privateKey.makeBytes().base64URLDecoded)
+        let verifier = try createSigner(publicKey.makeBytes().base64URLDecoded)
         XCTAssertEqual(signer.name, name, file: file, line: line)
 
         let signature = try signer.sign(message: message.makeBytes())
@@ -131,7 +129,7 @@ final class SignerTests: XCTestCase {
     }
 
     func testRSAPublicKeySignFails() throws {
-        let signer = try RS512(bytes: encoder.decode(publicRSAKey))
+        let signer = try RS512(bytes: publicRSAKey.makeBytes().base64URLDecoded)
 
         XCTAssertThrowsError(
             try signer.sign(message: "foo")

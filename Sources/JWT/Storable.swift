@@ -5,7 +5,7 @@ public protocol Storable {
     var node: Node { get }
 }
 
-extension Node {
+extension StructuredDataWrapper {
     public init(_ storable: Storable) {
         self = .object([type(of: storable).name: storable.node])
     }

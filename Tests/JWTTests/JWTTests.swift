@@ -20,46 +20,29 @@ struct TildeSigner: Signer {
     }
 }
 
-struct PeriodToCommaEncoding: Encoding {
-    func decode(_ string: String) throws -> Bytes {
-        return string.makeBytes().map {
-            switch $0 {
-            case 44: return 46
-            default: return $0
-            }
-        }
-    }
-
-    func encode(_ bytes: Bytes) throws -> String {
-        return bytes.map {
-            switch $0 {
-            case 46: return 44
-            default: return $0
-            }
-        }.makeString()
-    }
-}
-
 final class JWTTests: XCTestCase {
     func testSignature() throws {
         let jwt = try JWT(
-            headers: .array(["header"]),
+            headers: .object(["alg": "tilde"]),
             payload: .array(["payload"]),
-            encoding: PeriodToCommaEncoding(),
-            signer: TildeSigner())
-        XCTAssertEqual(try jwt.createToken(),
-                       "[\"header\"].[\"payload\"].~[\"header\"],[\"payload\"]~")
+            signer: TildeSigner()
+        )
+        XCTAssertEqual(
+            try jwt.createToken(),
+            "eyJhbGciOiJ0aWxkZSJ9.WyJwYXlsb2FkIl0.fmV5SmhiR2NpT2lKMGFXeGtaU0o5Lld5SndZWGxzYjJGa0lsMH4"
+        )
     }
 
     func testInitWithToken() throws {
-        let token = "{\"alg\":\"tilde\"}.[\"payload\"].~{\"alg\":\"tilde\"},[\"payload\"]~"
-        let jwt = try JWT(
-            token: token,
-            encoding: PeriodToCommaEncoding()
-        )
+        do {
+        let token = "eyJhbGciOiJ0aWxkZSJ9.WyJwYXlsb2FkIl0.fmV5SmhiR2NpT2lKMGFXeGtaU0o5Lld5SndZWGxzYjJGa0lsMH4"
+        let jwt = try JWT(token: token)
         XCTAssertEqual(jwt.algorithmName, "tilde")
         XCTAssertEqual(try jwt.createToken(), token)
         try jwt.verifySignature(using: TildeSigner())
+        } catch {
+            XCTFail("\(error)")
+        }
     }
 
     func testIncorrectNumberOfSegments() {
@@ -75,9 +58,9 @@ final class JWTTests: XCTestCase {
 
     func testDefaultHeaders() throws {
         let jwt = try JWT(
-            payload: EmptyNode,
+            payload: JSON(),
             signer: TildeSigner())
-        XCTAssertEqual(jwt.headers, Node(["alg": "tilde", "typ": "JWT"]))
+        XCTAssertEqual(jwt.headers, JSON(["alg": "tilde", "typ": "JWT"]))
     }
 
     func testCustomHeaders() throws {
@@ -87,31 +70,30 @@ final class JWTTests: XCTestCase {
         }
 
         let jwt = try JWT(
-            headers: Node(TestHeader()),
-            payload: EmptyNode,
+            headers: JSON(TestHeader()),
+            payload: JSON(),
             signer: TildeSigner())
-        XCTAssertEqual(jwt.headers, Node(["test": "header"]))
+        XCTAssertEqual(jwt.headers, JSON(["test": "header"]))
     }
 
     func testCustomJSONHeaders() throws {
         let jwt = try JWT(
-            headers: Node(["extra": "header"]),
-            payload: EmptyNode,
+            headers: JSON(["extra": "header"]),
+            payload: JSON(),
             signer: TildeSigner())
-        XCTAssertEqual(jwt.headers, Node(["extra": "header"]))
+        XCTAssertEqual(jwt.headers, JSON(["extra": "header"]))
     }
 
     func testJWTClaimsCanBeVerified() throws {
         let jwt = try JWT(
-            payload: EmptyNode,
+            payload: JSON(),
             signer: TildeSigner())
         try jwt.verifyClaims([])
     }
 
     func testHS256VerificationOfWellKnownToken() throws {
         let jwt = try JWT(
-            token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE0ODkwMDE0MzIsImV4cCI6MTUyMDUzODA4NCwiYXVkIjoiIiwic3ViIjoiMTIzNDU2Nzg5MCIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjoidHJ1ZSJ9.wvd76NP4xKMPEL0Knu0l2mi-fZPiPW49o1nsP2aMSeo",
-            encoding: Base64URLEncoding()
+            token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE0ODkwMDE0MzIsImV4cCI6MTUyMDUzODA4NCwiYXVkIjoiIiwic3ViIjoiMTIzNDU2Nzg5MCIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjoidHJ1ZSJ9.wvd76NP4xKMPEL0Knu0l2mi-fZPiPW49o1nsP2aMSeo"
         )
 
         let signer = HS256(key: "foobar".makeBytes())

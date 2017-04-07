@@ -5,10 +5,10 @@ public struct Base64Encoding: Encoding {
     public init() {}
 
     public func encode(_ bytes: Bytes) throws -> String {
-        return bytes.base64Encoded.string
+        return Base64Encoder.shared.encode(bytes).string
     }
 
     public func decode(_ base64Encoded: String) throws -> Bytes {
-        return base64Encoded.bytes.base64Decoded
+        return Base64Encoder.shared.decode(base64Encoded.bytes)
     }
 }

@@ -90,12 +90,12 @@ public final class RS512: RSASigner {
 public protocol RSASigner: Signer, BytesInitializable {
     var key: RSAKey { get }
     var hashMethod: HashMethod { get }
-    
+
     init(key: RSAKey)
 }
 
 extension RSASigner {
-    
+
     public init(bytes: Bytes) throws {
         try self.init(key: RSAKey(bytes))
     }

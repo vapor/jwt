@@ -7,7 +7,7 @@ public enum HashMethod {
     case sha512
 }
 
-extension HashMethod {
+public extension HashMethod {
     var type: Int32 {
         switch self {
         case .sha256: return NID_sha256
@@ -25,9 +25,9 @@ extension HashMethod {
     }
 }
 
-typealias CRSAKey = UnsafeMutablePointer<RSA>
+public typealias CRSAKey = UnsafeMutablePointer<RSA>
 
-enum RSAKey {
+public enum RSAKey {
     case `public`(CRSAKey)
     case `private`(CRSAKey)
 

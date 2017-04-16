@@ -63,7 +63,7 @@ public enum RSAKey {
 public final class RS256: RSASigner {
     public let key: RSAKey
     public let hashMethod = HashMethod.sha256
-    
+
     public init(key: RSAKey) {
         self.key = key
     }
@@ -81,7 +81,7 @@ public final class RS384: RSASigner {
 public final class RS512: RSASigner {
     public let key: RSAKey
     public let hashMethod = HashMethod.sha512
-    
+
     public init(key: RSAKey) {
         self.key = key
     }

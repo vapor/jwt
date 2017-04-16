@@ -7,7 +7,7 @@ public enum HashMethod {
     case sha512
 }
 
-public extension HashMethod {
+extension HashMethod {
     var type: Int32 {
         switch self {
         case .sha256: return NID_sha256
@@ -94,7 +94,7 @@ public protocol RSASigner: Signer, BytesInitializable {
     init(key: RSAKey)
 }
 
-public extension RSASigner {
+extension RSASigner {
     
     public init(bytes: Bytes) throws {
         try self.init(key: RSAKey(bytes))

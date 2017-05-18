@@ -2,7 +2,7 @@
     <img src="https://cloud.githubusercontent.com/assets/1342803/24798188/0915659c-1b95-11e7-9a99-7c75d760c904.png" width="320" alt="JWT">
     <br>
     <br>
-    <a href="https://github.com/vapor/jwt/blob/2.0.0-beta.1/README.md">
+    <a href="https://docs.vapor.codes/2.0/jwt/package/">
         <img src="http://img.shields.io/badge/read_the-docs-92A8D1.svg" alt="Documentation">
     </a>
     <a href="http://vapor.team">
@@ -17,4 +17,4 @@
     <a href="https://swift.org">
         <img src="http://img.shields.io/badge/swift-3.1-brightgreen.svg" alt="Swift 3.1">
     </a>
-</center>
+</p>

@@ -113,7 +113,7 @@ extension RSASigner {
 
         let digest = try Hash(hashMethod.method, message).hash()
 
-        RSA_sign(
+        let ret = RSA_sign(
             hashMethod.type,
             digest,
             UInt32(digest.count),
@@ -121,6 +121,16 @@ extension RSASigner {
             &siglen,
             cKey
         )
+        
+        guard ret == 1 else {
+            let reason: UnsafeMutablePointer<Int8>? = nil
+            ERR_error_string(ERR_get_error(), reason)
+            if let reason = reason {
+                let string = String(validatingUTF8: reason) ?? ""
+                print("[JWT] Signing error: \(string)")
+            }
+            throw JWTError.signing
+        }
 
         return sig
     }

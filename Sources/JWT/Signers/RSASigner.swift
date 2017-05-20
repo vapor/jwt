@@ -26,6 +26,32 @@ extension HashMethod {
 }
 
 typealias CRSAKey = UnsafeMutablePointer<RSA>
+typealias CX509Key = UnsafeMutablePointer<X509>
+
+func convertX509toRSAPublicKey (key: Bytes) throws -> RSAKey {
+
+    guard let cert = key.withUnsafeBufferPointer({ rawKeyPointer -> CX509Key? in
+
+        var base = rawKeyPointer.baseAddress
+        let count = key.count
+
+        if let cert = d2i_X509(nil, &base, count) {
+            return cert
+        }
+
+        return nil
+    }) else {
+        throw JWTError.createPublicKey
+    }
+
+    let pubkey = X509_get_pubkey(cert)
+    let rsa = EVP_PKEY_get1_RSA(pubkey)
+
+    // free resources
+    EVP_PKEY_free (pubkey)
+
+    return RSAKey.public(rsa!)
+}
 
 enum RSAKey {
     case `public`(CRSAKey)
@@ -67,6 +93,10 @@ public final class RS256: RSASigner {
     public init(key: Bytes) throws {
         self.key = try RSAKey(key)
     }
+
+    public init(cert: Bytes) throws {
+        self.key = try convertX509toRSAPublicKey(key: cert)
+    }
 }
 
 public final class RS384: RSASigner {
@@ -76,6 +106,10 @@ public final class RS384: RSASigner {
     public init(key: Bytes) throws {
         self.key = try RSAKey(key)
     }
+
+    public init(cert: Bytes) throws {
+        self.key = try convertX509toRSAPublicKey(key: cert)
+    }
 }
 
 public final class RS512: RSASigner {
@@ -84,6 +118,10 @@ public final class RS512: RSASigner {
 
     public init(key: Bytes) throws {
         self.key = try RSAKey(key)
+    }
+
+    public init(cert: Bytes) throws {
+        self.key = try convertX509toRSAPublicKey(key: cert)
     }
 }
 
@@ -121,7 +159,7 @@ extension RSASigner {
             &siglen,
             cKey
         )
-        
+
         guard ret == 1 else {
             let reason: UnsafeMutablePointer<Int8>? = nil
             ERR_error_string(ERR_get_error(), reason)

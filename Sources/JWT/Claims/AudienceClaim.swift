@@ -12,7 +12,7 @@ public struct AudienceClaim: NodeFailableInitializable {
         self.value = strings
     }
 
-    init?(_ node: Node) {
+    public init?(_ node: Node) {
         if let string = node.string {
             self.init(string: string)
         } else if let array = node.array?.flatMap({ $0.string }) {

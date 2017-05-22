@@ -1,7 +1,7 @@
 import Foundation
 import Node
 
-protocol TimeBasedClaim: SecondsBacked, Claim {
+public protocol TimeBasedClaim: SecondsBacked, Claim {
     var createTimestamp: () -> Seconds { get }
 
     init(createTimestamp: @escaping () -> Seconds, leeway: Seconds)
@@ -33,7 +33,7 @@ extension TimeBasedClaim {
             leeway: leeway)
     }
 
-    init(seconds: Seconds) {
+    public init(seconds: Seconds) {
         self.init(createTimestamp: { seconds }, leeway: 0)
     }
 
@@ -45,7 +45,7 @@ extension TimeBasedClaim {
         return verify(other.value)
     }
 
-    var value: Seconds {
+    public var value: Seconds {
         return createTimestamp()
     }
 }

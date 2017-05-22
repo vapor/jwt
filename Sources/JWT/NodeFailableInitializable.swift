@@ -1,11 +1,11 @@
 import Foundation
 import Node
 
-protocol NodeFailableInitializable {
+public protocol NodeFailableInitializable {
     init?(_ node: Node)
 }
 
-protocol StringBacked: NodeFailableInitializable {
+public protocol StringBacked: NodeFailableInitializable {
     var value: String { get }
     init(string: String)
 }
@@ -26,7 +26,7 @@ extension StringBacked {
 
 public typealias Seconds = Int
 
-protocol SecondsBacked: NodeFailableInitializable {
+public protocol SecondsBacked: NodeFailableInitializable {
     var value: Seconds { get }
     init(seconds: Seconds)
 }

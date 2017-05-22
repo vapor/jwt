@@ -155,14 +155,14 @@ final class SignerTests: XCTestCase {
         line: UInt = #line
 
     ) throws {
-        let signer = try createSigner(privateKeyX509.makeBytes().base64URLDecoded)
-        let verifier = try createVerifier(publicCert.makeBytes().base64URLDecoded)
+        let signer = try createSigner(privateKey.makeBytes().base64URLDecoded)
+        let verifier = try createVerifier(publicKey.makeBytes().base64URLDecoded)
         XCTAssertEqual(signer.name, name, file: file, line: line)
         let signature = try signer.sign(message: message.makeBytes())
         try verifier.verify(signature: signature, message: message.makeBytes())
     }
 
-    func testRS512x256() throws {
+    func testRS256x509() throws {
         try checkSignerX590(
             createSigner: RS256.init(key:),
             createVerifier: RS256.init(x509Cert:),
@@ -183,6 +183,6 @@ final class SignerTests: XCTestCase {
         ("testRS256", testRS256),
         ("testRS384", testRS384),
         ("testRS512", testRS512),
-        ("testRS512x256", testRS512x256),
+        ("testRS256x509", testRS256x509),
     ]
 }

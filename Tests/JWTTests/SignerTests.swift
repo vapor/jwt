@@ -103,7 +103,7 @@ final class SignerTests: XCTestCase {
 
     func testRS256() throws {
         try checkSigner(
-            createSigner: RS256.init,
+            createSigner: RS256.init(key:),
             name: "RS256",
             privateKey: privateRSAKey,
             publicKey: publicRSAKey
@@ -112,7 +112,7 @@ final class SignerTests: XCTestCase {
 
     func testRS384() throws {
         try checkSigner(
-            createSigner: RS384.init,
+            createSigner: RS384.init(key:),
             name: "RS384",
             privateKey: privateRSAKey,
             publicKey: publicRSAKey
@@ -121,7 +121,7 @@ final class SignerTests: XCTestCase {
 
     func testRS512() throws {
         try checkSigner(
-            createSigner: RS512.init,
+            createSigner: RS512.init(key:),
             name: "RS512",
             privateKey: privateRSAKey,
             publicKey: publicRSAKey
@@ -141,6 +141,37 @@ final class SignerTests: XCTestCase {
         }
     }
 
+    let privateKeyX509 = "MIIBOgIBAAJBAPnZE7Om9gDGaYgC5bszVridpL/6LeSPPxaDc3/wa+HNzydMjpxfmDMxg8hdCfMuhGyQLtqNqfIAK2oL7x20APkCAwEAAQJAa0w3ctLEGScckSW1ZUSx/IzvAOc/KEYAcPm483vbyNeR3wrwRWl3ZkNy+z1pr+ND1tnVYpHKEdzlMOUOY+5TNQIhAP/OBHEH/fQCd4dPExG1WwPVsIqHvxtvc+f+NY4qHisPAiEA+gnlS+IGcKED1RnhRznvAqYDDKzmEo5hvX9M0i9GM3cCIAuJs1GV1rKG2fVUb7vAvlYx8UCOVuRZ5pR0Nt4usCWpAiAHJ09TG3VZtZGZgDMMyaCH7934d93hPAeZ11GIVefpQwIhAN9cZc9wZDUdz6/2+pXpdozzbXcowWZZbID+FDdclQ9/"
+    let publicCert = "MIICWTCCAgOgAwIBAgIJANM5K91tjScPMA0GCSqGSIb3DQEBCwUAMFQxCzAJBgNVBAYTAlVTMREwDwYDVQQIEwhDb2xvcmFkbzEPMA0GA1UEBxMGRGVudmVyMSEwHwYDVQQKExhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTcwNTIyMDMxMDI2WhcNMTcwNjIxMDMxMDI2WjBUMQswCQYDVQQGEwJVUzERMA8GA1UECBMIQ29sb3JhZG8xDzANBgNVBAcTBkRlbnZlcjEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPnZE7Om9gDGaYgC5bszVridpL/6LeSPPxaDc3/wa+HNzydMjpxfmDMxg8hdCfMuhGyQLtqNqfIAK2oL7x20APkCAwEAAaOBtzCBtDAdBgNVHQ4EFgQUJoHhyknL7sHyLZMR+EbDLWPTaYEwgYQGA1UdIwR9MHuAFCaB4cpJy+7B8i2TEfhGwy1j02mBoVikVjBUMQswCQYDVQQGEwJVUzERMA8GA1UECBMIQ29sb3JhZG8xDzANBgNVBAcTBkRlbnZlcjEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkggkA0zkr3W2NJw8wDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAANBAAAkIvlASbRx7ORKYNixdpUw8tHdFRlzcQJ/QHCZAjOqvDp7jPmMrUwIDjHGOfSiWgU2bd2tljnzp5HVdqahzWA="
+
+    func checkSignerX590(
+        createSigner: (Bytes) throws -> Signer,
+        createVerifier: (Bytes) throws -> Signer,
+        name: String,
+        message: String = "message",
+        privateKey: String,
+        publicKey: String,
+        file: StaticString = #file,
+        line: UInt = #line
+
+    ) throws {
+        let signer = try createSigner(privateKeyX509.makeBytes().base64URLDecoded)
+        let verifier = try createVerifier(publicCert.makeBytes().base64URLDecoded)
+        XCTAssertEqual(signer.name, name, file: file, line: line)
+        let signature = try signer.sign(message: message.makeBytes())
+        try verifier.verify(signature: signature, message: message.makeBytes())
+    }
+
+    func testRS512x256() throws {
+        try checkSignerX590(
+            createSigner: RS256.init(key:),
+            createVerifier: RS256.init(x509Cert:),
+            name: "RS256",
+            privateKey: privateKeyX509,
+            publicKey: publicCert
+        )
+    }
+
     static let all = [
         ("testUnsigned", testUnsigned),
         ("testHS256", testHS256),
@@ -152,5 +183,6 @@ final class SignerTests: XCTestCase {
         ("testRS256", testRS256),
         ("testRS384", testRS384),
         ("testRS512", testRS512),
+        ("testRS512x256", testRS512x256),
     ]
 }

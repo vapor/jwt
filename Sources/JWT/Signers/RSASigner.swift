@@ -26,32 +26,6 @@ extension HashMethod {
 }
 
 typealias CRSAKey = UnsafeMutablePointer<RSA>
-typealias CX509Key = UnsafeMutablePointer<X509>
-
-func convertX509toRSAPublicKey (key: Bytes) throws -> RSAKey {
-
-    guard let cert = key.withUnsafeBufferPointer({ rawKeyPointer -> CX509Key? in
-
-        var base = rawKeyPointer.baseAddress
-        let count = key.count
-
-        if let cert = d2i_X509(nil, &base, count) {
-            return cert
-        }
-
-        return nil
-    }) else {
-        throw JWTError.createPublicKey
-    }
-
-    let pubkey = X509_get_pubkey(cert)
-    let rsa = EVP_PKEY_get1_RSA(pubkey)
-
-    // free resources
-    EVP_PKEY_free (pubkey)
-
-    return RSAKey.public(rsa!)
-}
 
 enum RSAKey {
     case `public`(CRSAKey)
@@ -90,12 +64,15 @@ public final class RS256: RSASigner {
     let key: RSAKey
     let hashMethod = HashMethod.sha256
 
-    public init(key: Bytes) throws {
-        self.key = try RSAKey(key)
+    init(rsaKey: RSAKey) {
+        self.key = rsaKey
     }
 
-    public init(cert: Bytes) throws {
-        self.key = try convertX509toRSAPublicKey(key: cert)
+    deinit {
+        switch key {
+        case .public(let key), .private(let key):
+            RSA_free(key)
+        }
     }
 }
 
@@ -103,12 +80,15 @@ public final class RS384: RSASigner {
     let key: RSAKey
     let hashMethod = HashMethod.sha384
 
-    public init(key: Bytes) throws {
-        self.key = try RSAKey(key)
+    init(rsaKey: RSAKey) {
+        self.key = rsaKey
     }
 
-    public init(cert: Bytes) throws {
-        self.key = try convertX509toRSAPublicKey(key: cert)
+    deinit {
+        switch key {
+        case .public(let key), .private(let key):
+            RSA_free(key)
+        }
     }
 }
 
@@ -116,24 +96,33 @@ public final class RS512: RSASigner {
     let key: RSAKey
     let hashMethod = HashMethod.sha512
 
-    public init(key: Bytes) throws {
-        self.key = try RSAKey(key)
+    init(rsaKey: RSAKey) {
+        self.key = rsaKey
     }
 
-    public init(cert: Bytes) throws {
-        self.key = try convertX509toRSAPublicKey(key: cert)
+    deinit {
+        switch key {
+        case .public(let key), .private(let key):
+            RSA_free(key)
+        }
     }
 }
 
 protocol RSASigner: Signer, BytesInitializable {
     var key: RSAKey { get }
     var hashMethod: HashMethod { get }
-    init(key: Bytes) throws
+    init(rsaKey: RSAKey) throws
 }
 
 extension RSASigner {
     public init(bytes: Bytes) throws {
         try self.init(key: bytes)
+    }
+}
+
+extension RSASigner {
+    public init(key: Bytes) throws {
+        try self.init(rsaKey: try RSAKey(key))
     }
 }
 

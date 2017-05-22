@@ -17,7 +17,10 @@ extension RSAKey {
         }
 
         // free resources
-        EVP_PKEY_free(pubkey)
+        defer {
+            X509_free(cert)
+            EVP_PKEY_free(pubkey)
+        }
 
         self = .public(rsa)
     }

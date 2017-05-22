@@ -11,7 +11,7 @@ public protocol StringBacked: NodeFailableInitializable {
 }
 
 extension StringBacked {
-    init?(_ node: Node) {
+    public init?(_ node: Node) {
         guard let string = node.string else {
             return nil
         }
@@ -32,7 +32,7 @@ public protocol SecondsBacked: NodeFailableInitializable {
 }
 
 extension SecondsBacked {
-    init?(_ node: Node) {
+    public init?(_ node: Node) {
         guard let int = node.int else {
             return nil
         }

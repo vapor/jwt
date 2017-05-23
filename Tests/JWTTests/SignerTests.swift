@@ -54,6 +54,7 @@ final class SignerTests: XCTestCase {
 
     func checkSigner(
         createSigner: (Bytes) throws -> Signer,
+        createVerifier: ((Bytes) throws -> Signer)? = nil,
         name: String,
         message: String = "message",
         privateKey: String,
@@ -63,7 +64,10 @@ final class SignerTests: XCTestCase {
 
     ) throws {
         let signer = try createSigner(privateKey.makeBytes().base64URLDecoded)
-        let verifier = try createSigner(publicKey.makeBytes().base64URLDecoded)
+
+        let publicBytes = publicKey.makeBytes().base64URLDecoded
+        let verifier = try createVerifier?(publicBytes) ?? createSigner(publicBytes)
+
         XCTAssertEqual(signer.name, name, file: file, line: line)
 
         let signature = try signer.sign(message: message.makeBytes())
@@ -144,26 +148,8 @@ final class SignerTests: XCTestCase {
     let privateKeyX509 = "MIIBOgIBAAJBAPnZE7Om9gDGaYgC5bszVridpL/6LeSPPxaDc3/wa+HNzydMjpxfmDMxg8hdCfMuhGyQLtqNqfIAK2oL7x20APkCAwEAAQJAa0w3ctLEGScckSW1ZUSx/IzvAOc/KEYAcPm483vbyNeR3wrwRWl3ZkNy+z1pr+ND1tnVYpHKEdzlMOUOY+5TNQIhAP/OBHEH/fQCd4dPExG1WwPVsIqHvxtvc+f+NY4qHisPAiEA+gnlS+IGcKED1RnhRznvAqYDDKzmEo5hvX9M0i9GM3cCIAuJs1GV1rKG2fVUb7vAvlYx8UCOVuRZ5pR0Nt4usCWpAiAHJ09TG3VZtZGZgDMMyaCH7934d93hPAeZ11GIVefpQwIhAN9cZc9wZDUdz6/2+pXpdozzbXcowWZZbID+FDdclQ9/"
     let publicCert = "MIICWTCCAgOgAwIBAgIJANM5K91tjScPMA0GCSqGSIb3DQEBCwUAMFQxCzAJBgNVBAYTAlVTMREwDwYDVQQIEwhDb2xvcmFkbzEPMA0GA1UEBxMGRGVudmVyMSEwHwYDVQQKExhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwHhcNMTcwNTIyMDMxMDI2WhcNMTcwNjIxMDMxMDI2WjBUMQswCQYDVQQGEwJVUzERMA8GA1UECBMIQ29sb3JhZG8xDzANBgNVBAcTBkRlbnZlcjEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAPnZE7Om9gDGaYgC5bszVridpL/6LeSPPxaDc3/wa+HNzydMjpxfmDMxg8hdCfMuhGyQLtqNqfIAK2oL7x20APkCAwEAAaOBtzCBtDAdBgNVHQ4EFgQUJoHhyknL7sHyLZMR+EbDLWPTaYEwgYQGA1UdIwR9MHuAFCaB4cpJy+7B8i2TEfhGwy1j02mBoVikVjBUMQswCQYDVQQGEwJVUzERMA8GA1UECBMIQ29sb3JhZG8xDzANBgNVBAcTBkRlbnZlcjEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkggkA0zkr3W2NJw8wDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAANBAAAkIvlASbRx7ORKYNixdpUw8tHdFRlzcQJ/QHCZAjOqvDp7jPmMrUwIDjHGOfSiWgU2bd2tljnzp5HVdqahzWA="
 
-    func checkSignerX590(
-        createSigner: (Bytes) throws -> Signer,
-        createVerifier: (Bytes) throws -> Signer,
-        name: String,
-        message: String = "message",
-        privateKey: String,
-        publicKey: String,
-        file: StaticString = #file,
-        line: UInt = #line
-
-    ) throws {
-        let signer = try createSigner(privateKey.makeBytes().base64URLDecoded)
-        let verifier = try createVerifier(publicKey.makeBytes().base64URLDecoded)
-        XCTAssertEqual(signer.name, name, file: file, line: line)
-        let signature = try signer.sign(message: message.makeBytes())
-        try verifier.verify(signature: signature, message: message.makeBytes())
-    }
-
     func testRS256x509() throws {
-        try checkSignerX590(
+        try checkSigner(
             createSigner: RS256.init(key:),
             createVerifier: RS256.init(x509Cert:),
             name: "RS256",

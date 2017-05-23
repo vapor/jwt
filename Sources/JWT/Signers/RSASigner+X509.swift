@@ -10,16 +10,24 @@ extension RSAKey {
                 let count = cert.count
 
                 return d2i_X509(nil, &base, count)
-            }),
-            let pubkey = X509_get_pubkey(cert),
-            let rsa = EVP_PKEY_get1_RSA(pubkey) else {
+            }) else {
                 throw JWTError.createPublicKey
         }
 
-        // free resources
         defer {
             X509_free(cert)
+        }
+
+        guard let pubkey = X509_get_pubkey(cert) else {
+            throw JWTError.createPublicKey
+        }
+
+        defer {
             EVP_PKEY_free(pubkey)
+        }
+
+        guard let rsa = EVP_PKEY_get1_RSA(pubkey) else {
+            throw JWTError.createPublicKey
         }
 
         self = .public(rsa)

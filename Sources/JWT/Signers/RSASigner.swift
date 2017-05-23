@@ -64,8 +64,15 @@ public final class RS256: RSASigner {
     let key: RSAKey
     let hashMethod = HashMethod.sha256
 
-    public init(key: Bytes) throws {
-        self.key = try RSAKey(key)
+    init(rsaKey: RSAKey) {
+        self.key = rsaKey
+    }
+
+    deinit {
+        switch key {
+        case .public(let key), .private(let key):
+            RSA_free(key)
+        }
     }
 }
 
@@ -73,8 +80,15 @@ public final class RS384: RSASigner {
     let key: RSAKey
     let hashMethod = HashMethod.sha384
 
-    public init(key: Bytes) throws {
-        self.key = try RSAKey(key)
+    init(rsaKey: RSAKey) {
+        self.key = rsaKey
+    }
+
+    deinit {
+        switch key {
+        case .public(let key), .private(let key):
+            RSA_free(key)
+        }
     }
 }
 
@@ -82,20 +96,33 @@ public final class RS512: RSASigner {
     let key: RSAKey
     let hashMethod = HashMethod.sha512
 
-    public init(key: Bytes) throws {
-        self.key = try RSAKey(key)
+    init(rsaKey: RSAKey) {
+        self.key = rsaKey
+    }
+
+    deinit {
+        switch key {
+        case .public(let key), .private(let key):
+            RSA_free(key)
+        }
     }
 }
 
 protocol RSASigner: Signer, BytesInitializable {
     var key: RSAKey { get }
     var hashMethod: HashMethod { get }
-    init(key: Bytes) throws
+    init(rsaKey: RSAKey) throws
 }
 
 extension RSASigner {
     public init(bytes: Bytes) throws {
         try self.init(key: bytes)
+    }
+}
+
+extension RSASigner {
+    public init(key: Bytes) throws {
+        try self.init(rsaKey: try RSAKey(key))
     }
 }
 
@@ -121,7 +148,7 @@ extension RSASigner {
             &siglen,
             cKey
         )
-        
+
         guard ret == 1 else {
             let reason: UnsafeMutablePointer<Int8>? = nil
             ERR_error_string(ERR_get_error(), reason)

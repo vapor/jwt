@@ -4,8 +4,8 @@ import Node
 public struct ExpirationTimeClaim: TimeBasedClaim {
     public static var name = "exp"
 
-    let createTimestamp: () -> Seconds
-    let leeway: Seconds
+    public let createTimestamp: () -> Seconds
+    public let leeway: Seconds
 
     public init(
         createTimestamp: @escaping () -> Seconds,

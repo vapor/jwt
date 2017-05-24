@@ -1,6 +1,6 @@
 import Node
 
-protocol EqualityClaim: Claim, NodeFailableInitializable {
+public protocol EqualityClaim: Claim, NodeFailableInitializable {
     associatedtype T: Equatable
     var value: T { get }
 }

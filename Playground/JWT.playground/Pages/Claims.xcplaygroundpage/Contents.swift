@@ -3,7 +3,6 @@
 //: `Claim`s are used to constrain the validity of a token.
 import Foundation
 import JWT
-import Node
 //: These are all the claims that come with `JWT`
 let claims: [Claim] = [
     AudienceClaim(string: "some audience"),
@@ -15,7 +14,7 @@ let claims: [Claim] = [
     SubjectClaim(string: "some subject")
 ]
 
-let jwt = try JWT(payload: Node(claims), signer: Unsigned())
+let jwt = try JWT(payload: JSON(claims), signer: Unsigned())
 try jwt.verifyClaims([AudienceClaim(string: "some audience")])
 do {
     try jwt.verifyClaims([SubjectClaim(string: "another subject")])

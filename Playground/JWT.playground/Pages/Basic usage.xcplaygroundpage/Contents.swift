@@ -5,10 +5,9 @@
  */
 import Foundation
 import JWT
-import Node
 //: Create an signed token that expires 1 minute from now.
 let jwt = try JWT(
-    payload: Node(ExpirationTimeClaim(date: Date() + 60)),
+    payload: JSON(ExpirationTimeClaim(date: Date() + 60)),
     signer: HS256(key: "secret".bytes))
 let token = try jwt.createToken()
 //: Decode the token on the receiving end.

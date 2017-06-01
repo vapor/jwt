@@ -25,9 +25,9 @@ extension HashMethod {
     }
 }
 
-typealias CRSAKey = UnsafeMutablePointer<RSA>
+public typealias CRSAKey = UnsafeMutablePointer<RSA>
 
-enum RSAKey {
+public enum RSAKey {
     case `public`(CRSAKey)
     case `private`(CRSAKey)
 
@@ -61,10 +61,10 @@ enum RSAKey {
 }
 
 public final class RS256: RSASigner {
-    let key: RSAKey
-    let hashMethod = HashMethod.sha256
+    public let key: RSAKey
+    public let hashMethod = HashMethod.sha256
 
-    init(rsaKey: RSAKey) {
+    public init(rsaKey: RSAKey) {
         self.key = rsaKey
     }
 
@@ -77,10 +77,10 @@ public final class RS256: RSASigner {
 }
 
 public final class RS384: RSASigner {
-    let key: RSAKey
-    let hashMethod = HashMethod.sha384
+    public let key: RSAKey
+    public let hashMethod = HashMethod.sha384
 
-    init(rsaKey: RSAKey) {
+    public init(rsaKey: RSAKey) {
         self.key = rsaKey
     }
 
@@ -93,10 +93,10 @@ public final class RS384: RSASigner {
 }
 
 public final class RS512: RSASigner {
-    let key: RSAKey
-    let hashMethod = HashMethod.sha512
+    public let key: RSAKey
+    public let hashMethod = HashMethod.sha512
 
-    init(rsaKey: RSAKey) {
+    public init(rsaKey: RSAKey) {
         self.key = rsaKey
     }
 
@@ -108,7 +108,7 @@ public final class RS512: RSASigner {
     }
 }
 
-protocol RSASigner: Signer, BytesInitializable {
+public protocol RSASigner: Signer, BytesInitializable {
     var key: RSAKey { get }
     var hashMethod: HashMethod { get }
     init(rsaKey: RSAKey) throws

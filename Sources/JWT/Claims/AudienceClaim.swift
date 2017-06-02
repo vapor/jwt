@@ -1,7 +1,7 @@
 import Foundation
 import Node
 
-public struct AudienceClaim: NodeFailableInitializable {
+public struct AudienceClaim: NodeInitializable {
     fileprivate let value: Set<String>
 
     public init(string: String) {
@@ -12,13 +12,13 @@ public struct AudienceClaim: NodeFailableInitializable {
         self.value = strings
     }
 
-    public init?(_ node: Node) {
+    public init(node: Node) throws {
         if let string = node.string {
             self.init(string: string)
         } else if let array = node.array?.flatMap({ $0.string }) {
             self.init(strings: Set(array))
         } else {
-            return nil
+            throw JWTError.incorrectNodeType
         }
     }
 }
@@ -47,11 +47,12 @@ extension AudienceClaim: Claim {
     public static let name = "aud"
 
     public func verify(_ node: Node) -> Bool {
-        guard let other = AudienceClaim(node) else {
+        do {
+            let other = try AudienceClaim(node: node)
+            return value.intersection(other.value).count == other.value.count
+        } catch {
             return false
         }
-
-        return value.intersection(other.value).count == other.value.count
     }
 
     public var node: Node {

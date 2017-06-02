@@ -8,14 +8,6 @@ public enum HashMethod {
 }
 
 extension HashMethod {
-    var type: Int32 {
-        switch self {
-        case .sha256: return NID_sha256
-        case .sha384: return NID_sha384
-        case .sha512: return NID_sha512
-        }
-    }
-
     var method: Hash.Method {
         switch self {
         case .sha256: return .sha256
@@ -23,13 +15,21 @@ extension HashMethod {
         case .sha512: return .sha512
         }
     }
+
+    var type: Int32 {
+        switch self {
+        case .sha256: return NID_sha256
+        case .sha384: return NID_sha384
+        case .sha512: return NID_sha512
+        }
+    }
 }
 
 public typealias CRSAKey = UnsafeMutablePointer<RSA>
 
 public enum RSAKey {
-    case `public`(CRSAKey)
     case `private`(CRSAKey)
+    case `public`(CRSAKey)
 
     public init(_ rawKey: Bytes) throws {
         guard let rsa = rawKey.withUnsafeBufferPointer({ rawKeyPointer -> RSAKey? in
@@ -52,65 +52,54 @@ public enum RSAKey {
 
     var cKey: CRSAKey {
         switch self {
-        case .public(let cKey):
-            return cKey
-        case .private(let cKey):
+        case .public(let cKey), .private(let cKey):
             return cKey
         }
     }
 }
 
 public final class RS256: RSASigner {
-    public let key: RSAKey
     public let hashMethod = HashMethod.sha256
+    public let key: RSAKey
 
     public init(rsaKey: RSAKey) {
         self.key = rsaKey
     }
 
     deinit {
-        switch key {
-        case .public(let key), .private(let key):
-            RSA_free(key)
-        }
+        RSA_free(key.cKey)
     }
 }
 
 public final class RS384: RSASigner {
-    public let key: RSAKey
     public let hashMethod = HashMethod.sha384
+    public let key: RSAKey
 
     public init(rsaKey: RSAKey) {
         self.key = rsaKey
     }
 
     deinit {
-        switch key {
-        case .public(let key), .private(let key):
-            RSA_free(key)
-        }
+        RSA_free(key.cKey)
     }
 }
 
 public final class RS512: RSASigner {
-    public let key: RSAKey
     public let hashMethod = HashMethod.sha512
+    public let key: RSAKey
 
     public init(rsaKey: RSAKey) {
         self.key = rsaKey
     }
 
     deinit {
-        switch key {
-        case .public(let key), .private(let key):
-            RSA_free(key)
-        }
+        RSA_free(key.cKey)
     }
 }
 
 public protocol RSASigner: Signer, BytesInitializable {
-    var key: RSAKey { get }
     var hashMethod: HashMethod { get }
+    var key: RSAKey { get }
     init(rsaKey: RSAKey) throws
 }
 
@@ -118,9 +107,7 @@ extension RSASigner {
     public init(bytes: Bytes) throws {
         try self.init(key: bytes)
     }
-}
 
-extension RSASigner {
     public init(key: Bytes) throws {
         try self.init(rsaKey: try RSAKey(key))
     }

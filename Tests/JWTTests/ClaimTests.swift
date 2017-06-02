@@ -1,4 +1,4 @@
-@testable import JWT
+import JWT
 import Foundation
 import Node
 import XCTest

@@ -4,6 +4,7 @@ public enum JWTError: Error {
     case decoding
     case encoding
     case incorrectNumberOfSegments
+    case incorrectNodeType
     case incorrectPayloadForClaimVerification
     case missingAlgorithm
     case missingClaim(withName: String)
@@ -31,6 +32,8 @@ extension JWTError: CustomStringConvertible {
             reason = "Could not encode"
         case .incorrectNumberOfSegments:
             reason = "Incorrect number of segments"
+        case .incorrectNodeType:
+            reason = "Incorrect node type"
         case .incorrectPayloadForClaimVerification:
             reason = "Payload is not of type `[String: Node]`"
         case .missingAlgorithm:

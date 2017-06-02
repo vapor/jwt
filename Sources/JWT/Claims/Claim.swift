@@ -16,6 +16,7 @@ extension Claim {
         guard let data = object[name] else {
             throw JWTError.missingClaim(withName: name)
         }
+        
         let claim = Node(data, in: nil)
 
         guard verify(claim) else {

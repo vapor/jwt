@@ -38,12 +38,11 @@ extension TimeBasedClaim {
     }
 
     public func verify(_ node: Node) -> Bool {
-        do {
-            let other = try Self(node: node)
-            return verify(other.value)
-        } catch {
+        guard let other = Self(node) else {
             return false
         }
+
+        return verify(other.value)
     }
 
     public var value: Seconds {

@@ -1,14 +1,14 @@
 public typealias Seconds = Int
 
-public protocol SecondsBacked: NodeInitializable {
+public protocol SecondsBacked: NodeFailableInitializable {
     var value: Seconds { get }
     init(seconds: Seconds)
 }
 
 extension SecondsBacked {
-    public init(node: Node) throws {
+    public init?(_ node: Node) {
         guard let int = node.int else {
-            throw JWTError.incorrectNodeType
+            return nil
         }
 
         self.init(seconds: int)

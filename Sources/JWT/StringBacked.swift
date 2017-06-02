@@ -1,15 +1,15 @@
 import Foundation
 import Node
 
-protocol StringBacked: NodeInitializable {
+protocol StringBacked: NodeFailableInitializable {
     var value: String { get }
     init(string: String)
 }
 
 extension StringBacked {
-    public init(node: Node) throws {
+    public init?(_ node: Node) {
         guard let string = node.string else {
-            throw JWTError.incorrectNodeType
+            return nil
         }
 
         self.init(string: string)

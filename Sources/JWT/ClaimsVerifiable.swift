@@ -29,6 +29,7 @@ extension JSON: ClaimsVerifiable {
         return makeNode(in: nil)
     }
 }
+
 extension Node: ClaimsVerifiable {
     public var node: Node {
         return self

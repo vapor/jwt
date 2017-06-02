@@ -50,6 +50,7 @@ extension AudienceClaim: Claim {
         guard let other = AudienceClaim(node) else {
             return false
         }
+
         return value.intersection(other.value).count == other.value.count
     }
 

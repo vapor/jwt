@@ -23,12 +23,13 @@ extension ClaimsVerifiable {
         }
     }
 }
- 
+
 extension JSON: ClaimsVerifiable {
     public var node: Node {
         return makeNode(in: nil)
     }
 }
+
 extension Node: ClaimsVerifiable {
     public var node: Node {
         return self

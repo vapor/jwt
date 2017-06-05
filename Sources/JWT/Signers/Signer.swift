@@ -14,12 +14,12 @@ extension Signer {
         return String(describing: Self.self)
     }
 
-    func sign(message convertible: BytesConvertible) throws -> Bytes {
+    public func sign(message convertible: BytesConvertible) throws -> Bytes {
         let bytes = try convertible.makeBytes()
         return try sign(message: bytes)
     }
 
-    func verify(signature: BytesConvertible, message: BytesConvertible) throws {
+    public func verify(signature: BytesConvertible, message: BytesConvertible) throws {
         let signatureBytes = try signature.makeBytes()
         let messageBytes = try message.makeBytes()
         return try verify(

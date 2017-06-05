@@ -1,8 +1,8 @@
 import Crypto
 
 public final class HS256: HMACSigner {
-    let key: Bytes
-    let method = HMAC.Method.sha256
+    public let key: Bytes
+    public let method = HMAC.Method.sha256
 
     public init(key: Bytes) {
         self.key = key
@@ -10,8 +10,8 @@ public final class HS256: HMACSigner {
 }
 
 public final class HS384: HMACSigner {
-    let key: Bytes
-    let method = HMAC.Method.sha384
+    public let key: Bytes
+    public let method = HMAC.Method.sha384
 
     public init(key: Bytes) {
         self.key = key
@@ -19,18 +19,18 @@ public final class HS384: HMACSigner {
 }
 
 public final class HS512: HMACSigner {
-    let key: Bytes
-    let method = HMAC.Method.sha512
+    public let key: Bytes
+    public let method = HMAC.Method.sha512
 
     public init(key: Bytes) {
         self.key = key
     }
 }
 
-protocol HMACSigner: Signer, BytesConvertible {
-    init(key: Bytes)
+public protocol HMACSigner: Signer, BytesConvertible {
     var key: Bytes { get }
     var method: HMAC.Method { get }
+    init(key: Bytes)
 }
 
 extension HMACSigner {

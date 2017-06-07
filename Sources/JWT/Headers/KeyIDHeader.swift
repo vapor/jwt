@@ -8,3 +8,10 @@ public struct KeyIDHeader: Header {
         node = .string(identifier)
     }
 }
+
+public extension JWT {
+
+    public var keyIdentifier: String? {
+        return self.headers[KeyIDHeader.name]?.string
+    }
+}

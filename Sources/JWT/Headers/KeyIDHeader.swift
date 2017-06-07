@@ -5,6 +5,6 @@ public struct KeyIDHeader: Header {
     public let node: Node
 
     init(identifier: String) {
-        kid = .string(identifier)
+        node = .string(identifier)
     }
 }

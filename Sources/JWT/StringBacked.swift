@@ -1,7 +1,7 @@
 import Foundation
 import Node
 
-protocol StringBacked: NodeFailableInitializable {
+public protocol StringBacked: NodeFailableInitializable {
     var value: String { get }
     init(string: String)
 }

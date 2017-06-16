@@ -15,6 +15,8 @@ public struct JWT {
     )?
 
     /// Creates a JWT with custom headers and payload
+    /// this will NOT include keys such as algorithm.
+    /// Use 'init(additionalHeaders: ..' to include those headers
     ///
     /// - parameter headers:  Headers object as Node
     /// - parameter payload:  Payload object as Node

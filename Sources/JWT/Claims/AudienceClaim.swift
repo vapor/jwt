@@ -1,7 +1,10 @@
 import Foundation
 import Node
 
-public struct AudienceClaim: NodeFailableInitializable {
+@available(*, deprecated, message: "Use MultipleAudienceClaim or SingleAudienceClaim instead.")
+public typealias AudienceClaim = MultipleAudienceClaim
+
+public struct MultipleAudienceClaim: NodeFailableInitializable {
     fileprivate let value: Set<String>
 
     public init(string: String) {
@@ -23,7 +26,7 @@ public struct AudienceClaim: NodeFailableInitializable {
     }
 }
 
-extension AudienceClaim: ExpressibleByStringLiteral {
+extension MultipleAudienceClaim: ExpressibleByStringLiteral {
     public init(stringLiteral value: String) {
         self.init(string: value)
     }
@@ -37,17 +40,17 @@ extension AudienceClaim: ExpressibleByStringLiteral {
     }
 }
 
-extension AudienceClaim: ExpressibleByArrayLiteral {
+extension MultipleAudienceClaim: ExpressibleByArrayLiteral {
     public init(arrayLiteral elements: String...) {
         self.init(strings: Set(elements))
     }
 }
 
-extension AudienceClaim: Claim {
+extension MultipleAudienceClaim: Claim {
     public static let name = "aud"
 
     public func verify(_ node: Node) -> Bool {
-        guard let other = AudienceClaim(node) else {
+        guard let other = MultipleAudienceClaim(node) else {
             return false
         }
 

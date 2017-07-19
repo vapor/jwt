@@ -81,13 +81,13 @@ final class ClaimTests: XCTestCase {
     }
 
     func testAudienceClaim() {
-        XCTAssertEqual([AudienceClaim.name], ["aud"])
-        XCTAssertTrue(AudienceClaim(string: "a").verify("a"))
-        XCTAssertFalse(AudienceClaim(string: "a").verify("b"))
-        XCTAssertTrue(AudienceClaim(strings: ["a", "b"]).verify("b"))
-        XCTAssertFalse(AudienceClaim(strings: ["a", "b"]).verify("c"))
-        XCTAssertTrue(AudienceClaim(strings: ["a", "b", "c"]).verify(["b", "c"]))
-        XCTAssertFalse(AudienceClaim(strings: ["a", "b", "c"]).verify(["c", "d"]))
+        XCTAssertEqual([MultipleAudienceClaim.name], ["aud"])
+        XCTAssertTrue(MultipleAudienceClaim(string: "a").verify("a"))
+        XCTAssertFalse(MultipleAudienceClaim(string: "a").verify("b"))
+        XCTAssertTrue(MultipleAudienceClaim(strings: ["a", "b"]).verify("b"))
+        XCTAssertFalse(MultipleAudienceClaim(strings: ["a", "b"]).verify("c"))
+        XCTAssertTrue(MultipleAudienceClaim(strings: ["a", "b", "c"]).verify(["b", "c"]))
+        XCTAssertFalse(MultipleAudienceClaim(strings: ["a", "b", "c"]).verify(["c", "d"]))
     }
 
     func testExpirationTimeClaim() {

@@ -21,6 +21,18 @@ struct TildeSigner: Signer {
 }
 
 final class JWTTests: XCTestCase {
+    static let all = [
+        ("testSignature", testSignature),
+        ("testInitWithToken", testInitWithToken),
+        ("testIncorrectNumberOfSegments", testIncorrectNumberOfSegments),
+        ("testDefaultHeaders", testDefaultHeaders),
+        ("testCustomHeaders", testCustomHeaders),
+        ("testCustomJSONHeaders", testCustomJSONHeaders),
+        ("testJWTClaimsCanBeVerified", testJWTClaimsCanBeVerified),
+        ("testHS256VerificationOfWellKnownToken", testHS256VerificationOfWellKnownToken),
+        ("testHeaders", testHeaders),
+    ]
+
     func testSignature() throws {
         let jwt = try JWT(
             headers: .object(["alg": "tilde"]),
@@ -100,14 +112,35 @@ final class JWTTests: XCTestCase {
         try jwt.verifySignature(using: signer)
     }
 
-    static let all = [
-        ("testSignature", testSignature),
-        ("testInitWithToken", testInitWithToken),
-        ("testIncorrectNumberOfSegments", testIncorrectNumberOfSegments),
-        ("testDefaultHeaders", testDefaultHeaders),
-        ("testCustomHeaders", testCustomHeaders),
-        ("testCustomJSONHeaders", testCustomJSONHeaders),
-        ("testJWTClaimsCanBeVerified", testJWTClaimsCanBeVerified),
-        ("testHS256VerificationOfWellKnownToken", testHS256VerificationOfWellKnownToken)
-    ]
+    func testHeaders() throws {
+        let expiry = Date() + 1800
+        let headers: [String: JSON] = ["aaaa": "bbbb", "cccc": 1]
+        let payload = JSON([
+            ExpirationTimeClaim(date: expiry)
+        ])
+        let fail = try JWT(
+            additionalHeaders: headers,
+            payload: payload,
+            signer: HS512(key: "secret".bytes)
+        )
+        let token = try fail.createToken()
+
+
+        let receivedJWT = try JWT(token: token)
+        try receivedJWT.verifySignature(using: HS512(key: "secret".bytes))
+        try receivedJWT.verifyClaims([ExpirationTimeClaim(date: Date())])
+    }
+
+    func testHeadersPassing() throws {
+        let expiry = Date() + 1800
+        let payload = JSON([
+            ExpirationTimeClaim(date: expiry)
+        ])
+        let fail = try JWT(payload: payload, signer: HS512(key: "secret".bytes))
+        let token = try fail.createToken()
+
+        let receivedJWT = try JWT(token: token)
+        try receivedJWT.verifySignature(using: HS512(key: "secret".bytes))
+        try receivedJWT.verifyClaims([ExpirationTimeClaim(date: Date())])
+    }
 }

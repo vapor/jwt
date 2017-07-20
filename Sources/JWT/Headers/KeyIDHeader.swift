@@ -4,7 +4,7 @@ public struct KeyIDHeader: Header {
     public static let name = "kid"
     public let node: Node
 
-    init(identifier: String) {
+    public init(identifier: String) {
         node = .string(identifier)
     }
 }

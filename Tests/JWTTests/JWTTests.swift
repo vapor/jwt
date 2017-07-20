@@ -139,17 +139,8 @@ final class JWTTests: XCTestCase {
         let fail = try JWT(payload: payload, signer: HS512(key: "secret".bytes))
         let token = try fail.createToken()
 
-
         let receivedJWT = try JWT(token: token)
-        do {
-            try receivedJWT.verifySignature(using: HS512(key: "secret".bytes))
-            try receivedJWT.verifyClaims([ExpirationTimeClaim(date: Date())])
-            print("pass")
-            print("")
-        }
-        catch {
-            print(error)
-            XCTFail("\(error)")
-        }
+        try receivedJWT.verifySignature(using: HS512(key: "secret".bytes))
+        try receivedJWT.verifyClaims([ExpirationTimeClaim(date: Date())])
     }
 }

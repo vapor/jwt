@@ -64,7 +64,35 @@ public struct JWT {
     ) throws {
         let headers: [Header] = [TypeHeader(), AlgorithmHeader(signer: signer)] + additionalHeaders
         try self.init(
-            headers: JSON(headers),
+            headers: JSON.init(headers),
+            payload: payload,
+            signer: signer
+        )
+    }
+
+    /// Creates a JWT with claims and default headers ("typ", and "alg")
+    ///
+    /// - parameter additionalHeaders: Headers to add besides the defaults ones
+    /// - parameter payload:  Payload object as Node
+    /// - parameter encoding: Encoding to use for the headers, payload, and signature when creating
+    ///                       the token string
+    /// - parameter signer:   Signer that creates the signature
+    ///
+    /// - throws: Any error thrown while encoding or signing
+    ///
+    /// - returns: A JWT value
+    public init(
+        additionalHeaders: [String: JSON],
+        payload: JSON,
+        signer: Signer
+        ) throws {
+        let headers: [Header] = [TypeHeader(), AlgorithmHeader(signer: signer)]
+        var headersJSON = JSON(headers)
+        additionalHeaders.forEach { key, value in
+            headersJSON[key] = value
+        }
+        try self.init(
+            headers: headersJSON,
             payload: payload,
             signer: signer
         )

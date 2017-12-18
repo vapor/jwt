@@ -25,7 +25,7 @@ Pod::Spec.new do |s|
 
                    #### Cocoapods
 
-                   Add `pod 'jwt', :git => 'https://github.com/vapor/jwt.git'` to you `Podfile` and run `pod install`.
+                   Add `pod 'jwt', :git => 'https://github.com/mrommel/jwt.git'` to you `Podfile` and run `pod install`.
 
                    ## Setup
 
@@ -38,7 +38,7 @@ Pod::Spec.new do |s|
                    
                    DESC
 
-  s.homepage     = "https://github.com/vapor/jwt.git"
+  s.homepage     = "https://github.com/mrommel/jwt.git"
 
   s.license      = { :type => "MIT", :file => "LICENSE" }
 
@@ -46,7 +46,7 @@ Pod::Spec.new do |s|
   s.social_media_url   = "http://vapor.codes/"
 
   s.platform     = :ios, "8.0"
-  s.source       = { :git => "https://github.com/vapor/jwt.git", :tag => s.version }
+  s.source       = { :git => "https://github.com/mrommel/jwt.git", :tag => s.version }
   s.source_files  = "Sources/JWT/*.swift"
 
   s.requires_arc = false

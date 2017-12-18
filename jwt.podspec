@@ -9,7 +9,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "JWT"
-  s.version      = "2.3.0"
+  s.version      = "2.3.1"
   s.summary      = ""
 
   s.description  = <<-DESC

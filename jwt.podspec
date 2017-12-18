@@ -37,7 +37,7 @@ Pod::Spec.new do |s|
                    	
                     #### Cocoapods
                     
-                    Add `pod 'JWT', :git => 'https://github.com/mrommel/JWT.git'` to you `Podfile` and run `pod install`.
+                    Add `pod 'JWT', :git => 'https://github.com/vapor/JWT.git'` to you `Podfile` and run `pod install`.
 
                     ## Setup
 
@@ -51,7 +51,7 @@ Pod::Spec.new do |s|
 
                    DESC
 
-  s.homepage     = "https://github.com/mrommel/JWT.git"
+  s.homepage     = "https://github.com/vapor/JWT.git"
   # s.screenshots  = "www.example.com/screenshots_1.gif", "www.example.com/screenshots_2.gif"
 
 
@@ -95,7 +95,7 @@ Pod::Spec.new do |s|
   #  Supports git, hg, bzr, svn and HTTP.
   #
 
-  s.source       = { :git => "https://github.com/mrommel/JWT.git", :tag => s.version }
+  s.source       = { :git => "https://github.com/vapor/JWT.git", :tag => s.version }
 
 
   # ――― Source Code ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #

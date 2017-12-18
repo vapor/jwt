@@ -1,5 +1,5 @@
 #
-#  Be sure to run `pod spec lint jwt.podspec' to ensure this is a
+#  Be sure to run `pod spec lint JWT.podspec' to ensure this is a
 #  valid spec and to remove all comments including this before submitting the spec.
 #
 #  To learn more about Podspec attributes see http://docs.cocoapods.org/specification.html
@@ -15,9 +15,9 @@ Pod::Spec.new do |s|
   #  summary should be tweet-length, and the description more in depth.
   #
 
-  s.name         = "jwt"
+  s.name         = "JWT"
   s.version      = "2.3.2"
-  s.summary      = "n implementation of JWT - https://jwt.io/ - for swift"
+  s.summary      = "An implementation of JWT - https://jwt.io/ - for swift"
 
   # This description is used to generate tags and improve search results.
   #   * Think: What does it do? Why did you write it? What is the focus?
@@ -37,7 +37,7 @@ Pod::Spec.new do |s|
                    	
                     #### Cocoapods
                     
-                    Add `pod 'jwt', :git => 'https://github.com/mrommel/jwt.git'` to you `Podfile` and run `pod install`.
+                    Add `pod 'JWT', :git => 'https://github.com/mrommel/JWT.git'` to you `Podfile` and run `pod install`.
 
                     ## Setup
 
@@ -51,7 +51,7 @@ Pod::Spec.new do |s|
 
                    DESC
 
-  s.homepage     = "https://github.com/mrommel/jwt.git"
+  s.homepage     = "https://github.com/mrommel/JWT.git"
   # s.screenshots  = "www.example.com/screenshots_1.gif", "www.example.com/screenshots_2.gif"
 
 
@@ -95,7 +95,7 @@ Pod::Spec.new do |s|
   #  Supports git, hg, bzr, svn and HTTP.
   #
 
-  s.source       = { :git => "https://github.com/mrommel/jwt.git", :tag => s.version }
+  s.source       = { :git => "https://github.com/mrommel/JWT.git", :tag => s.version }
 
 
   # ――― Source Code ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #

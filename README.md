@@ -18,3 +18,10 @@
         <img src="http://img.shields.io/badge/swift-3.1-brightgreen.svg" alt="Swift 3.1">
     </a>
 </p>
+
+<p align="center">
+	<h2>Installation with Cocoapods</h2>
+	<pre>
+	Add `pod 'JWT', '~> 2.3.2'` to you `Podfile` and run `pod install`.
+	</pre>
+<p>

@@ -1,12 +1,17 @@
+// swift-tools-version:4.0
 import PackageDescription
 
 let package = Package(
     name: "JWT",
-    dependencies: [
-        .Package(url: "https://github.com/vapor/crypto.git", majorVersion: 2),
-        .Package(url: "https://github.com/vapor/json.git", majorVersion: 2),
+    products: [
+        .library(name: "JWT", targets: ["JWT"]),
     ],
-    exclude: [
-        "Playground"
+    dependencies: [
+        // Cryptography modules
+        .package(url: "https://github.com/vapor/crypto.git", .branch("beta")),
+    ],
+    targets: [
+        .target(name: "JWT", dependencies: ["Crypto"]),
+        .testTarget(name: "JWTTests", dependencies: ["JWT"]),
     ]
 )

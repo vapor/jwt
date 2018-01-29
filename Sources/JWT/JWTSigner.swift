@@ -24,11 +24,14 @@ public final class JWTSigner {
     /// let signedString = String(bytes: signed, encoding: .utf8)
     /// ```
     public func sign<Payload>(_ jwt: inout JWT<Payload>) throws -> Data {
+        let jsonEncoder = JSONEncoder()
+        jsonEncoder.dateEncodingStrategy = .secondsSince1970
+
         jwt.header.alg = self.algorithm.jwtAlgorithmName
-        let headerData = try JSONEncoder().encode(jwt.header)
+        let headerData = try jsonEncoder.encode(jwt.header)
         let encodedHeader = base64.encode(data: headerData)
 
-        let payloadData = try JSONEncoder().encode(jwt.payload)
+        let payloadData = try jsonEncoder.encode(jwt.payload)
         let encodedPayload = base64.encode(data: payloadData)
 
         let encodedSignature = try signature(header: encodedHeader, payload: encodedPayload)

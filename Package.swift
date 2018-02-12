@@ -8,7 +8,7 @@ let package = Package(
     ],
     dependencies: [
         // Cryptography modules
-        .package(url: "https://github.com/vapor/crypto.git", .branch("beta")),
+        .package(url: "https://github.com/vapor/crypto.git", .exact("3.0.0-beta.1")),
     ],
     targets: [
         .target(name: "JWT", dependencies: ["Crypto"]),

@@ -73,9 +73,11 @@ class JWTTests: XCTestCase {
         } catch {
             // pass
         }
-        let data = try jwt.sign(using: privateSigner)
-        let parsed = try JWT<TestPayload>(from: data, verifiedUsing: privateSigner)
-        XCTAssertEqual(parsed.payload.name, "Foo")
+        let privateSigned = try jwt.sign(using: privateSigner)
+        let publicVerified = try JWT<TestPayload>(from: privateSigned, verifiedUsing: publicSigner)
+        let privateVerified = try JWT<TestPayload>(from: privateSigned, verifiedUsing: privateSigner)
+        XCTAssertEqual(publicVerified.payload.name, "Foo")
+        XCTAssertEqual(privateVerified.payload.name, "Foo")
     }
     
     static var allTests = [

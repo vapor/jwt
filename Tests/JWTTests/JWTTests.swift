@@ -38,9 +38,10 @@ class JWTTests: XCTestCase {
         var jwt = JWT(payload: ExpirationPayload(exp: exp))
 
         let signer = JWTSigner.hs256(key: Data("secret".utf8))
+        jwt.header.typ = nil // set to nil to avoid dictionary re-ordering causing probs
         let data = try signer.sign(&jwt)
 
-        XCTAssertEqual(String(data: data, encoding: .utf8), "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwMDAwMDAwMDB9.JgCO_GqUQnbS0z2hCxJLE9Tpt5SMoZObHBxzGBWuTYQ")
+        XCTAssertEqual(String(data: data, encoding: .utf8), "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjIwMDAwMDAwMDB9.4W6egHvMSp9bBiGUnE7WhVfXazOfg-ADcjvIYILgyPU")
     }
 
     func testSigners() throws {

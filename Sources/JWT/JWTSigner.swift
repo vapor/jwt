@@ -30,7 +30,6 @@ public final class JWTSigner {
     public func sign<Payload>(_ jwt: inout JWT<Payload>) throws -> Data {
         let jsonEncoder = JSONEncoder()
         jsonEncoder.dateEncodingStrategy = .secondsSince1970
-
         jwt.header.alg = self.algorithm.jwtAlgorithmName
         let headerData = try jsonEncoder.encode(jwt.header)
         let encodedHeader = base64encoder.encode(data: headerData)

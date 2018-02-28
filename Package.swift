@@ -7,8 +7,8 @@ let package = Package(
         .library(name: "JWT", targets: ["JWT"]),
     ],
     dependencies: [
-        // Cryptography modules
-        .package(url: "https://github.com/vapor/crypto.git", "3.0.0-beta.1"..<"3.0.0-beta.2"),
+        // 🔑 Hashing (BCrypt, SHA, HMAC, etc), encryption, and randomness.
+        .package(url: "https://github.com/vapor/crypto.git", from: "3.0.0-rc"),
     ],
     targets: [
         .target(name: "JWT", dependencies: ["Crypto"]),

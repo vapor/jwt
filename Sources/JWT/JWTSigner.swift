@@ -7,12 +7,16 @@ public final class JWTSigner {
     public var algorithm: JWTAlgorithm
 
     /// Base64 encoder
-    private let base64: Base64Encoder
+    private let base64encoder: Base64Encoder
+
+    /// Base64 decoder
+    private let base64decoder: Base64Decoder
 
     /// Create a new JWT signer.
     public init(algorithm: JWTAlgorithm) {
         self.algorithm = algorithm
-        self.base64 = Base64Encoder(encoding: .base64url)
+        self.base64encoder = Base64Encoder(encoding: .base64url)
+        self.base64decoder = Base64Decoder(encoding: .base64url)
     }
 
     /// Signs the message and returns the UTF8 of this message
@@ -29,10 +33,10 @@ public final class JWTSigner {
 
         jwt.header.alg = self.algorithm.jwtAlgorithmName
         let headerData = try jsonEncoder.encode(jwt.header)
-        let encodedHeader = base64.encode(data: headerData)
+        let encodedHeader = base64encoder.encode(data: headerData)
 
         let payloadData = try jsonEncoder.encode(jwt.payload)
-        let encodedPayload = base64.encode(data: payloadData)
+        let encodedPayload = base64encoder.encode(data: payloadData)
 
         let encodedSignature = try signature(header: encodedHeader, payload: encodedPayload)
         return encodedHeader + Data([.period]) + encodedPayload + Data([.period]) + encodedSignature
@@ -41,10 +45,19 @@ public final class JWTSigner {
     /// Generates a signature for the supplied payload and header.
     public func signature(header: Data, payload: Data) throws -> Data {
         let message: Data = header + Data([.period]) + payload
-        let signature = try algorithm.makeCiphertext(from: message)
-        return base64.encode(data: signature)
+        let signature = try algorithm.sign(message)
+        return base64encoder.encode(data: signature)
+    }
+
+    /// Generates a signature for the supplied payload and header.
+    public func verify(_ signature: Data, header: Data, payload: Data) throws -> Bool {
+        let message: Data = header + Data([.period]) + payload
+        let signature = try base64decoder.decode(data: signature)
+        return try algorithm.verify(signature, signs: message)
     }
 }
+
+/// MARK: HMAC
 
 extension JWTSigner {
     /// Creates an HS256 JWT signer with the supplied key
@@ -60,5 +73,24 @@ extension JWTSigner {
     /// Creates an HS512 JWT signer with the supplied key
     public static func hs512(key: Data) -> JWTSigner {
         return JWTSigner(algorithm: HMACAlgorithm(.sha512, key: key))
+    }
+}
+
+/// MARK: RSA
+
+extension JWTSigner {
+    /// Creates an RS256 JWT signer with the supplied key
+    public static func rs256(key: RSAKey) -> JWTSigner {
+        return JWTSigner(algorithm: RSA(hashAlgorithm: .sha256, key: key))
+    }
+
+    /// Creates an RS384 JWT signer with the supplied key
+    public static func rs384(key: RSAKey) -> JWTSigner {
+        return JWTSigner(algorithm: RSA(hashAlgorithm: .sha384, key: key))
+    }
+
+    /// Creates an RS512 JWT signer with the supplied key
+    public static func rs512(key: RSAKey) -> JWTSigner {
+        return JWTSigner(algorithm: RSA(hashAlgorithm: .sha512, key: key))
     }
 }

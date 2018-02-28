@@ -37,7 +37,7 @@ public struct JWT<Payload> where Payload: JWTPayload {
         let payloadData = Data(parts[1])
         let signatureData = Data(parts[2])
 
-        guard try signer.signature(header: headerData, payload: payloadData) == signatureData else {
+        guard try signer.verify(signatureData, header: headerData, payload: payloadData) else {
             throw JWTError(identifier: "invalidSignature", reason: "Invalid JWT signature")
         }
 
@@ -71,7 +71,7 @@ public struct JWT<Payload> where Payload: JWTPayload {
         }
 
         let signer = try signers.requireSigner(kid: kid)
-        guard try signer.signature(header: headerData, payload: payloadData) == signatureData else {
+        guard try signer.verify(signatureData, header: headerData, payload: payloadData) else {
             throw JWTError(identifier: "invalidSignature", reason: "Invalid JWT signature")
         }
 

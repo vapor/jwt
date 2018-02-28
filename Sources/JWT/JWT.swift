@@ -1,177 +1,115 @@
-/// JSON web token (JWT)
-public struct JWT {
-    fileprivate static let separator: Byte = .period
+import Bits
+import Crypto
+import Foundation
 
-    public let headers: JSON
-    public let payload: JSON
-    public let signature: Bytes
+/// A JSON Web Token
+public struct JWT<Payload> where Payload: JWTPayload {
+    /// The headers linked to this message
+    public var header: JWTHeader
 
-    /// Used to store the token that created this
-    /// JWT if it was parsed
-    public let rawToken: (
-        header: Bytes, 
-        payload: Bytes, 
-        signature: Bytes
-    )?
+    /// The JSON payload within this message
+    public var payload: Payload
 
-    /// Creates a JWT with custom headers and payload
-    /// this will NOT include keys such as algorithm.
-    /// Use 'init(additionalHeaders: ..' to include those headers
-    ///
-    /// - parameter headers:  Headers object as Node
-    /// - parameter payload:  Payload object as Node
-    /// - parameter encoding: Encoding to use for the headers, payload, and signature when creating
-    ///                       the token string
-    /// - parameter signer:   Signer that creates the signature
-    ///
-    /// - throws: Any error thrown while encoding or signing
-    ///
-    /// - returns: A JWT value
-    public init(
-        headers: JSON,
-        payload: JSON,
-        signer: Signer
-    ) throws {
-        self.headers = headers
+    /// Creates a new JSON Web Signature from predefined data
+    public init(header: JWTHeader = .init(), payload: Payload) {
+        self.header = header
         self.payload = payload
-
-        let encoded = try [headers, payload].map { json in
-            return try json.makeBytes().base64URLEncoded
-        }
-        let message = encoded[0] + [JWT.separator] + encoded[1]
-
-        signature = try signer
-            .sign(message: message)
-
-        rawToken = nil
     }
 
-    /// Creates a JWT with claims and default headers ("typ", and "alg")
-    ///
-    /// - parameter additionalHeaders: Headers to add besides the defaults ones
-    /// - parameter payload:  Payload object as Node
-    /// - parameter encoding: Encoding to use for the headers, payload, and signature when creating
-    ///                       the token string
-    /// - parameter signer:   Signer that creates the signature
-    ///
-    /// - throws: Any error thrown while encoding or signing
-    ///
-    /// - returns: A JWT value
-    public init(
-        additionalHeaders: [Header] = [],
-        payload: JSON,
-        signer: Signer
-    ) throws {
-        let headers: [Header] = [TypeHeader(), AlgorithmHeader(signer: signer)] + additionalHeaders
-        try self.init(
-            headers: JSON.init(headers),
-            payload: payload,
-            signer: signer
-        )
+    /// Parses a JWT string into a JSON Web Token
+    public init(from string: String, verifiedUsing signer: JWTSigner) throws {
+        try self.init(from: Data(string.utf8), verifiedUsing: signer)
     }
 
-    /// Creates a JWT with claims and default headers ("typ", and "alg")
-    ///
-    /// - parameter additionalHeaders: Headers to add besides the defaults ones
-    /// - parameter payload:  Payload object as Node
-    /// - parameter encoding: Encoding to use for the headers, payload, and signature when creating
-    ///                       the token string
-    /// - parameter signer:   Signer that creates the signature
-    ///
-    /// - throws: Any error thrown while encoding or signing
-    ///
-    /// - returns: A JWT value
-    public init(
-        additionalHeaders: [String: JSON],
-        payload: JSON,
-        signer: Signer
-        ) throws {
-        let headers: [Header] = [TypeHeader(), AlgorithmHeader(signer: signer)]
-        var headersJSON = JSON(headers)
-        additionalHeaders.forEach { key, value in
-            headersJSON[key] = value
-        }
-        try self.init(
-            headers: headersJSON,
-            payload: payload,
-            signer: signer
-        )
+    /// Parses a JWT string into a JSON Web Signature
+    public init(from string: String, verifiedUsing signers: JWTSigners) throws {
+        try self.init(from: Data(string.utf8), verifiedUsing: signers)
     }
 
-    /// Decodes a token string into a JWT
-    ///
-    /// - parameter token:    The token string to decode
-    /// - parameter encoding: Encoding used for decoding the headers, payload, and signature
-    ///
-    /// - throws: JWTError.incorrectNumberOfSegments when the token does not consist of 3 "."
-    ///           separated segments or any error thrown while decoding
-    ///
-    /// - returns: A JWT value
-    public init(token: String) throws {
-        let segments = token.components(
-            separatedBy: [JWT.separator].makeString()
-        )
-
-        guard segments.count == 3 else {
-            throw JWTError.incorrectNumberOfSegments
+    /// Parses a JWT string into a JSON Web Signature
+    public init(from data: Data, verifiedUsing signer: JWTSigner) throws {
+        let parts = data.split(separator: .period)
+        guard parts.count == 3 else {
+            throw JWTError(identifier: "invalidJWT", reason: "Malformed JWT")
         }
 
-        let parsed = segments.map { string in
-            return string
-                .makeBytes()
-                .base64URLDecoded
+        let headerData = Data(parts[0])
+        let payloadData = Data(parts[1])
+        let signatureData = Data(parts[2])
+
+        guard try signer.verify(signatureData, header: headerData, payload: payloadData) else {
+            throw JWTError(identifier: "invalidSignature", reason: "Invalid JWT signature")
         }
 
-        headers = try JSON(bytes: parsed[0])
-        payload = try JSON(bytes: parsed[1])
-        signature = parsed[2]
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.dateDecodingStrategy = .secondsSince1970
 
-        self.rawToken = (
-            segments[0].makeBytes(),
-            segments[1].makeBytes(),
-            segments[2].makeBytes()
-        )
+        let base64 = Base64Decoder(encoding: .base64url)
+        self.header = try jsonDecoder.decode(JWTHeader.self, from:  base64.decode(data: headerData))
+        self.payload = try jsonDecoder.decode(Payload.self, from: base64.decode(data: payloadData))
+        try payload.verify()
     }
 
-    /// Creates a token from the provided header and payload (claims), encoded using the JWT's 
-    /// encoder and signed by the signature.
-    ///
-    /// - throws: Any error thrown while encoding
-    ///
-    /// - returns: An encoded and signed token string
-    public func createToken() throws -> String {
-        let tokenBytes = try createMessage()
-            + [JWT.separator]
-            + signature.base64URLEncoded
-
-        return tokenBytes.makeString()
-    }
-}
-
-extension JWT: ClaimsVerifiable {
-    public var node: Node {
-        return Node(payload.wrapped)
-    }
-}
-
-extension JWT: SignatureVerifiable {
-    public var algorithmName: String? {
-        return headers.object?[AlgorithmHeader.name]?.string
-    }
-
-    public func createMessage() throws -> Bytes {
-        if let rawToken = self.rawToken {
-            return rawToken.header 
-                + JWT.separator.makeBytes() 
-                + rawToken.payload
+    /// Parses a JWT string into a JSON Web Signature
+    public init(from data: Data, verifiedUsing signers: JWTSigners) throws {
+        let parts = data.split(separator: .period)
+        guard parts.count == 3 else {
+            throw JWTError(identifier: "invalidJWT", reason: "Malformed JWT")
         }
 
-        return try headers.makeBytes().base64URLEncoded
-            + [JWT.separator]
-            + payload.makeBytes().base64URLEncoded
+        let headerData = Data(parts[0])
+        let payloadData = Data(parts[1])
+        let signatureData = Data(parts[2])
+
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.dateDecodingStrategy = .secondsSince1970
+
+        let base64 = Base64Decoder(encoding: .base64url)
+        let header = try jsonDecoder.decode(JWTHeader.self, from:  base64.decode(data: headerData))
+        guard let kid = header.kid else {
+            throw JWTError(identifier: "missingKID", reason: "`kid` header property required to identify signer")
+        }
+
+        let signer = try signers.requireSigner(kid: kid)
+        guard try signer.verify(signatureData, header: headerData, payload: payloadData) else {
+            throw JWTError(identifier: "invalidSignature", reason: "Invalid JWT signature")
+        }
+
+        self.header = header
+        self.payload = try jsonDecoder.decode(Payload.self, from: base64.decode(data: payloadData))
+        try payload.verify()
     }
 
-    public func createSignature() throws -> Bytes {
-        return signature
+    /// Parses a JWT string into a JSON Web Signature
+    public init(unverifiedFrom data: Data) throws {
+        let parts = data.split(separator: .period)
+        guard parts.count == 3 else {
+            throw JWTError(identifier: "invalidJWT", reason: "Malformed JWT")
+        }
+
+        let headerData = Data(parts[0])
+        let payloadData = Data(parts[1])
+
+        let jsonDecoder = JSONDecoder()
+        jsonDecoder.dateDecodingStrategy = .secondsSince1970
+
+        let base64 = Base64Decoder(encoding: .base64url)
+        self.header = try jsonDecoder.decode(JWTHeader.self, from:  base64.decode(data: headerData))
+        self.payload = try jsonDecoder.decode(Payload.self, from: base64.decode(data: payloadData))
+    }
+
+    /// Signs the message and returns the serialized JSON web token
+    public mutating func sign(using signers: JWTSigners) throws -> Data {
+        guard let kid = header.kid else {
+            throw JWTError(identifier: "missingKID", reason: "`kid` header property required to identify signer")
+        }
+
+        let signer = try signers.requireSigner(kid: kid)
+        return try signer.sign(&self)
+    }
+
+    /// Signs the message and returns the serialized JSON web token
+    public mutating func sign(using signer: JWTSigner) throws -> Data {
+        return try signer.sign(&self)
     }
 }

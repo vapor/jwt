@@ -3,8 +3,34 @@ import Foundation
 
 /// The algorithm to use for signing
 public protocol JWTAlgorithm {
+    /// Unique JWT-standard name for this algorithm.
     var jwtAlgorithmName: String { get }
-    func makeCiphertext(from plaintext: Data) throws -> Data
+
+    /// Creates a signature from the supplied plaintext.
+    func sign(_ plaintext: Data) throws -> Data
+
+    /// Returns true if the signature was creating by signing the plaintext.
+    func verify(_ signature: Data, signs plaintext: Data) throws -> Bool
+}
+
+extension JWTAlgorithm {
+    /// See `JWTAlgorithm.verify(_:signs)`
+    public func verify(_ signature: Data, signs plaintext: Data) throws -> Bool {
+        return try sign(plaintext) == signature
+    }
+}
+
+extension RSA: JWTAlgorithm {
+    /// See JWTAlgorithm.jwtAlgorithmName
+    public var jwtAlgorithmName: String {
+        switch hashAlgorithm {
+        case .sha1: return "RS1"
+        case .sha224: return "RS224"
+        case .sha256: return "RS256"
+        case .sha384: return "RS384"
+        case .sha512: return "RS512"
+        }
+    }
 }
 
 public struct HMACAlgorithm: JWTAlgorithm {
@@ -30,7 +56,7 @@ public struct HMACAlgorithm: JWTAlgorithm {
     }
 
     /// See JWTAlgorithm.makeCiphertext
-    public func makeCiphertext(from plaintext: Data) throws -> Data {
+    public func sign(_ plaintext: Data) throws -> Data {
         switch variant {
         case .sha256: return HMAC<SHA256>.authenticate(plaintext, withKey: key)
         case .sha384: return HMAC<SHA384>.authenticate(plaintext, withKey: key)

@@ -44,9 +44,8 @@ public struct JWT<Payload> where Payload: JWTPayload {
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .secondsSince1970
 
-        let base64 = Base64Decoder(encoding: .base64url)
-        self.header = try jsonDecoder.decode(JWTHeader.self, from:  base64.decode(data: headerData))
-        self.payload = try jsonDecoder.decode(Payload.self, from: base64.decode(data: payloadData))
+        self.header = try jsonDecoder.decode(JWTHeader.self, from: Base64.url.decode(data: headerData))
+        self.payload = try jsonDecoder.decode(Payload.self, from: Base64.url.decode(data: payloadData))
         try payload.verify()
     }
 
@@ -64,8 +63,7 @@ public struct JWT<Payload> where Payload: JWTPayload {
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .secondsSince1970
 
-        let base64 = Base64Decoder(encoding: .base64url)
-        let header = try jsonDecoder.decode(JWTHeader.self, from:  base64.decode(data: headerData))
+        let header = try jsonDecoder.decode(JWTHeader.self, from: Base64.url.decode(data: headerData))
         guard let kid = header.kid else {
             throw JWTError(identifier: "missingKID", reason: "`kid` header property required to identify signer")
         }
@@ -76,7 +74,7 @@ public struct JWT<Payload> where Payload: JWTPayload {
         }
 
         self.header = header
-        self.payload = try jsonDecoder.decode(Payload.self, from: base64.decode(data: payloadData))
+        self.payload = try jsonDecoder.decode(Payload.self, from: Base64.url.decode(data: payloadData))
         try payload.verify()
     }
 
@@ -93,9 +91,8 @@ public struct JWT<Payload> where Payload: JWTPayload {
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .secondsSince1970
 
-        let base64 = Base64Decoder(encoding: .base64url)
-        self.header = try jsonDecoder.decode(JWTHeader.self, from:  base64.decode(data: headerData))
-        self.payload = try jsonDecoder.decode(Payload.self, from: base64.decode(data: payloadData))
+        self.header = try jsonDecoder.decode(JWTHeader.self, from: Base64.url.decode(data: headerData))
+        self.payload = try jsonDecoder.decode(Payload.self, from: Base64.url.decode(data: payloadData))
     }
 
     /// Signs the message and returns the serialized JSON web token

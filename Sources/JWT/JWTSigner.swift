@@ -25,10 +25,10 @@ public final class JWTSigner {
         jsonEncoder.dateEncodingStrategy = .secondsSince1970
         jwt.header.alg = self.algorithm.jwtAlgorithmName
         let headerData = try jsonEncoder.encode(jwt.header)
-        let encodedHeader = Base64.url.encode(data: headerData)
+        let encodedHeader = try Base64.url.encode(data: headerData)
 
         let payloadData = try jsonEncoder.encode(jwt.payload)
-        let encodedPayload = Base64.url.encode(data: payloadData)
+        let encodedPayload = try Base64.url.encode(data: payloadData)
 
         let encodedSignature = try signature(header: encodedHeader, payload: encodedPayload)
         return encodedHeader + Data([.period]) + encodedPayload + Data([.period]) + encodedSignature
@@ -38,7 +38,7 @@ public final class JWTSigner {
     public func signature(header: Data, payload: Data) throws -> Data {
         let message: Data = header + Data([.period]) + payload
         let signature = try algorithm.sign(message)
-        return Base64.url.encode(data: signature)
+        return try Base64.url.encode(data: signature)
     }
 
     /// Generates a signature for the supplied payload and header.

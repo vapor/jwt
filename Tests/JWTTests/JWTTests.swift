@@ -57,8 +57,8 @@ class JWTTests: XCTestCase {
     }
 
     func testRSA() throws {
-        let privateKey = privateKeyString.base64Decoded()
-        let publicKey = publicKeyString.base64Decoded()
+        let privateKey = try privateKeyString.base64Decoded()
+        let publicKey = try publicKeyString.base64Decoded()
         let privateSigner = JWTSigner.rs256(key: .private2048(privateKey))
         let publicSigner = JWTSigner.rs256(key: .public2048(publicKey))
 

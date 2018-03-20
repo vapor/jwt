@@ -44,7 +44,7 @@ public final class JWTSigner {
     /// Generates a signature for the supplied payload and header.
     public func verify(_ signature: Data, header: Data, payload: Data) throws -> Bool {
         let message: Data = header + Data([.period]) + payload
-        let signature = Base64.url.decode(data: signature)
+        let signature = try Base64.url.decode(data: signature)
         return try algorithm.verify(signature, signs: message)
     }
 }

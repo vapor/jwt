@@ -8,7 +8,7 @@ let package = Package(
     ],
     dependencies: [
         // 🔑 Hashing (BCrypt, SHA, HMAC, etc), encryption, and randomness.
-        .package(url: "https://github.com/vapor/crypto.git", .branch("nio")),
+        .package(url: "https://github.com/vapor/crypto.git", .branch("master")),
     ],
     targets: [
         .target(name: "JWT", dependencies: ["Crypto"]),

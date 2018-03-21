@@ -1,4 +1,4 @@
-import Bits
+import Core
 import Crypto
 import Foundation
 
@@ -44,8 +44,15 @@ public struct JWT<Payload> where Payload: JWTPayload {
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .secondsSince1970
 
-        self.header = try jsonDecoder.decode(JWTHeader.self, from: Base64.url.decode(data: headerData))
-        self.payload = try jsonDecoder.decode(Payload.self, from: Base64.url.decode(data: payloadData))
+        guard let decodedHeader = Data(base64URLEncoded: headerData) else {
+            throw JWTError(identifier: "base64", reason: "JWT header is not valid base64-url")
+        }
+        guard let decodedPayload = Data(base64URLEncoded: payloadData) else {
+            throw JWTError(identifier: "base64", reason: "JWT payload is not valid base64-url")
+        }
+        
+        self.header = try jsonDecoder.decode(JWTHeader.self, from: decodedHeader)
+        self.payload = try jsonDecoder.decode(Payload.self, from: decodedPayload)
         try payload.verify()
     }
 
@@ -63,7 +70,11 @@ public struct JWT<Payload> where Payload: JWTPayload {
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .secondsSince1970
 
-        let header = try jsonDecoder.decode(JWTHeader.self, from: Base64.url.decode(data: headerData))
+        guard let decodedHeader = Data(base64URLEncoded: headerData) else {
+            throw JWTError(identifier: "base64", reason: "JWT header is not valid base64-url")
+        }
+
+        let header = try jsonDecoder.decode(JWTHeader.self, from: decodedHeader)
         guard let kid = header.kid else {
             throw JWTError(identifier: "missingKID", reason: "`kid` header property required to identify signer")
         }
@@ -73,8 +84,12 @@ public struct JWT<Payload> where Payload: JWTPayload {
             throw JWTError(identifier: "invalidSignature", reason: "Invalid JWT signature")
         }
 
+        guard let decodedPayload = Data(base64URLEncoded: payloadData) else {
+            throw JWTError(identifier: "base64", reason: "JWT payload is not valid base64-url")
+        }
+
         self.header = header
-        self.payload = try jsonDecoder.decode(Payload.self, from: Base64.url.decode(data: payloadData))
+        self.payload = try jsonDecoder.decode(Payload.self, from: decodedPayload)
         try payload.verify()
     }
 
@@ -91,8 +106,15 @@ public struct JWT<Payload> where Payload: JWTPayload {
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .secondsSince1970
 
-        self.header = try jsonDecoder.decode(JWTHeader.self, from: Base64.url.decode(data: headerData))
-        self.payload = try jsonDecoder.decode(Payload.self, from: Base64.url.decode(data: payloadData))
+        guard let decodedHeader = Data(base64URLEncoded: headerData) else {
+            throw JWTError(identifier: "base64", reason: "JWT header is not valid base64-url")
+        }
+        guard let decodedPayload = Data(base64URLEncoded: payloadData) else {
+            throw JWTError(identifier: "base64", reason: "JWT payload is not valid base64-url")
+        }
+
+        self.header = try jsonDecoder.decode(JWTHeader.self, from: decodedHeader)
+        self.payload = try jsonDecoder.decode(Payload.self, from: decodedPayload)
     }
 
     /// Signs the message and returns the serialized JSON web token

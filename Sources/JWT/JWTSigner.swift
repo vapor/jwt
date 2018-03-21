@@ -1,4 +1,4 @@
-import Bits
+import Core
 import Crypto
 import Foundation
 
@@ -25,10 +25,10 @@ public final class JWTSigner {
         jsonEncoder.dateEncodingStrategy = .secondsSince1970
         jwt.header.alg = self.algorithm.jwtAlgorithmName
         let headerData = try jsonEncoder.encode(jwt.header)
-        let encodedHeader = Base64.url.encode(data: headerData)
+        let encodedHeader = headerData.base64URLEncodedData()
 
         let payloadData = try jsonEncoder.encode(jwt.payload)
-        let encodedPayload = Base64.url.encode(data: payloadData)
+        let encodedPayload = payloadData.base64URLEncodedData()
 
         let encodedSignature = try signature(header: encodedHeader, payload: encodedPayload)
         return encodedHeader + Data([.period]) + encodedPayload + Data([.period]) + encodedSignature
@@ -38,13 +38,15 @@ public final class JWTSigner {
     public func signature(header: Data, payload: Data) throws -> Data {
         let message: Data = header + Data([.period]) + payload
         let signature = try algorithm.sign(message)
-        return Base64.url.encode(data: signature)
+        return signature.base64URLEncodedData()
     }
 
     /// Generates a signature for the supplied payload and header.
     public func verify(_ signature: Data, header: Data, payload: Data) throws -> Bool {
         let message: Data = header + Data([.period]) + payload
-        let signature = try Base64.url.decode(data: signature)
+        guard let signature = Data(base64URLEncoded: signature) else {
+            throw JWTError(identifier: "base64", reason: "JWT signature is not valid base64-url")
+        }
         return try algorithm.verify(signature, signs: message)
     }
 }

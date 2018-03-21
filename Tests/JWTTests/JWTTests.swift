@@ -52,15 +52,13 @@ class JWTTests: XCTestCase {
         let signers = JWTSigners()
         signers.use(signer, kid: "foo")
 
-        let jwt = try! JWT<TestPayload>(from: data, verifiedUsing: signers)
+        let jwt = try JWT<TestPayload>(from: data, verifiedUsing: signers)
         XCTAssertEqual(jwt.payload.name, "John Doe")
     }
 
     func testRSA() throws {
-        let privateKey = try privateKeyString.base64Decoded()
-        let publicKey = try publicKeyString.base64Decoded()
-        let privateSigner = JWTSigner.rs256(key: .private2048(privateKey))
-        let publicSigner = JWTSigner.rs256(key: .public2048(publicKey))
+        let privateSigner = try JWTSigner.rs256(key: .private(pem: privateKeyString))
+        let publicSigner = try JWTSigner.rs256(key: .public(pem: publicKeyString))
 
         let payload = TestPayload(
             sub: "vapor",
@@ -114,39 +112,28 @@ struct ExpirationPayload: JWTPayload {
 /// MARK: RSA
 
 let privateKeyString = """
-MIIEpAIBAAKCAQEAk+dWlCTQIr85rtUi56yD6FT6vuG68Q9xJ4B9bAo4wys+ndlP
-SX0UQkrPOpnNZcsHOob6DbRI5Cc4qce00nNJAlCxYqAJDDDryyQEtUv8ghGGWnjU
-gBRytm39UM9s/UxyLfGWk3P1Z1us8q5RvsrceC28uG94Lr+w2XmcBwxP020qJIiU
-qOff8me1vI7vogvec3yO6pLvb1zcqMioKIdQ/kWjgMvhVyFyg44IqEI1iApjt05C
-jTQ30W1xyN/9b/cedQzEg8Nq2MQdhKCIZJh2vjSUuWOBCnx+ttErIYt0roisNj1O
-howtSM6k0vV1LPDrCjV7lFPmE1njwTfdV/vlcQIDAQABAoIBAGBwjt6oJmMRx139
-sfXYYmZiyuEeNRQsGn9EZAPHon14PCsW4IEtosEbIIa4dNq0CPGbw36eGI1UGbly
-86/p5igxT4jciym82HMr+Dny4yI4pR9m/EDLlITpsSw5JHsBls3oYmOhT9nmSB4x
-ljHO+vUN9alZXcc1zO3xQtDBsWdNG73YFRAv2HJ6us50wQXw4cEsuQo6X/fUREkB
-nznkArTcm/VcnZFaRUg4sXQBBQdy3LhRh3zQ5V64iBe9AWgenDv7tO5Bk8xhrLE/
-kBdvyrTsWKaKSSnes28oB5YLfbFpRYnYGGuaWbu5f0deOuQlS5F5HxuaHHsdRxaU
-Xee7BLECgYEA60QxWsXdeIWXmMhOoCapq6OTdaPVVzZfZc57s82xy5IgghBJj3up
-QbOIcfcBNTmpG4ohtB5EEmOozBKEm3dg09RF9aQ/t4Gx4TOmbtCt8IiuNAr4zj7+
-xsLWh1sWGK0UvZ1hkkKoFxHU7ienXCfhfiEjBLWtNGzVHieoIc1Ly00CgYEAoPAr
-Txegn2ZreU4vn6CP9pHIxY6JV7nFPbGng6q8hkMMCu7CY/w9UP9iZG6uvQcoSqGt
-7rIUUqYWUcf8qcAtvWyLTZmtkCm+LIHiJak4PZXwTrpYOZQScpBTw8ViuVREsJSw
-5oHgworZg3rD9oLbiSt+Iy//U14g7gzA7mJVyLUCgYEA6pHoX6gOpH8WYme9NSK3
-YwHKIa4DJVx6C2ivn9uD3QPKU8PnhB746CAX+AEd/DKMcH/uEMdoealSAH6qJtQE
-/8+THVLxkIbIk1BLLgv0kXHFtvAFmKXoosZa3UQtKNdRaakEQq8hJzdJRVbWICVH
-R9nEL4rwseedKd7CXUlyu7UCgYBrjnbzQfAn95QGGxm6zdzIxb9vQIZLaa0HQS6Z
-0UZzWGW4/L5Pgikcc8E3K71+OUVVM16BsuPgJH2wJD6Y2AX5nYwvzW/wc+VT623P
-C5u5lPZoNyN1P59gj1Jb+RO0ljvd41Gii9RBT/h0ZVyH6AZ+UuHW9GHoPnU1grKB
-3phELQKBgQDOWrOLmd/v43r99fxqrkZv9twFkAPlcpYOMn/SDpmJfWR3sGWCz5eI
-czQFrr4k36C5HwgornNShezXpbU9bGaG7zAdd3egdqjYeWQeqj/WQFAoP6+jA+yL
-hR/bpssdZZaF7Ah0AR/IHGgbNLAfdpGBjyEl1WRoq+tuJ9oMcbKezQ==
-""".replacingOccurrences(of: "\n", with: "")
+-----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQC0cOtPjzABybjzm3fCg1aCYwnxPmjXpbCkecAWLj/CcDWEcuTZ
+kYDiSG0zgglbbbhcV0vJQDWSv60tnlA3cjSYutAv7FPo5Cq8FkvrdDzeacwRSxYu
+Iq1LtYnd6I30qNaNthntjvbqyMmBulJ1mzLI+Xg/aX4rbSL49Z3dAQn8vQIDAQAB
+AoGBAJeBFGLJ1EI8ENoiWIzu4A08gRWZFEi06zs+quU00f49XwIlwjdX74KP03jj
+H14wIxMNjSmeixz7aboa6jmT38pQIfE3DmZoZAbKPG89SdP/S1qprQ71LgBGOuNi
+LoYTZ96ZFPcHbLZVCJLPWWWX5yEqy4MS996E9gMAjSt8yNvhAkEA38MufqgrAJ0H
+VSgL7ecpEhWG3PHryBfg6fK13RRpRM3jETo9wAfuPiEodnD6Qcab52H2lzMIysv1
+Ex6nGv2pCQJBAM5v9SMbMG20gBzmeZvjbvxkZV2Tg9x5mWQpHkeGz8GNyoDBclAc
+BFEWGKVGYV6jl+3F4nqQ6YwKBToE5KIU5xUCQEY9Im8norgCkrasZ3I6Sa4fi8H3
+PqgEttk5EtVe/txWNJzHx3JsCuD9z5G+TRAwo+ex3JIBtxTRiRCDYrkaPuECQA2W
+vRI0hfmSuiQs37BtRi8DBNEmFrX6oyg+tKmMrDxXcw8KrNWtInOb+r9WZK5wIl4a
+epAK3fTD7Bgnnk01BwkCQHQwEdGNGN3ntYfuRzPA4KiLrt8bpACaHHr2wn9N3fRI
+bxEd3Ax0uhHVqKRWNioL7UBvd4lxoReY8RmmfghZHEA=
+-----END RSA PRIVATE KEY-----
+"""
 
 let publicKeyString = """
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAk+dWlCTQIr85rtUi56yD
-6FT6vuG68Q9xJ4B9bAo4wys+ndlPSX0UQkrPOpnNZcsHOob6DbRI5Cc4qce00nNJ
-AlCxYqAJDDDryyQEtUv8ghGGWnjUgBRytm39UM9s/UxyLfGWk3P1Z1us8q5Rvsrc
-eC28uG94Lr+w2XmcBwxP020qJIiUqOff8me1vI7vogvec3yO6pLvb1zcqMioKIdQ
-/kWjgMvhVyFyg44IqEI1iApjt05CjTQ30W1xyN/9b/cedQzEg8Nq2MQdhKCIZJh2
-vjSUuWOBCnx+ttErIYt0roisNj1OhowtSM6k0vV1LPDrCjV7lFPmE1njwTfdV/vl
-cQIDAQAB
-""".replacingOccurrences(of: "\n", with: "")
+-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC0cOtPjzABybjzm3fCg1aCYwnx
+PmjXpbCkecAWLj/CcDWEcuTZkYDiSG0zgglbbbhcV0vJQDWSv60tnlA3cjSYutAv
+7FPo5Cq8FkvrdDzeacwRSxYuIq1LtYnd6I30qNaNthntjvbqyMmBulJ1mzLI+Xg/
+aX4rbSL49Z3dAQn8vQIDAQAB
+-----END PUBLIC KEY-----
+"""

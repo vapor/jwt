@@ -11,7 +11,7 @@ jobs:
 
   linux:
     docker:
-      - image: norionomura/swift:swift-4.1-branch
+      - image: codevapor/swift:4.1
     steps:
       - checkout
       - run: 

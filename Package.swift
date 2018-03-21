@@ -8,10 +8,10 @@ let package = Package(
     ],
     dependencies: [
         // 🌎 Utility package containing tools for byte manipulation, Codable, OS APIs, and debugging.
-        .package(url: "https://github.com/vapor/core.git", .branch("master")),
+        .package(url: "https://github.com/vapor/core.git", from: "3.0.0-rc.2"),
 
         // 🔑 Hashing (BCrypt, SHA, HMAC, etc), encryption, and randomness.
-        .package(url: "https://github.com/vapor/crypto.git", .branch("master")),
+        .package(url: "https://github.com/vapor/crypto.git", from: "3.0.0-rc.2"),
     ],
     targets: [
         .target(name: "JWT", dependencies: ["Core", "Crypto"]),

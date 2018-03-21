@@ -1,3 +1,4 @@
+import Core
 import Crypto
 import Foundation
 
@@ -6,17 +7,9 @@ public final class JWTSigner {
     /// Algorithm
     public var algorithm: JWTAlgorithm
 
-    /// Base64 encoder
-    private let base64encoder: Base64Encoder
-
-    /// Base64 decoder
-    private let base64decoder: Base64Decoder
-
     /// Create a new JWT signer.
     public init(algorithm: JWTAlgorithm) {
         self.algorithm = algorithm
-        self.base64encoder = Base64Encoder(encoding: .base64url)
-        self.base64decoder = Base64Decoder(encoding: .base64url)
     }
 
     /// Signs the message and returns the UTF8 of this message
@@ -32,10 +25,10 @@ public final class JWTSigner {
         jsonEncoder.dateEncodingStrategy = .secondsSince1970
         jwt.header.alg = self.algorithm.jwtAlgorithmName
         let headerData = try jsonEncoder.encode(jwt.header)
-        let encodedHeader = base64encoder.encode(data: headerData)
+        let encodedHeader = headerData.base64URLEncodedData()
 
         let payloadData = try jsonEncoder.encode(jwt.payload)
-        let encodedPayload = base64encoder.encode(data: payloadData)
+        let encodedPayload = payloadData.base64URLEncodedData()
 
         let encodedSignature = try signature(header: encodedHeader, payload: encodedPayload)
         return encodedHeader + Data([.period]) + encodedPayload + Data([.period]) + encodedSignature
@@ -45,13 +38,15 @@ public final class JWTSigner {
     public func signature(header: Data, payload: Data) throws -> Data {
         let message: Data = header + Data([.period]) + payload
         let signature = try algorithm.sign(message)
-        return base64encoder.encode(data: signature)
+        return signature.base64URLEncodedData()
     }
 
     /// Generates a signature for the supplied payload and header.
     public func verify(_ signature: Data, header: Data, payload: Data) throws -> Bool {
         let message: Data = header + Data([.period]) + payload
-        let signature = try base64decoder.decode(data: signature)
+        guard let signature = Data(base64URLEncoded: signature) else {
+            throw JWTError(identifier: "base64", reason: "JWT signature is not valid base64-url")
+        }
         return try algorithm.verify(signature, signs: message)
     }
 }

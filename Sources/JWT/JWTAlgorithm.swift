@@ -31,6 +31,16 @@ extension RSA: JWTAlgorithm {
         case .sha512: return "RS512"
         }
     }
+
+    /// See `JWTAlgorithm.sign`
+    public func sign(_ plaintext: Data) throws -> Data {
+        return try sign(plaintext as DataRepresentable)
+    }
+
+    /// See `JWTAlgorithm.verify`
+    public func verify(_ signature: Data, signs plaintext: Data) throws -> Bool {
+        return try verify(signature as DataRepresentable, signs: plaintext as DataRepresentable)
+    }
 }
 
 public struct HMACAlgorithm: JWTAlgorithm {

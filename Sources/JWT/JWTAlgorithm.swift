@@ -83,3 +83,9 @@ public enum HMACAlgorithmVariant {
     case sha384
     case sha512
 }
+
+extension DigestAlgorithm: Equatable {
+    public static func == (lhs: DigestAlgorithm, rhs: DigestAlgorithm) -> Bool {
+        return rhs.type == lhs.type
+    }
+}

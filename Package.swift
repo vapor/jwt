@@ -1,12 +1,20 @@
+// swift-tools-version:4.0
 import PackageDescription
 
 let package = Package(
     name: "JWT",
-    dependencies: [
-        .Package(url: "https://github.com/vapor/crypto.git", majorVersion: 2),
-        .Package(url: "https://github.com/vapor/json.git", majorVersion: 2),
+    products: [
+        .library(name: "JWT", targets: ["JWT"]),
     ],
-    exclude: [
-        "Playground"
+    dependencies: [
+        // 🌎 Utility package containing tools for byte manipulation, Codable, OS APIs, and debugging.
+        .package(url: "https://github.com/vapor/core.git", from: "3.0.0-rc.2"),
+
+        // 🔑 Hashing (BCrypt, SHA, HMAC, etc), encryption, and randomness.
+        .package(url: "https://github.com/vapor/crypto.git", from: "3.0.0-rc.2"),
+    ],
+    targets: [
+        .target(name: "JWT", dependencies: ["Core", "Crypto"]),
+        .testTarget(name: "JWTTests", dependencies: ["JWT"]),
     ]
 )

@@ -75,16 +75,16 @@ extension JWTSigner {
 extension JWTSigner {
     /// Creates an RS256 JWT signer with the supplied key
     public static func rs256(key: RSAKey) -> JWTSigner {
-        return JWTSigner(algorithm: RSA(hashAlgorithm: .sha256, key: key))
+        return JWTSigner(algorithm: RSA(digestAlgorithm: .sha256, key: key))
     }
 
     /// Creates an RS384 JWT signer with the supplied key
     public static func rs384(key: RSAKey) -> JWTSigner {
-        return JWTSigner(algorithm: RSA(hashAlgorithm: .sha384, key: key))
+        return JWTSigner(algorithm: RSA(digestAlgorithm: .sha384, key: key))
     }
 
     /// Creates an RS512 JWT signer with the supplied key
     public static func rs512(key: RSAKey) -> JWTSigner {
-        return JWTSigner(algorithm: RSA(hashAlgorithm: .sha512, key: key))
+        return JWTSigner(algorithm: RSA(digestAlgorithm: .sha512, key: key))
     }
 }

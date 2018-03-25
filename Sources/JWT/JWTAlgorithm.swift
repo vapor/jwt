@@ -7,16 +7,16 @@ public protocol JWTAlgorithm {
     var jwtAlgorithmName: String { get }
 
     /// Creates a signature from the supplied plaintext.
-    func sign(_ plaintext: Data) throws -> Data
+    func sign(_ plaintext: LosslessDataConvertible) throws -> Data
 
     /// Returns true if the signature was creating by signing the plaintext.
-    func verify(_ signature: Data, signs plaintext: Data) throws -> Bool
+    func verify(_ signature: LosslessDataConvertible, signs plaintext: LosslessDataConvertible) throws -> Bool
 }
 
 extension JWTAlgorithm {
     /// See `JWTAlgorithm.verify(_:signs)`
-    public func verify(_ signature: Data, signs plaintext: Data) throws -> Bool {
-        return try sign(plaintext) == signature
+    public func verify(_ signature: LosslessDataConvertible, signs plaintext: LosslessDataConvertible) throws -> Bool {
+        return try sign(plaintext) == signature.convertToData()
     }
 }
 
@@ -32,16 +32,6 @@ extension RSA: JWTAlgorithm {
         default:
             return "Unknown" // this should never be reached
         }
-    }
-
-    /// See `JWTAlgorithm.sign`
-    public func sign(_ plaintext: Data) throws -> Data {
-        return try sign(plaintext as LosslessDataConvertible)
-    }
-
-    /// See `JWTAlgorithm.verify`
-    public func verify(_ signature: Data, signs plaintext: Data) throws -> Bool {
-        return try verify(signature as LosslessDataConvertible, signs: plaintext as LosslessDataConvertible)
     }
 }
 
@@ -68,7 +58,7 @@ public struct HMACAlgorithm: JWTAlgorithm {
     }
 
     /// See JWTAlgorithm.makeCiphertext
-    public func sign(_ plaintext: Data) throws -> Data {
+    public func sign(_ plaintext: LosslessDataConvertible) throws -> Data {
         switch variant {
         case .sha256: return try HMAC.SHA256.authenticate(plaintext, key: key)
         case .sha384: return try HMAC.SHA384.authenticate(plaintext, key: key)

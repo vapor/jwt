@@ -23,23 +23,25 @@ extension JWTAlgorithm {
 extension RSA: JWTAlgorithm {
     /// See JWTAlgorithm.jwtAlgorithmName
     public var jwtAlgorithmName: String {
-        switch hashAlgorithm {
+        switch digestAlgorithm {
         case .sha1: return "RS1"
         case .sha224: return "RS224"
         case .sha256: return "RS256"
         case .sha384: return "RS384"
         case .sha512: return "RS512"
+        default:
+            return "Unknown" // this should never be reached
         }
     }
 
     /// See `JWTAlgorithm.sign`
     public func sign(_ plaintext: Data) throws -> Data {
-        return try sign(plaintext as DataRepresentable)
+        return try sign(plaintext as LosslessDataConvertible)
     }
 
     /// See `JWTAlgorithm.verify`
     public func verify(_ signature: Data, signs plaintext: Data) throws -> Bool {
-        return try verify(signature as DataRepresentable, signs: plaintext as DataRepresentable)
+        return try verify(signature as LosslessDataConvertible, signs: plaintext as LosslessDataConvertible)
     }
 }
 
@@ -68,9 +70,9 @@ public struct HMACAlgorithm: JWTAlgorithm {
     /// See JWTAlgorithm.makeCiphertext
     public func sign(_ plaintext: Data) throws -> Data {
         switch variant {
-        case .sha256: return HMAC<SHA256>.authenticate(plaintext, withKey: key)
-        case .sha384: return HMAC<SHA384>.authenticate(plaintext, withKey: key)
-        case .sha512: return HMAC<SHA512>.authenticate(plaintext, withKey: key)
+        case .sha256: return try HMAC.SHA256.authenticate(plaintext, key: key)
+        case .sha384: return try HMAC.SHA384.authenticate(plaintext, key: key)
+        case .sha512: return try HMAC.SHA512.authenticate(plaintext, key: key)
         }
     }
 }
@@ -80,4 +82,10 @@ public enum HMACAlgorithmVariant {
     case sha256
     case sha384
     case sha512
+}
+
+extension DigestAlgorithm: Equatable {
+    public static func == (lhs: DigestAlgorithm, rhs: DigestAlgorithm) -> Bool {
+        return rhs.type == lhs.type
+    }
 }

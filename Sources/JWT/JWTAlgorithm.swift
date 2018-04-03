@@ -20,62 +20,35 @@ extension JWTAlgorithm {
     }
 }
 
-extension RSA: JWTAlgorithm {
-    /// See JWTAlgorithm.jwtAlgorithmName
-    public var jwtAlgorithmName: String {
-        switch digestAlgorithm {
-        case .sha1: return "RS1"
-        case .sha224: return "RS224"
-        case .sha256: return "RS256"
-        case .sha384: return "RS384"
-        case .sha512: return "RS512"
-        default:
-            return "Unknown" // this should never be reached
-        }
-    }
-}
+/// Convenience struct for `JWTAlgorithm` conformance.
+public struct CustomJWTAlgorithm: JWTAlgorithm {
+    /// See `JWTAlgorithm`.
+    public let jwtAlgorithmName: String
 
-public struct HMACAlgorithm: JWTAlgorithm {
-    /// HMAC variant to use
-    public let variant: HMACAlgorithmVariant
+    /// See `JWTAlgorithm`.
+    private let signClosure: (LosslessDataConvertible) throws -> Data
 
-    /// The HMAC key
-    public let key: Data
+    /// See `JWTAlgorithm`.
+    private let verifyClosure: (LosslessDataConvertible, LosslessDataConvertible) throws -> Bool
 
-    /// See JWTAlgorithm.jwtAlgorithmName
-    public var jwtAlgorithmName: String {
-        switch variant {
-        case .sha256: return "HS256"
-        case .sha384: return "HS384"
-        case .sha512: return "HS512"
-        }
+    /// Create a new `CustomJWTAlgorithm`.
+    public init(
+        name: String,
+        sign: @escaping (LosslessDataConvertible) throws -> Data,
+        verify: @escaping (LosslessDataConvertible, LosslessDataConvertible) throws -> Bool
+    ) {
+        self.jwtAlgorithmName = name
+        self.signClosure = sign
+        self.verifyClosure = verify
     }
 
-    /// Create a new HMAC algorithm
-    public init(_ variant: HMACAlgorithmVariant, key: Data) {
-        self.variant = variant
-        self.key = key
-    }
-
-    /// See JWTAlgorithm.makeCiphertext
+    /// See `JWTAlgorithm`.
     public func sign(_ plaintext: LosslessDataConvertible) throws -> Data {
-        switch variant {
-        case .sha256: return try HMAC.SHA256.authenticate(plaintext, key: key)
-        case .sha384: return try HMAC.SHA384.authenticate(plaintext, key: key)
-        case .sha512: return try HMAC.SHA512.authenticate(plaintext, key: key)
-        }
+        return try signClosure(plaintext)
     }
-}
 
-/// Supported HMAC algorithm variants
-public enum HMACAlgorithmVariant {
-    case sha256
-    case sha384
-    case sha512
-}
-
-extension DigestAlgorithm: Equatable {
-    public static func == (lhs: DigestAlgorithm, rhs: DigestAlgorithm) -> Bool {
-        return rhs.type == lhs.type
+    /// See `JWTAlgorithm`.
+    public func verify(_ signature: LosslessDataConvertible, signs plaintext: LosslessDataConvertible) throws -> Bool {
+        return try verifyClosure(signature, plaintext)
     }
 }

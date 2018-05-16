@@ -18,7 +18,7 @@ public struct ExpirationClaim: JWTClaim, JWTVerifiable {
     }
 
     /// See Claim.verify
-    public func verify(date: Date = Date()) throws {
+    public func verify(compareTo: Date = Date()) throws {
         switch value.compare(date) {
         case .orderedAscending, .orderedSame: throw JWTError(identifier: "exp", reason: "Expiration claim failed")
         case .orderedDescending: break
@@ -38,7 +38,7 @@ public struct NotBeforeClaim: JWTClaim, JWTVerifiable {
     }
 
     /// See Claim.verify
-    public func verify(date: Date = Date()) throws {
+    public func verify(compareTo: Date = Date()) throws {
         switch value.compare(date) {
         case .orderedDescending: throw JWTError(identifier: "nbf", reason: "Not before claim failed")
         case .orderedAscending, .orderedSame: break

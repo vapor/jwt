@@ -16,7 +16,23 @@ public protocol JWTAlgorithm {
 extension JWTAlgorithm {
     /// See `JWTAlgorithm.verify(_:signs)`
     public func verify(_ signature: LosslessDataConvertible, signs plaintext: LosslessDataConvertible) throws -> Bool {
-        return try sign(plaintext) == signature.convertToData()
+        let chk = try sign(plaintext)
+        let sig = signature.convertToData()
+        
+        // byte-by-byte comparison to avoid timing attacks
+        var match = true
+        for i in 0..<min(chk.count, sig.count) {
+            if chk[chk.index(chk.startIndex, offsetBy: i)] != sig[sig.index(sig.startIndex, offsetBy: i)] {
+                match = false
+            }
+        }
+        
+        // finally, if the counts match then we can accept the result
+        if chk.count == sig.count {
+            return match
+        } else {
+            return false
+        }
     }
 }
 

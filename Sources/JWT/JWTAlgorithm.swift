@@ -1,20 +1,40 @@
 import Crypto
-import Foundation
 
-/// The algorithm to use for signing
+/// Algorithm powering a `JWTSigner`.
 public protocol JWTAlgorithm {
     /// Unique JWT-standard name for this algorithm.
     var jwtAlgorithmName: String { get }
 
     /// Creates a signature from the supplied plaintext.
+    ///
+    ///     let sig = try alg.sign("hello")
+    ///
+    /// - parameters:
+    ///     - plaintext: Plaintext data to sign.
+    /// - returns: Signature unique to the supplied data.
     func sign(_ plaintext: LosslessDataConvertible) throws -> Data
 
-    /// Returns true if the signature was creating by signing the plaintext.
+    /// Returns `true` if the signature was creating by signing the plaintext.
+    ///
+    ///     let sig = try alg.sign("hello")
+    ///
+    ///     if alg.verify(sig, signs: "hello") {
+    ///         print("signature is valid")
+    ///     } else {
+    ///         print("signature is invalid")
+    ///     }
+    ///
+    /// The above snippet should print `"signature is valid"`.
+    ///
+    /// - parameters:
+    ///     - signature: Signature data resulting from a previous call to `sign(:_)`.
+    ///     - plaintext: Plaintext data to check signature against.
+    /// - returns: Returns `true` if the signature was created by the supplied plaintext data.
     func verify(_ signature: LosslessDataConvertible, signs plaintext: LosslessDataConvertible) throws -> Bool
 }
 
 extension JWTAlgorithm {
-    /// See `JWTAlgorithm.verify(_:signs)`
+    /// See `JWTAlgorithm`.
     public func verify(_ signature: LosslessDataConvertible, signs plaintext: LosslessDataConvertible) throws -> Bool {
         let chk = try sign(plaintext)
         let sig = signature.convertToData()

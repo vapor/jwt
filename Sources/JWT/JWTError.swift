@@ -1,17 +1,17 @@
 import Debugging
 
-/// Errors that can be thrown while working with JWT
+/// Errors that can be thrown while working with JWT.
 public struct JWTError: Debuggable, Error {
-    /// See Debuggable.readableName
+    /// See `Debuggable`.
     public static var readableName = "JWT Error"
 
-    /// See Debuggable.reason
+    /// See `Debuggable`.
     public var reason: String
 
-    /// See Debuggable.identifier
+    /// See `Debuggable`.
     public var identifier: String
 
-    /// Create a new JWT error
+    /// Create a new `JWTError`.
     public init(identifier: String, reason: String) {
         self.identifier = identifier
         self.reason = reason

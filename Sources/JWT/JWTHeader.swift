@@ -1,20 +1,18 @@
-import Foundation
-
-/// The header (details) used for signing and processing this JSON Web Signature
+/// The header (details) used for signing and processing the JWT.
 public struct JWTHeader: Codable {
-    /// The algorithm used with the signing
+    /// The algorithm used with the signing.
     public var alg: String?
     
-    /// The Signature's Content Type
+    /// The Signature's Content Type.
     public var typ: String?
     
-    /// The Payload's Content Type
+    /// The Payload's Content Type.
     public var cty: String?
 
-    /// Critical fields
+    /// Critical fields.
     public var crit: [String]?
 
-    /// The JWT key identifier
+    /// The JWT key identifier.
     public var kid: String?
 
     /// Create a new JWT header

@@ -40,7 +40,7 @@ class JWTTests: XCTestCase {
 
         let signer = JWTSigner.hs256(key: Data("secret".utf8))
         jwt.header.typ = nil // set to nil to avoid dictionary re-ordering causing probs
-        let data = try signer.sign(&jwt)
+        let data = try signer.sign(jwt)
 
         XCTAssertEqual(String(data: data, encoding: .utf8), "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjIwMDAwMDAwMDB9.4W6egHvMSp9bBiGUnE7WhVfXazOfg-ADcjvIYILgyPU")
     }
@@ -96,16 +96,16 @@ struct TestPayload: JWTPayload {
     var admin: Bool
     var exp: ExpirationClaim
 
-    func verify() throws {
-        try exp.verify()
+    func verify(using signer: JWTSigner) throws {
+        try exp.verifyNotExpired()
     }
 }
 
 struct ExpirationPayload: JWTPayload {
     var exp: ExpirationClaim
 
-    func verify() throws {
-        try exp.verify()
+    func verify(using signer: JWTSigner) throws {
+        try exp.verifyNotExpired()
     }
 }
 

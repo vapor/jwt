@@ -1,8 +1,12 @@
-import Core
 import Crypto
-import Foundation
 
-/// A JSON Web Token
+/// A JSON Web Token with a generic, codable payload.
+///
+///     let jwt = JWT(payload: ...)
+///     let data = try jwt.sign(using: ...)
+///
+/// Learn more at https://jwt.io.
+/// Read specification (RFC 7519) https://tools.ietf.org/html/rfc7519.
 public struct JWT<Payload> where Payload: JWTPayload {
     /// The headers linked to this message
     public var header: JWTHeader
@@ -53,7 +57,7 @@ public struct JWT<Payload> where Payload: JWTPayload {
         
         self.header = try jsonDecoder.decode(JWTHeader.self, from: decodedHeader)
         self.payload = try jsonDecoder.decode(Payload.self, from: decodedPayload)
-        try payload.verify()
+        try payload.verify(using: signer)
     }
 
     /// Parses a JWT string into a JSON Web Signature
@@ -90,7 +94,7 @@ public struct JWT<Payload> where Payload: JWTPayload {
 
         self.header = header
         self.payload = try jsonDecoder.decode(Payload.self, from: decodedPayload)
-        try payload.verify()
+        try payload.verify(using: signer)
     }
 
     /// Parses a JWT string into a JSON Web Signature
@@ -124,11 +128,11 @@ public struct JWT<Payload> where Payload: JWTPayload {
         }
 
         let signer = try signers.requireSigner(kid: kid)
-        return try signer.sign(&self)
+        return try signer.sign(self)
     }
 
     /// Signs the message and returns the serialized JSON web token
     public mutating func sign(using signer: JWTSigner) throws -> Data {
-        return try signer.sign(&self)
+        return try signer.sign(self)
     }
 }

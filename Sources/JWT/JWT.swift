@@ -19,20 +19,10 @@ public struct JWT<Payload> where Payload: JWTPayload {
         self.header = header
         self.payload = payload
     }
-
-    /// Parses a JWT string into a JSON Web Token
-    public init(from string: String, verifiedUsing signer: JWTSigner) throws {
-        try self.init(from: Data(string.utf8), verifiedUsing: signer)
-    }
-
+    
     /// Parses a JWT string into a JSON Web Signature
-    public init(from string: String, verifiedUsing signers: JWTSigners) throws {
-        try self.init(from: Data(string.utf8), verifiedUsing: signers)
-    }
-
-    /// Parses a JWT string into a JSON Web Signature
-    public init(from data: Data, verifiedUsing signer: JWTSigner) throws {
-        let parts = data.split(separator: .period)
+    public init(from data: LosslessDataConvertible, verifiedUsing signer: JWTSigner) throws {
+        let parts = data.convertToData().split(separator: .period)
         guard parts.count == 3 else {
             throw JWTError(identifier: "invalidJWT", reason: "Malformed JWT")
         }
@@ -61,8 +51,8 @@ public struct JWT<Payload> where Payload: JWTPayload {
     }
 
     /// Parses a JWT string into a JSON Web Signature
-    public init(from data: Data, verifiedUsing signers: JWTSigners) throws {
-        let parts = data.split(separator: .period)
+    public init(from data: LosslessDataConvertible, verifiedUsing signers: JWTSigners) throws {
+        let parts = data.convertToData().split(separator: .period)
         guard parts.count == 3 else {
             throw JWTError(identifier: "invalidJWT", reason: "Malformed JWT")
         }

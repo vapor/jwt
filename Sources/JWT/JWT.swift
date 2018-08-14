@@ -122,7 +122,7 @@ public struct JWT<Payload> where Payload: JWTPayload {
     }
 
     /// Signs the message and returns the serialized JSON web token
-    public mutating func sign(using signers: JWTSigners) throws -> Data {
+    public func sign(using signers: JWTSigners) throws -> Data {
         guard let kid = header.kid else {
             throw JWTError(identifier: "missingKID", reason: "`kid` header property required to identify signer")
         }
@@ -132,7 +132,7 @@ public struct JWT<Payload> where Payload: JWTPayload {
     }
 
     /// Signs the message and returns the serialized JSON web token
-    public mutating func sign(using signer: JWTSigner) throws -> Data {
+    public func sign(using signer: JWTSigner) throws -> Data {
         return try signer.sign(self)
     }
 }

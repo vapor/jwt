@@ -1,8 +1,12 @@
-import Core
 import Crypto
-import Foundation
 
-/// A JSON Web Token
+/// A JSON Web Token with a generic, codable payload.
+///
+///     let jwt = JWT(payload: ...)
+///     let data = try jwt.sign(using: ...)
+///
+/// Learn more at https://jwt.io.
+/// Read specification (RFC 7519) https://tools.ietf.org/html/rfc7519.
 public struct JWT<Payload> where Payload: JWTPayload {
     /// The headers linked to this message
     public var header: JWTHeader
@@ -15,20 +19,10 @@ public struct JWT<Payload> where Payload: JWTPayload {
         self.header = header
         self.payload = payload
     }
-
-    /// Parses a JWT string into a JSON Web Token
-    public init(from string: String, verifiedUsing signer: JWTSigner) throws {
-        try self.init(from: Data(string.utf8), verifiedUsing: signer)
-    }
-
+    
     /// Parses a JWT string into a JSON Web Signature
-    public init(from string: String, verifiedUsing signers: JWTSigners) throws {
-        try self.init(from: Data(string.utf8), verifiedUsing: signers)
-    }
-
-    /// Parses a JWT string into a JSON Web Signature
-    public init(from data: Data, verifiedUsing signer: JWTSigner) throws {
-        let parts = data.split(separator: .period)
+    public init(from data: LosslessDataConvertible, verifiedUsing signer: JWTSigner) throws {
+        let parts = data.convertToData().split(separator: .period)
         guard parts.count == 3 else {
             throw JWTError(identifier: "invalidJWT", reason: "Malformed JWT")
         }
@@ -53,12 +47,12 @@ public struct JWT<Payload> where Payload: JWTPayload {
         
         self.header = try jsonDecoder.decode(JWTHeader.self, from: decodedHeader)
         self.payload = try jsonDecoder.decode(Payload.self, from: decodedPayload)
-        try payload.verify()
+        try payload.verify(using: signer)
     }
 
     /// Parses a JWT string into a JSON Web Signature
-    public init(from data: Data, verifiedUsing signers: JWTSigners) throws {
-        let parts = data.split(separator: .period)
+    public init(from data: LosslessDataConvertible, verifiedUsing signers: JWTSigners) throws {
+        let parts = data.convertToData().split(separator: .period)
         guard parts.count == 3 else {
             throw JWTError(identifier: "invalidJWT", reason: "Malformed JWT")
         }
@@ -90,7 +84,7 @@ public struct JWT<Payload> where Payload: JWTPayload {
 
         self.header = header
         self.payload = try jsonDecoder.decode(Payload.self, from: decodedPayload)
-        try payload.verify()
+        try payload.verify(using: signer)
     }
 
     /// Parses a JWT string into a JSON Web Signature
@@ -118,17 +112,17 @@ public struct JWT<Payload> where Payload: JWTPayload {
     }
 
     /// Signs the message and returns the serialized JSON web token
-    public mutating func sign(using signers: JWTSigners) throws -> Data {
+    public func sign(using signers: JWTSigners) throws -> Data {
         guard let kid = header.kid else {
             throw JWTError(identifier: "missingKID", reason: "`kid` header property required to identify signer")
         }
 
         let signer = try signers.requireSigner(kid: kid)
-        return try signer.sign(&self)
+        return try signer.sign(self)
     }
 
     /// Signs the message and returns the serialized JSON web token
-    public mutating func sign(using signer: JWTSigner) throws -> Data {
-        return try signer.sign(&self)
+    public func sign(using signer: JWTSigner) throws -> Data {
+        return try signer.sign(self)
     }
 }

@@ -66,7 +66,7 @@ class JWTTests: XCTestCase {
             admin: false,
             exp: .init(value: .init(timeIntervalSince1970: 2_000_000_000))
         )
-        var jwt = JWT(payload: payload)
+        let jwt = JWT(payload: payload)
         do {
             _ = try jwt.sign(using: publicSigner)
             XCTFail("cannot sign with public signer")

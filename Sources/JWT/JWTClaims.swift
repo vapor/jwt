@@ -50,20 +50,6 @@ public struct AudienceClaim: JWTClaim, ExpressibleByStringLiteral {
     }
 }
 
-/// The "iat" (issued at) claim identifies the time at which the JWT was
-/// issued.  This claim can be used to determine the age of the JWT.  Its
-/// value MUST be a number containing a NumericDate value.  Use of this
-/// claim is OPTIONAL.
-public struct IssuedAtClaim: JWTClaim {
-    /// See `JWTClaim`.
-    public var value: Date
-    
-    /// See `JWTClaim`.
-    public init(value: Date) {
-        self.value = value
-    }
-}
-
 /// The "jti" (JWT ID) claim provides a unique identifier for the JWT.
 /// The identifier value MUST be assigned in a manner that ensures that
 /// there is a negligible probability that the same value will be
@@ -72,7 +58,21 @@ public struct IssuedAtClaim: JWTClaim {
 /// produced by different issuers as well.  The "jti" claim can be used
 /// to prevent the JWT from being replayed.  The "jti" value is a case-
 /// sensitive string.  Use of this claim is OPTIONAL.
-public struct IDClaim: JWTClaim {
+public struct IDClaim: JWTClaim, ExpressibleByStringLiteral {
+    /// See `JWTClaim`.
+    public var value: String
+    
+    /// See `JWTClaim`.
+    public init(value: String) {
+        self.value = value
+    }
+}
+
+/// The "iat" (issued at) claim identifies the time at which the JWT was
+/// issued.  This claim can be used to determine the age of the JWT.  Its
+/// value MUST be a number containing a NumericDate value.  Use of this
+/// claim is OPTIONAL.
+public struct IssuedAtClaim: JWTUnixEpochClaim {
     /// See `JWTClaim`.
     public var value: Date
     
@@ -89,7 +89,7 @@ public struct IDClaim: JWTClaim {
 /// Implementers MAY provide for some small leeway, usually no more than
 /// a few minutes, to account for clock skew.  Its value MUST be a number
 /// containing a NumericDate value.  Use of this claim is OPTIONAL.
-public struct ExpirationClaim: JWTClaim {
+public struct ExpirationClaim: JWTUnixEpochClaim {
     /// See `JWTClaim`.
     public var value: Date
     
@@ -114,7 +114,7 @@ public struct ExpirationClaim: JWTClaim {
 /// provide for some small leeway, usually no more than a few minutes, to
 /// account for clock skew.  Its value MUST be a number containing a
 /// NumericDate value.  Use of this claim is OPTIONAL.
-public struct NotBeforeClaim: JWTClaim {
+public struct NotBeforeClaim: JWTUnixEpochClaim {
     /// See `JWTClaim`.
     public var value: Date
     
@@ -122,12 +122,28 @@ public struct NotBeforeClaim: JWTClaim {
     public init(value: Date) {
         self.value = value
     }
-    
+
     /// Throws an error if the claim's date is earlier than current date.
     public func verifyNotBefore(currentDate: Date = .init()) throws {
         switch value.compare(currentDate) {
         case .orderedDescending: throw JWTError(identifier: "nbf", reason: "Not before claim failed")
         case .orderedAscending, .orderedSame: break
         }
+    }
+}
+
+public protocol JWTUnixEpochClaim: JWTClaim where Value == Date { }
+
+extension JWTUnixEpochClaim {
+    /// See `Decodable`.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        try self.init(value: .init(timeIntervalSince1970: container.decode(Double.self)))
+    }
+    
+    /// See `Encodable`.
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(value.timeIntervalSince1970)
     }
 }

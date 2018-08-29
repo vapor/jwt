@@ -14,7 +14,7 @@ public final class JWTSigner {
     ///
     /// Can be transformed into a String like so:
     ///
-    ///     let signature = try jws.sign()
+    ///     let signature = try jwt.sign()
     ///     guard let string = String(bytes: signed, encoding: .utf8) else {
     ///         throw ...
     ///     }

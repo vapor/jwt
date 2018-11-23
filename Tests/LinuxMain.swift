@@ -3,4 +3,5 @@ import XCTest
 
 XCTMain([
     testCase(JWTTests.allTests),
+    testCase(JWKTests.allTests)    
 ])

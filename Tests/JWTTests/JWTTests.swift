@@ -79,6 +79,36 @@ class JWTTests: XCTestCase {
         XCTAssertEqual(publicVerified.payload.name, "Foo")
         XCTAssertEqual(privateVerified.payload.name, "Foo")
     }
+
+    func testConcurrentHMACVerifications() throws {
+        let queue = DispatchQueue(
+            label: "JWT - Concurrency test",
+            attributes: .concurrent
+        )
+
+        let group = DispatchGroup()
+
+        let signer: JWTSigner = .hs256(key: "secret-access")
+
+        for _ in 0..<2 {
+            queue.async(group: group) {
+                group.enter()
+
+                do {
+                    _ = try JWT<SomePayload>(
+                        from: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NTExNzQxNTAuMjgwNDU0Miwic3ViIjoiMiIsInBjYyI6MX0.4n7e0CISR_NvHGhQSSJQ0lf884jcDILRaz0RilhgbxY",
+                        verifiedUsing: signer
+                    )
+                } catch {
+                    XCTFail("Expected verification to pass")
+                }
+
+                group.leave()
+            }
+        }
+
+        group.wait()
+    }
     
     static var allTests = [
         ("testParse", testParse),
@@ -87,7 +117,16 @@ class JWTTests: XCTestCase {
         ("testExpirationEncoding", testExpirationEncoding),
         ("testSigners", testSigners),
         ("testRSA", testRSA),
+        ("testConcurrentHMACVerifications", testConcurrentHMACVerifications),
     ]
+}
+
+struct SomePayload: JWTPayload {
+    var sub: SubjectClaim
+
+    func verify(using signer: JWTSigner) throws {
+
+    }
 }
 
 struct TestPayload: JWTPayload {

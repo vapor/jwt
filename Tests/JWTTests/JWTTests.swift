@@ -90,7 +90,7 @@ class JWTTests: XCTestCase {
 
         let signer: JWTSigner = .hs256(key: "secret-access")
 
-        for _ in 0..<2 {
+        for _ in 0..<1000 {
             queue.async(group: group) {
                 group.enter()
 

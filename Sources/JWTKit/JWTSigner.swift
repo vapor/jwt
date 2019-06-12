@@ -1,4 +1,4 @@
-import Crypto
+import class Foundation.JSONEncoder
 
 /// A JWT signer.
 public final class JWTSigner {
@@ -23,7 +23,7 @@ public final class JWTSigner {
     /// - parameters:
     ///     - jwt: JWT to sign.
     /// - returns: Signed JWT data.
-    public func sign<Payload>(_ jwt: JWT<Payload>) throws -> Data {
+    public func sign<Payload>(_ jwt: JWT<Payload>) throws -> JWTMessage {
         let jsonEncoder = JSONEncoder()
         jsonEncoder.dateEncodingStrategy = .secondsSince1970
         
@@ -31,33 +31,48 @@ public final class JWTSigner {
         var header = jwt.header
         header.alg = algorithm.jwtAlgorithmName
         let headerData = try jsonEncoder.encode(header)
-        let encodedHeader = headerData.base64URLEncodedData()
+        let encodedHeader = headerData.base64URLEncodedBytes()
 
         // encode payload
         let payloadData = try jsonEncoder.encode(jwt.payload)
-        let encodedPayload = payloadData.base64URLEncodedData()
+        let encodedPayload = payloadData.base64URLEncodedBytes()
 
         // combine header and payload to create signature
-        let encodedSignature = try signature(header: encodedHeader, payload: encodedPayload)
+        let signatureData = try self.algorithm.sign(encodedHeader + [.period] + encodedPayload)
         
         // yield complete jwt
-        return encodedHeader + Data([.period]) + encodedPayload + Data([.period]) + encodedSignature
+        return JWTMessage(
+            bytes: encodedHeader
+                + [.period]
+                + encodedPayload
+                + [.period]
+                + signatureData.base64URLEncodedBytes()
+        )
     }
 
     /// Generates a signature for the supplied payload and header.
-    public func signature(header: LosslessDataConvertible, payload: LosslessDataConvertible) throws -> Data {
-        let message: Data = header.convertToData() + Data([.period]) + payload.convertToData()
-        let signature = try algorithm.sign(message)
-        return signature.base64URLEncodedData()
-    }
-
-    /// Generates a signature for the supplied payload and header.
-    public func verify(_ signature: LosslessDataConvertible, header: LosslessDataConvertible, payload: LosslessDataConvertible) throws -> Bool {
-        let message: Data = header.convertToData() + Data([.period]) + payload.convertToData()
-        guard let signature = Data(base64URLEncoded: signature.convertToData()) else {
-            throw JWTError(identifier: "base64", reason: "JWT signature is not valid base64-url")
+    public func verify<Payload>(_ message: JWTMessage) throws -> JWT<Payload> {
+        let message = message.bytes.split(separator: .period)
+        guard message.count == 3 else {
+            throw JWTError(identifier: "invalidJWT", reason: "Malformed JWT")
         }
-        return try algorithm.verify(signature, signs: message)
+
+        let encodedHeader = message[0]
+        let encodedPayload = message[1]
+        let encodedSignature = message[2]
+        guard try self.algorithm.verify(
+            encodedSignature.base64URLDecodedBytes(),
+            signs: encodedHeader + [.period] + encodedPayload
+        ) else {
+            throw JWTError(identifier: "invalidSignature", reason: "Invalid JWT signature")
+        }
+
+        let jwt = try JWT<Payload>(
+            header: encodedHeader.base64URLDecodedBytes(),
+            payload: encodedPayload.base64URLDecodedBytes()
+        )
+        try jwt.payload.verify(using: self)
+        return jwt
     }
 }
 
@@ -65,22 +80,22 @@ public final class JWTSigner {
 
 extension JWTSigner {
     /// Creates an HS256 JWT signer with the supplied key
-    public static func hs256(key: LosslessDataConvertible) -> JWTSigner {
+    public static func hs256(key: CryptoData) -> JWTSigner {
         return hmac(HMAC.SHA256, name: "HS256", key: key)
     }
 
     /// Creates an HS384 JWT signer with the supplied key
-    public static func hs384(key: LosslessDataConvertible) -> JWTSigner {
+    public static func hs384(key: CryptoData) -> JWTSigner {
         return hmac(HMAC.SHA384, name: "HS384", key: key)
     }
 
     /// Creates an HS512 JWT signer with the supplied key
-    public static func hs512(key: LosslessDataConvertible) -> JWTSigner {
+    public static func hs512(key: CryptoData) -> JWTSigner {
         return hmac(HMAC.SHA512, name: "HS512", key: key)
     }
 
     /// Creates an HMAC-based `CustomJWTAlgorithm` and `JWTSigner`.
-    private static func hmac(_ hmac: HMAC, name: String, key: LosslessDataConvertible) -> JWTSigner {
+    private static func hmac(_ hmac: HMAC, name: String, key: CryptoData) -> JWTSigner {
         let alg = CustomJWTAlgorithm(name: name, sign: { plaintext in
             return try hmac.authenticate(plaintext, key: key)
         }, verify: { signature, plaintext in

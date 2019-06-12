@@ -1,7 +1,5 @@
-import Debugging
-
 /// Errors that can be thrown while working with JWT.
-public struct JWTError: Debuggable, Error {
+public struct JWTError: Error {
     /// See `Debuggable`.
     public static var readableName = "JWT Error"
 

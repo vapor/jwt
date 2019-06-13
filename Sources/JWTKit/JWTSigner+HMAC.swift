@@ -36,6 +36,12 @@ extension JWTSigner {
 
 // MARK: Private
 
+private enum HMACError: Error {
+    case initializationFailure
+    case updateFailure
+    case finalizationFailure
+}
+
 private struct HMACSigner: JWTAlgorithm {
     let key: [UInt8]
     let algorithm: OpaquePointer
@@ -50,13 +56,13 @@ private struct HMACSigner: JWTAlgorithm {
         guard self.key.withUnsafeBytes({
             return HMAC_Init_ex(context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32($0.count), convert(self.algorithm), nil)
         }) == 1 else {
-            fatalError("Failed initializing HMAC context")
+            throw JWTError.signingAlgorithmFailure(HMACError.initializationFailure)
         }
         
         guard plaintext.copyBytes().withUnsafeBytes({
             return HMAC_Update(context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), $0.count)
         }) == 1 else {
-            fatalError("Failed updating HMAC digest")
+            throw JWTError.signingAlgorithmFailure(HMACError.updateFailure)
         }
         var hash = [UInt8](repeating: 0, count: Int(EVP_MAX_MD_SIZE))
         var count: UInt32 = 0
@@ -64,7 +70,7 @@ private struct HMACSigner: JWTAlgorithm {
         guard hash.withUnsafeMutableBytes({
             return HMAC_Final(context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), &count)
         }) == 1 else {
-            fatalError("Failed finalizing HMAC digest")
+            throw JWTError.signingAlgorithmFailure(HMACError.finalizationFailure)
         }
         return .init(hash[0..<Int(count)])
     }

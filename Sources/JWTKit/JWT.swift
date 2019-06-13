@@ -28,7 +28,7 @@ public struct JWT<Payload> where Payload: JWTPayload {
     {
         let message = message.copyBytes().split(separator: .period)
         guard message.count == 3 else {
-            throw JWTError(identifier: "invalidJWT", reason: "Malformed JWT")
+            throw JWTError.malformedToken
         }
 
         let encodedHeader = message[0]
@@ -66,7 +66,7 @@ public struct JWT<Payload> where Payload: JWTPayload {
     {
         let components = try JWT<Payload>.parse(message: message)
         guard try signer.algorithm.verify(components.signature, signs: components.message) else {
-            throw JWTError(identifier: "invalidSignature", reason: "Invalid JWT signature")
+            throw JWTError.signatureVerifictionFailed
         }
         self.header = components.header
         self.payload = components.payload
@@ -78,13 +78,13 @@ public struct JWT<Payload> where Payload: JWTPayload {
     {
         let components = try JWT<Payload>.parse(message: message)
         guard let kid = components.header.kid else {
-            throw JWTError(identifier: "missingKID", reason: "JWT is missing kid field in header")
+            throw JWTError.missingKIDHeader
         }
         guard let signer = signers.signer(kid: kid) else {
-            throw JWTError(identifier: "unknownKID", reason: "No signers are available for the supplied kid")
+            throw JWTError.unknownKID(kid)
         }
         guard try signer.algorithm.verify(components.signature, signs: components.message) else {
-            throw JWTError(identifier: "invalidSignature", reason: "Invalid JWT signature")
+            throw JWTError.signatureVerifictionFailed
         }
         self.header = components.header
         self.payload = components.payload

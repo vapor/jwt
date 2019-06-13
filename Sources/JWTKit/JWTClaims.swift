@@ -100,9 +100,11 @@ public struct ExpirationClaim: JWTUnixEpochClaim, Equatable {
     
     /// Throws an error if the claim's date is later than current date.
     public func verifyNotExpired(currentDate: Date = .init()) throws {
-        switch value.compare(currentDate) {
-        case .orderedAscending, .orderedSame: throw JWTError(identifier: "exp", reason: "Expiration claim failed")
-        case .orderedDescending: break
+        switch self.value.compare(currentDate) {
+        case .orderedAscending, .orderedSame:
+            throw JWTError.claimVerificationFailure(name: "exp", reason: "expired")
+        case .orderedDescending:
+            break
         }
     }
 }
@@ -126,8 +128,10 @@ public struct NotBeforeClaim: JWTUnixEpochClaim, Equatable {
     /// Throws an error if the claim's date is earlier than current date.
     public func verifyNotBefore(currentDate: Date = .init()) throws {
         switch value.compare(currentDate) {
-        case .orderedDescending: throw JWTError(identifier: "nbf", reason: "Not before claim failed")
-        case .orderedAscending, .orderedSame: break
+        case .orderedDescending:
+            throw JWTError.claimVerificationFailure(name: "nbf", reason: "too soon")
+        case .orderedAscending, .orderedSame:
+            break
         }
     }
 }

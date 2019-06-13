@@ -17,7 +17,12 @@ class JWTKitTests: XCTestCase {
         do {
             let _ = try JWT<TestPayload>(from: data.bytes, verifiedBy: .hs256(key: "secret".bytes))
         } catch let error as JWTError {
-            XCTAssertEqual(error.identifier, "exp")
+            switch error {
+            case .claimVerificationFailure(let name, _):
+                XCTAssertEqual(name, "exp")
+            default:
+                XCTFail("wrong error")
+            }
         }
     }
 
@@ -52,8 +57,8 @@ class JWTKitTests: XCTestCase {
     }
 
     func testRSA() throws {
-        let privateSigner = JWTSigner.rs256(key: .private(pem: rsaPrivateKey.bytes))
-        let publicSigner = JWTSigner.rs256(key: .public(pem: rsaPublicKey.bytes))
+        let privateSigner = try JWTSigner.rs256(key: .private(pem: rsaPrivateKey.bytes))
+        let publicSigner = try JWTSigner.rs256(key: .public(pem: rsaPublicKey.bytes))
 
         let payload = TestPayload(
             sub: "vapor",
@@ -68,7 +73,7 @@ class JWTKitTests: XCTestCase {
     }
 
     func testRSASignWithPublic() throws {
-        let publicSigner = JWTSigner.rs256(key: .public(pem: rsaPublicKey.bytes))
+        let publicSigner = try JWTSigner.rs256(key: .public(pem: rsaPublicKey.bytes))
         let payload = TestPayload(
             sub: "vapor",
             name: "Foo",
@@ -92,14 +97,14 @@ class JWTKitTests: XCTestCase {
             exp: .init(value: .init(timeIntervalSince1970: 2_000_000_000))
         )
         let jwt = JWT(payload: payload)
-        let signer = JWTSigner.es256(key: .generate())
+        let signer = try JWTSigner.es256(key: .generate())
         let data = try jwt.sign(using: signer)
         try XCTAssertEqual(JWT<TestPayload>(from: data, verifiedBy: signer).payload, payload)
     }
 
     func testECDSAPublicPrivate() throws {
-        let publicSigner = JWTSigner.es256(key: .public(pem: ecdsaPublicKey.bytes))
-        let privateSigner = JWTSigner.es256(key: .private(pem: ecdsaPrivateKey.bytes))
+        let publicSigner = try JWTSigner.es256(key: .public(pem: ecdsaPublicKey.bytes))
+        let privateSigner = try JWTSigner.es256(key: .private(pem: ecdsaPrivateKey.bytes))
 
         let payload = TestPayload(
             sub: "vapor",

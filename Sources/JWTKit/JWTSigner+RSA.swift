@@ -30,30 +30,30 @@ extension JWTSigner {
 }
 
 public final class RSAKey: OpenSSLKey {
-    public static func `public`<Data>(pem data: Data) -> RSAKey
+    public static func `public`<Data>(pem data: Data) throws -> RSAKey
         where Data: DataProtocol
     {
-        let pkey = self.load(pem: data) { bio in
+        let pkey = try self.load(pem: data) { bio in
             PEM_read_bio_PUBKEY(convert(bio), nil, nil, nil)
         }
         defer { EVP_PKEY_free(pkey) }
 
         guard let c = EVP_PKEY_get1_RSA(pkey) else {
-            fatalError("RSA key creation failed")
+            throw JWTError.signingAlgorithmFailure(RSAError.keyInitializationFailure)
         }
         return self.init(convert(c), .public)
     }
 
-    public static func `private`<Data>(pem data: Data) -> RSAKey
+    public static func `private`<Data>(pem data: Data) throws -> RSAKey
         where Data: DataProtocol
     {
-        let pkey = self.load(pem: data) { bio in
+        let pkey = try self.load(pem: data) { bio in
             PEM_read_bio_PrivateKey(convert(bio), nil, nil, nil)
         }
         defer { EVP_PKEY_free(pkey) }
 
         guard let c = EVP_PKEY_get1_RSA(pkey) else {
-            fatalError("RSA key creation failed")
+            throw JWTError.signingAlgorithmFailure(RSAError.keyInitializationFailure)
         }
         return self.init(convert(c), .private)
     }
@@ -77,6 +77,12 @@ public final class RSAKey: OpenSSLKey {
 
 // MARK: Private
 
+private enum RSAError: Error {
+    case privateKeyRequired
+    case signFailure
+    case keyInitializationFailure
+}
+
 private struct RSASigner: JWTAlgorithm, OpenSSLSigner {
     let key: RSAKey
     let algorithm: OpaquePointer
@@ -86,7 +92,7 @@ private struct RSASigner: JWTAlgorithm, OpenSSLSigner {
         where Plaintext: DataProtocol
     {
         guard case .private = self.key.type else {
-            throw JWTError(identifier: "rsa", reason: "Private key required to sign")
+            throw JWTError.signingAlgorithmFailure(RSAError.privateKeyRequired)
         }
         var signatureLength: UInt32 = 0
         var signature = [UInt8](
@@ -94,7 +100,7 @@ private struct RSASigner: JWTAlgorithm, OpenSSLSigner {
             count: Int(RSA_size(convert(key.c)))
         )
 
-        let digest = self.digest(plaintext)
+        let digest = try self.digest(plaintext)
         guard RSA_sign(
             EVP_MD_type(convert(self.algorithm)),
             digest,
@@ -103,7 +109,7 @@ private struct RSASigner: JWTAlgorithm, OpenSSLSigner {
             &signatureLength,
             convert(self.key.c)
         ) == 1 else {
-            throw JWTError(identifier: "rsaSign", reason: "RSA signature creation failed")
+            throw JWTError.signingAlgorithmFailure(RSAError.signFailure)
         }
 
         return .init(signature[0..<numericCast(signatureLength)])
@@ -115,7 +121,7 @@ private struct RSASigner: JWTAlgorithm, OpenSSLSigner {
     ) throws -> Bool
         where Signature: DataProtocol, Plaintext: DataProtocol
     {
-        let digest = self.digest(plaintext)
+        let digest = try self.digest(plaintext)
         let signature = signature.copyBytes()
         return RSA_verify(
             EVP_MD_type(convert(self.algorithm)),

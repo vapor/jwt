@@ -29,29 +29,29 @@ extension JWTSigner {
 }
 
 public final class ECDSAKey: OpenSSLKey {
-    public static func generate() -> ECDSAKey {
+    public static func generate() throws -> ECDSAKey {
         guard let c = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1) else {
-            fatalError("EC_KEY_new_by_curve_name failed")
+            throw JWTError.signingAlgorithmFailure(ECDSAError.newKeyByCurveFailure)
         }
         guard EC_KEY_generate_key(c) != 0 else {
-            fatalError("EC_KEY_generate_key failed")
+            throw JWTError.signingAlgorithmFailure(ECDSAError.generateKeyFailure)
         }
         return .init(c)
     }
 
-    public static func `public`<Data>(pem data: Data) -> ECDSAKey
+    public static func `public`<Data>(pem data: Data) throws -> ECDSAKey
         where Data: DataProtocol
     {
-        let c = self.load(pem: data) { bio in
+        let c = try self.load(pem: data) { bio in
             PEM_read_bio_EC_PUBKEY(convert(bio), nil, nil, nil)
         }
         return self.init(c)
     }
 
-    public static func `private`<Data>(pem data: Data) -> ECDSAKey
+    public static func `private`<Data>(pem data: Data) throws -> ECDSAKey
         where Data: DataProtocol
     {
-        let c = self.load(pem: data) { bio in
+        let c = try self.load(pem: data) { bio in
             PEM_read_bio_ECPrivateKey(convert(bio), nil, nil, nil)
         }
         return self.init(c)
@@ -70,6 +70,12 @@ public final class ECDSAKey: OpenSSLKey {
 
 // MARK: Private
 
+private enum ECDSAError: Error {
+    case newKeyByCurveFailure
+    case generateKeyFailure
+    case signFailure
+}
+
 private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
     let key: ECDSAKey
     let algorithm: OpaquePointer
@@ -84,7 +90,7 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
             count: Int(ECDSA_size(self.key.c))
         )
 
-        let digest = self.digest(plaintext)
+        let digest = try self.digest(plaintext)
         guard ECDSA_sign(
             0,
             digest,
@@ -93,7 +99,7 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
             &signatureLength,
             self.key.c
         ) == 1 else {
-            fatalError("ECDSA sign failed")
+            throw JWTError.signingAlgorithmFailure(ECDSAError.signFailure)
         }
 
         return .init(signature[0..<numericCast(signatureLength)])
@@ -105,7 +111,7 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
     ) throws -> Bool
         where Signature: DataProtocol, Plaintext: DataProtocol
     {
-        let digest = self.digest(plaintext)
+        let digest = try self.digest(plaintext)
         let signature = signature.copyBytes()
         return ECDSA_verify(
             0,

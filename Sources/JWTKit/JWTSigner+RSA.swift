@@ -1,4 +1,4 @@
-import CJWTKitOpenSSL
+import CJWTKitCrypto
 import struct Foundation.Data
 
 extension JWTSigner {
@@ -7,24 +7,24 @@ extension JWTSigner {
     public static func rs256(key: RSAKey) -> JWTSigner {
         return .init(algorithm: RSAAlgorithm(
             key: key,
-            algorithm: EVP_sha256(),
-            jwtAlgorithmName: "RS256"
+            algorithm: convert(EVP_sha256()),
+            name: "RS256"
         ))
     }
 
     public static func rs384(key: RSAKey) -> JWTSigner {
         return .init(algorithm: RSAAlgorithm(
             key: key,
-            algorithm: EVP_sha384(),
-            jwtAlgorithmName: "RS384"
+            algorithm: convert(EVP_sha384()),
+            name: "RS384"
         ))
     }
 
     public static func rs512(key: RSAKey) -> JWTSigner {
         return .init(algorithm: RSAAlgorithm(
             key: key,
-            algorithm: EVP_sha512(),
-            jwtAlgorithmName: "RS512"
+            algorithm: convert(EVP_sha512()),
+            name: "RS512"
         ))
     }
 }
@@ -38,8 +38,6 @@ public struct RSAKey {
         /// A private RSA key. Used for creating and verifying signatures.
         case `private`
     }
-
-    // MARK: Static
 
     /// Creates a new `RSAKey` from a private key pem file.
     public static func `private`<Data>(pem: Data) -> RSAKey
@@ -62,7 +60,6 @@ public struct RSAKey {
         return .init(type: .public, key: .make(type: .public, from: certificate, x509: true))
     }
 
-    // MARK: Properties
     /// The specific RSA key type. Either public or private.
     ///
     /// Note: public keys can only verify signatures. A private key
@@ -71,8 +68,6 @@ public struct RSAKey {
 
     /// The C OpenSSL key ref.
     fileprivate let c: CRSAKey
-
-    // MARK: Init
 
     /// Creates a new `RSAKey` from a public or private key.
     fileprivate init(type: Kind, key: CRSAKey) {
@@ -112,8 +107,8 @@ public struct RSAKey {
         let n = parseBignum(n)
         let e = parseBignum(e)
         let d = d.flatMap { parseBignum($0) }
-        RSA_set0_key(rsa, n, e, d)
-        return .init(type: d == nil ? .public : .private, key: CRSAKey(rsa))
+        RSA_set0_key(rsa, convert(n), convert(e), d.flatMap { convert($0) })
+        return .init(type: d == nil ? .public : .private, key: CRSAKey(convert(rsa)))
     }
 }
 
@@ -146,38 +141,40 @@ private final class CRSAKey {
             }
 
             defer { X509_free(x509) }
-            maybePkey = X509_get_pubkey(x509)
+            maybePkey = convert(X509_get_pubkey(x509))
         } else {
             switch type {
-            case .public: maybePkey = PEM_read_bio_PUBKEY(bio, nil, nil, nil)
-            case .private: maybePkey = PEM_read_bio_PrivateKey(bio, nil, nil, nil)
+            case .public:
+                maybePkey = convert(PEM_read_bio_PUBKEY(bio, nil, nil, nil))
+            case .private:
+                maybePkey = convert(PEM_read_bio_PrivateKey(bio, nil, nil, nil))
             }
         }
 
         guard let pkey = maybePkey else {
             fatalError("RSA key creation failed")
         }
-        defer { EVP_PKEY_free(pkey) }
+        defer { EVP_PKEY_free(convert(pkey)) }
 
-        guard let rsa = EVP_PKEY_get1_RSA(pkey) else {
+        guard let rsa = EVP_PKEY_get1_RSA(convert(pkey)) else {
             fatalError("RSA key creation failed")
         }
-        return .init(rsa)
+        return .init(convert(rsa))
     }
 
-    deinit { RSA_free(self.pointer) }
+    deinit { RSA_free(convert(self.pointer)) }
 }
 
 private func parseBignum(_ s: String) -> OpaquePointer {
-    return Data(s.utf8).base64URLDecodedBytes().withUnsafeBytes { (p: UnsafeRawBufferPointer) -> OpaquePointer in
-        return BN_bin2bn(p.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32(p.count), nil)
+    return Data(s.utf8).base64URLDecodedBytes().withUnsafeBytes { pointer in
+        convert(BN_bin2bn(pointer.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32(pointer.count), nil))
     }
 }
 
 private struct RSAAlgorithm: JWTAlgorithm {
     let key: RSAKey
     let algorithm: OpaquePointer
-    let jwtAlgorithmName: String
+    let name: String
 
     func sign<Plaintext>(_ plaintext: Plaintext) throws -> [UInt8]
         where Plaintext: DataProtocol
@@ -192,18 +189,18 @@ private struct RSAAlgorithm: JWTAlgorithm {
         var siglen: UInt32 = 0
         var signature = [UInt8](
             repeating: 0,
-            count: Int(RSA_size(key.c.pointer))
+            count: Int(RSA_size(convert(key.c.pointer)))
         )
 
         guard self.hash(plaintext).withUnsafeBytes ({ inputBuffer in
             signature.withUnsafeMutableBytes({ signatureBuffer in
                 RSA_sign(
-                    EVP_MD_type(self.algorithm),
+                    EVP_MD_type(convert(self.algorithm)),
                     inputBuffer.baseAddress!.assumingMemoryBound(to: UInt8.self),
                     UInt32(inputBuffer.count),
                     signatureBuffer.baseAddress!.assumingMemoryBound(to: UInt8.self),
                     &siglen,
-                    key.c.pointer
+                    convert(key.c.pointer)
                 )
             })
         }) == 1 else {
@@ -222,12 +219,12 @@ private struct RSAAlgorithm: JWTAlgorithm {
         return self.hash(plaintext).withUnsafeBytes({ inputBuffer in
             signature.copyBytes().withUnsafeBytes({ signatureBuffer in
                 RSA_verify(
-                    EVP_MD_type(self.algorithm),
+                    EVP_MD_type(convert(self.algorithm)),
                     inputBuffer.baseAddress?.assumingMemoryBound(to: UInt8.self),
                     UInt32(inputBuffer.count),
                     signatureBuffer.baseAddress?.assumingMemoryBound(to: UInt8.self),
                     UInt32(signatureBuffer.count),
-                    key.c.pointer
+                    convert(key.c.pointer)
                 )
             })
         }) == 1
@@ -239,7 +236,7 @@ private struct RSAAlgorithm: JWTAlgorithm {
         let context = EVP_MD_CTX_new()
         defer { EVP_MD_CTX_free(context) }
 
-        guard EVP_DigestInit_ex(context, self.algorithm, nil) == 1 else {
+        guard EVP_DigestInit_ex(context, convert(self.algorithm), nil) == 1 else {
             fatalError("Failed initializing digest context")
         }
         guard plaintext.copyBytes().withUnsafeBytes({

@@ -98,7 +98,7 @@ public struct JWT<Payload> where Payload: JWTPayload {
         
         // encode header, copying header struct to mutate alg
         var header = self.header
-        header.alg = signer.algorithm.jwtAlgorithmName
+        header.alg = signer.algorithm.name
         let headerData = try jsonEncoder.encode(header)
         let encodedHeader = headerData.base64URLEncodedBytes()
         

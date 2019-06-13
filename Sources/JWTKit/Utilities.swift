@@ -20,3 +20,25 @@ extension UInt8 {
         return Character(".").asciiValue!
     }
 }
+
+// pointer hacks
+
+func convert(_ pointer: OpaquePointer) -> OpaquePointer {
+    return pointer
+}
+
+func convert<T>(_ pointer: UnsafePointer<T>) -> OpaquePointer {
+    return .init(pointer)
+}
+
+func convert<T>(_ pointer: UnsafeMutablePointer<T>) -> OpaquePointer {
+    return .init(pointer)
+}
+
+func convert<T>(_ pointer: OpaquePointer) -> UnsafePointer<T> {
+    return .init(pointer)
+}
+
+func convert<T>(_ pointer: OpaquePointer) -> UnsafeMutablePointer<T> {
+    return .init(pointer)
+}

@@ -1,7 +1,7 @@
 /// Algorithm powering a `JWTSigner`.
 public protocol JWTAlgorithm {
     /// Unique JWT-standard name for this algorithm.
-    var jwtAlgorithmName: String { get }
+    var name: String { get }
 
     /// Creates a signature from the supplied plaintext.
     ///

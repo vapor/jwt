@@ -1,4 +1,4 @@
-import CJWTKitOpenSSL
+import CJWTKitCrypto
 
 extension JWTSigner {
     // MARK: HMAC
@@ -8,8 +8,8 @@ extension JWTSigner {
     {
         return .init(algorithm: HMACAlgorithm(
             key: key.copyBytes(),
-            algorithm: EVP_sha256(),
-            jwtAlgorithmName: "HS256"
+            algorithm: convert(EVP_sha256()),
+            name: "HS256"
         ))
     }
     
@@ -18,8 +18,8 @@ extension JWTSigner {
     {
         return .init(algorithm: HMACAlgorithm(
             key: key.copyBytes(),
-            algorithm: EVP_sha384(),
-            jwtAlgorithmName: "HS384"
+            algorithm: convert(EVP_sha384()),
+            name: "HS384"
         ))
     }
     
@@ -28,8 +28,8 @@ extension JWTSigner {
     {
         return .init(algorithm: HMACAlgorithm(
             key: key.copyBytes(),
-            algorithm: EVP_sha512(),
-            jwtAlgorithmName: "HS512"
+            algorithm: convert(EVP_sha512()),
+            name: "HS512"
         ))
     }
 }
@@ -37,7 +37,7 @@ extension JWTSigner {
 private struct HMACAlgorithm: JWTAlgorithm {
     let key: [UInt8]
     let algorithm: OpaquePointer
-    let jwtAlgorithmName: String
+    let name: String
     
     func sign<Plaintext>(_ plaintext: Plaintext) throws -> [UInt8]
         where Plaintext: DataProtocol
@@ -46,7 +46,7 @@ private struct HMACAlgorithm: JWTAlgorithm {
         defer { HMAC_CTX_free(context) }
         
         guard self.key.withUnsafeBytes({
-            return HMAC_Init_ex(context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32($0.count), self.algorithm, nil)
+            return HMAC_Init_ex(context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32($0.count), convert(self.algorithm), nil)
         }) == 1 else {
             fatalError("Failed initializing HMAC context")
         }

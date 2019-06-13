@@ -13,10 +13,11 @@ let package = Package(
             pkgConfig: "openssl",
             providers: [
                 .apt(["openssl libssl-dev"]),
-                .brew(["openssl@1.1"])
+                .brew(["openssl"])
             ]
         ),
-        .target(name: "JWTKit", dependencies: ["CJWTKitOpenSSL"]),
+        .target(name: "CJWTKitCrypto", dependencies: ["CJWTKitOpenSSL"]),
+        .target(name: "JWTKit", dependencies: ["CJWTKitCrypto"]),
         .testTarget(name: "JWTKitTests", dependencies: ["JWTKit"]),
     ]
 )

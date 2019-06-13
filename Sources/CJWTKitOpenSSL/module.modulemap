@@ -1,5 +1,4 @@
 module CJWTKitOpenSSL [system] {
-    header "shim.h"
     link "ssl"
     link "crypto"
 }

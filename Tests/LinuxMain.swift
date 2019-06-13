@@ -1,6 +1,8 @@
 import XCTest
-@testable import JWTTests
 
-XCTMain([
-    testCase(JWTTests.allTests),
-])
+import JWTKitTests
+
+var tests = [XCTestCaseEntry]()
+tests += JWTKitTests.__allTests()
+
+XCTMain(tests)

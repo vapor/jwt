@@ -47,7 +47,7 @@ private extension Data {
     /// Converts base64-url encoded data to a base64 encoded data.
     ///
     /// https://tools.ietf.org/html/rfc4648#page-7
-    func base64URLUnescaped() -> Self {
+    func base64URLUnescaped() -> Data {
         var data = self
         data.base64URLUnescape()
         return data
@@ -56,7 +56,7 @@ private extension Data {
     /// Converts base64 encoded data to a base64-url encoded data.
     ///
     /// https://tools.ietf.org/html/rfc4648#page-7
-    func base64URLEscaped() -> Self {
+    func base64URLEscaped() -> Data {
         var data = self
         data.base64URLEscape()
         return data

@@ -20,8 +20,8 @@ jobs:
     steps:
       - checkout
       - run: apt-get -y install openssl libssl-dev
-      - run: swift build --disable-index-store
-      - run: swift test --disable-index-store
+      - run: swift build
+      - run: swift test
   bionic-release:
     docker:
       - image: swift:5.0-bionic
@@ -35,8 +35,8 @@ jobs:
     steps:
       - checkout
       - run: apt-get -y install openssl libssl-dev
-      - run: swift build --disable-index-store
-      - run: swift test --disable-index-store
+      - run: swift build
+      - run: swift test
   xenial-release:
     docker:
       - image: swift:5.0-xenial

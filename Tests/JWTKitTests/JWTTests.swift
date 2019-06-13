@@ -5,8 +5,7 @@ class JWTTests: XCTestCase {
     func testParse() throws {
         let data = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImV4cCI6OTk5OTk5OTk5OTk5fQ.Ks7KcdjrlUTYaSNeAO5SzBla_sFCHkUh4vvJYn6q29U"
 
-        let signer = JWTSigner.hs256(key: "secret".bytes)
-        let jwt = try signer.verify(data.bytes, as: TestPayload.self)
+        let jwt = try JWT<TestPayload>(from: data.bytes, verifiedBy: .hs256(key: "secret".bytes))
         XCTAssertEqual(jwt.payload.name, "John Doe")
         XCTAssertEqual(jwt.payload.sub.value, "1234567890")
         XCTAssertEqual(jwt.payload.admin, true)
@@ -15,9 +14,8 @@ class JWTTests: XCTestCase {
     func testExpired() throws {
         let data = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImV4cCI6MX0.-x_DAYIg4R4R9oZssqgWyJP_oWO1ESj8DgKrGCk7i5o"
 
-        let signer = JWTSigner.hs256(key: "secret".bytes)
         do {
-            let _ = try signer.verify(data.bytes, as: TestPayload.self)
+            let _ = try JWT<TestPayload>(from: data.bytes, verifiedBy: .hs256(key: "secret".bytes))
         } catch let error as JWTError {
             XCTAssertEqual(error.identifier, "exp")
         }
@@ -26,9 +24,7 @@ class JWTTests: XCTestCase {
     func testExpirationDecoding() throws {
         let data = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIwMDAwMDAwMDB9.JgCO_GqUQnbS0z2hCxJLE9Tpt5SMoZObHBxzGBWuTYQ"
 
-        let signer = JWTSigner.hs256(key: "secret".bytes)
-        let jwt = try signer.verify(data.bytes, as: ExpirationPayload.self)
-
+        let jwt = try JWT<ExpirationPayload>(from: data.bytes, verifiedBy: .hs256(key: "secret".bytes))
         XCTAssertEqual(jwt.payload.exp.value, Date(timeIntervalSince1970: 2_000_000_000))
     }
 
@@ -36,9 +32,8 @@ class JWTTests: XCTestCase {
         let exp = ExpirationClaim(value: Date(timeIntervalSince1970: 2_000_000_000))
         var jwt = JWT(payload: ExpirationPayload(exp: exp))
 
-        let signer = JWTSigner.hs256(key: "secret".bytes)
         jwt.header.typ = nil // set to nil to avoid dictionary re-ordering causing probs
-        let data = try signer.sign(jwt)
+        let data = try jwt.sign(using: .hs256(key: "secret".bytes))
 
         XCTAssertEqual(
             String(decoding: data, as: UTF8.self),
@@ -49,37 +44,36 @@ class JWTTests: XCTestCase {
     func testSigners() throws {
         let data = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImZvbyJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImV4cCI6OTk5OTk5OTk5OTk5OTl9.Gf7leJ8i30LmMI7GBTpWDMXV60y1wkTOCOBudP9v9ms"
 
-        let signer = JWTSigner.hs256(key: "bar".bytes)
         let signers = JWTSigners()
-        signers.use(signer, kid: "foo")
+        signers.use(.hs256(key: "bar".bytes), kid: "foo")
 
-        let jwt = try signers.verify(data.bytes, as: TestPayload.self)
+        let jwt = try JWT<TestPayload>(from: data.bytes, verifiedBy: signers)
         XCTAssertEqual(jwt.payload.name, "John Doe")
     }
-//
-//    func testRSA() throws {
-//        let privateSigner = try JWTSigner.rs256(key: .private(pem: privateKeyString))
-//        let publicSigner = try JWTSigner.rs256(key: .public(pem: publicKeyString))
-//
-//        let payload = TestPayload(
-//            sub: "vapor",
-//            name: "Foo",
-//            admin: false,
-//            exp: .init(value: .init(timeIntervalSince1970: 2_000_000_000))
-//        )
-//        let jwt = JWT(payload: payload)
-//        do {
-//            _ = try jwt.sign(using: publicSigner)
-//            XCTFail("cannot sign with public signer")
-//        } catch {
-//            // pass
-//        }
-//        let privateSigned = try jwt.sign(using: privateSigner)
-//        let publicVerified = try JWT<TestPayload>(from: privateSigned, verifiedUsing: publicSigner)
-//        let privateVerified = try JWT<TestPayload>(from: privateSigned, verifiedUsing: privateSigner)
-//        XCTAssertEqual(publicVerified.payload.name, "Foo")
-//        XCTAssertEqual(privateVerified.payload.name, "Foo")
-//    }
+
+    func testRSA() throws {
+        let privateSigner = JWTSigner.rs256(key: .private(pem: privateKeyString.bytes))
+        let publicSigner = JWTSigner.rs256(key: .public(pem: publicKeyString.bytes))
+
+        let payload = TestPayload(
+            sub: "vapor",
+            name: "Foo",
+            admin: false,
+            exp: .init(value: .init(timeIntervalSince1970: 2_000_000_000))
+        )
+        let jwt = JWT(payload: payload)
+        do {
+            _ = try jwt.sign(using: publicSigner)
+            XCTFail("cannot sign with public signer")
+        } catch {
+            // pass
+        }
+        let privateSigned = try jwt.sign(using: privateSigner)
+        let publicVerified = try JWT<TestPayload>(from: privateSigned, verifiedBy: publicSigner)
+        let privateVerified = try JWT<TestPayload>(from: privateSigned, verifiedBy: privateSigner)
+        XCTAssertEqual(publicVerified.payload.name, "Foo")
+        XCTAssertEqual(privateVerified.payload.name, "Foo")
+    }
 }
 
 struct TestPayload: JWTPayload {
@@ -89,7 +83,7 @@ struct TestPayload: JWTPayload {
     var exp: ExpirationClaim
 
     func verify(using signer: JWTSigner) throws {
-        try exp.verifyNotExpired()
+        try self.exp.verifyNotExpired()
     }
 }
 
@@ -97,7 +91,7 @@ struct ExpirationPayload: JWTPayload {
     var exp: ExpirationClaim
 
     func verify(using signer: JWTSigner) throws {
-        try exp.verifyNotExpired()
+        try self.exp.verifyNotExpired()
     }
 }
 

@@ -16,42 +16,78 @@ public struct JWT<Payload> where Payload: JWTPayload {
     /// The JSON payload within this message
     public var payload: Payload
 
-    /// Creates a new JSON Web Signature from predefined data
-    public init(header: JWTHeader = .init(), payload: Payload) {
-        self.header = header
-        self.payload = payload
+    private struct JWTComponents {
+        var header: JWTHeader
+        var payload: Payload
+        var signature: [UInt8]
+        var message: [UInt8]
     }
-    
-    /// Parses a JWT string into a JSON Web Signature
-    public init<Message>(message: Message, using signer: JWTSigner) throws
+
+    private static func parse<Message>(message: Message) throws -> JWTComponents
         where Message: DataProtocol
     {
         let message = message.copyBytes().split(separator: .period)
         guard message.count == 3 else {
             throw JWTError(identifier: "invalidJWT", reason: "Malformed JWT")
         }
-        
+
         let encodedHeader = message[0]
         let encodedPayload = message[1]
         let encodedSignature = message[2]
-        
-        
+
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .secondsSince1970
         let header = try jsonDecoder.decode(JWTHeader.self, from: Data(encodedHeader.base64URLDecodedBytes()))
         let payload = try jsonDecoder.decode(Payload.self, from: Data(encodedPayload.base64URLDecodedBytes()))
-        
-        guard try signer.verify(
-            encodedSignature.base64URLDecodedBytes(),
-            signs: encodedHeader + [.period] + encodedPayload,
-            header: header
-        ) else {
-            throw JWTError(identifier: "invalidSignature", reason: "Invalid JWT signature")
-        }
-        
+
+        return .init(
+            header: header,
+            payload: payload,
+            signature: encodedSignature.base64URLDecodedBytes(),
+            message: .init(encodedHeader) + [.period] + .init(encodedPayload)
+        )
+    }
+
+    public init(header: JWTHeader = .init(), payload: Payload) {
         self.header = header
         self.payload = payload
-        
+    }
+
+    public init<Message>(fromUnverified message: Message) throws
+        where Message: DataProtocol
+    {
+        let components = try JWT<Payload>.parse(message: message)
+        self.header = components.header
+        self.payload = components.payload
+    }
+
+    public init<Message>(from message: Message, verifiedBy signer: JWTSigner) throws
+        where Message: DataProtocol
+    {
+        let components = try JWT<Payload>.parse(message: message)
+        guard try signer.algorithm.verify(components.signature, signs: components.message) else {
+            throw JWTError(identifier: "invalidSignature", reason: "Invalid JWT signature")
+        }
+        self.header = components.header
+        self.payload = components.payload
+        try self.payload.verify(using: signer)
+    }
+
+    public init<Message>(from message: Message, verifiedBy signers: JWTSigners) throws
+        where Message: DataProtocol
+    {
+        let components = try JWT<Payload>.parse(message: message)
+        guard let kid = components.header.kid else {
+            throw JWTError(identifier: "missingKID", reason: "JWT is missing kid field in header")
+        }
+        guard let signer = signers.signer(kid: kid) else {
+            throw JWTError(identifier: "unknownKID", reason: "No signers are available for the supplied kid")
+        }
+        guard try signer.algorithm.verify(components.signature, signs: components.message) else {
+            throw JWTError(identifier: "invalidSignature", reason: "Invalid JWT signature")
+        }
+        self.header = components.header
+        self.payload = components.payload
         try self.payload.verify(using: signer)
     }
 

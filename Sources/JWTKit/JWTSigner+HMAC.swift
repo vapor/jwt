@@ -1,6 +1,8 @@
 import CJWTKitOpenSSL
 
 extension JWTSigner {
+    // MARK: HMAC
+
     public static func hs256<Key>(key: Key) -> JWTSigner
         where Key: DataProtocol
     {

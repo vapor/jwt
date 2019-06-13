@@ -52,9 +52,23 @@ class JWTKitTests: XCTestCase {
     }
 
     func testRSA() throws {
-        let privateSigner = JWTSigner.rs256(key: .private(pem: privateKeyString.bytes))
-        let publicSigner = JWTSigner.rs256(key: .public(pem: publicKeyString.bytes))
+        let privateSigner = JWTSigner.rs256(key: .private(pem: rsaPrivateKey.bytes))
+        let publicSigner = JWTSigner.rs256(key: .public(pem: rsaPublicKey.bytes))
 
+        let payload = TestPayload(
+            sub: "vapor",
+            name: "Foo",
+            admin: false,
+            exp: .init(value: .init(timeIntervalSince1970: 2_000_000_000))
+        )
+        let jwt = JWT(payload: payload)
+        let privateSigned = try jwt.sign(using: privateSigner)
+        try XCTAssertEqual(JWT<TestPayload>(from: privateSigned, verifiedBy: publicSigner).payload, payload)
+        try XCTAssertEqual(JWT<TestPayload>(from: privateSigned, verifiedBy: privateSigner).payload, payload)
+    }
+
+    func testRSASignWithPublic() throws {
+        let publicSigner = JWTSigner.rs256(key: .public(pem: rsaPublicKey.bytes))
         let payload = TestPayload(
             sub: "vapor",
             name: "Foo",
@@ -68,15 +82,41 @@ class JWTKitTests: XCTestCase {
         } catch {
             // pass
         }
-        let privateSigned = try jwt.sign(using: privateSigner)
-        let publicVerified = try JWT<TestPayload>(from: privateSigned, verifiedBy: publicSigner)
-        let privateVerified = try JWT<TestPayload>(from: privateSigned, verifiedBy: privateSigner)
-        XCTAssertEqual(publicVerified.payload.name, "Foo")
-        XCTAssertEqual(privateVerified.payload.name, "Foo")
+    }
+
+    func testECDSAGenerate() throws {
+        let payload = TestPayload(
+            sub: "vapor",
+            name: "Foo",
+            admin: false,
+            exp: .init(value: .init(timeIntervalSince1970: 2_000_000_000))
+        )
+        let jwt = JWT(payload: payload)
+        let signer = JWTSigner.es256(key: .generate())
+        let data = try jwt.sign(using: signer)
+        try XCTAssertEqual(JWT<TestPayload>(from: data, verifiedBy: signer).payload, payload)
+    }
+
+    func testECDSAPublicPrivate() throws {
+        let publicSigner = JWTSigner.es256(key: .public(pem: ecdsaPublicKey.bytes))
+        let privateSigner = JWTSigner.es256(key: .private(pem: ecdsaPrivateKey.bytes))
+
+        let payload = TestPayload(
+            sub: "vapor",
+            name: "Foo",
+            admin: false,
+            exp: .init(value: .init(timeIntervalSince1970: 2_000_000_000))
+        )
+        let jwt = JWT(payload: payload)
+        let data = try jwt.sign(using: privateSigner)
+        // test private signer decoding
+        try XCTAssertEqual(JWT<TestPayload>(from: data, verifiedBy: privateSigner).payload, payload)
+        // test public signer decoding
+        try XCTAssertEqual(JWT<TestPayload>(from: data, verifiedBy: publicSigner).payload, payload)
     }
 }
 
-struct TestPayload: JWTPayload {
+struct TestPayload: JWTPayload, Equatable {
     var sub: SubjectClaim
     var name: String
     var admin: Bool
@@ -95,9 +135,22 @@ struct ExpirationPayload: JWTPayload {
     }
 }
 
-/// MARK: RSA
+let ecdsaPrivateKey = """
+-----BEGIN PRIVATE KEY-----
+MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg2sD+kukkA8GZUpmm
+jRa4fJ9Xa/JnIG4Hpi7tNO66+OGgCgYIKoZIzj0DAQehRANCAATZp0yt0btpR9kf
+ntp4oUUzTV0+eTELXxJxFvhnqmgwGAm1iVW132XLrdRG/ntlbQ1yzUuJkHtYBNve
+y+77Vzsd
+-----END PRIVATE KEY-----
+"""
+let ecdsaPublicKey = """
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE2adMrdG7aUfZH57aeKFFM01dPnkx
+C18ScRb4Z6poMBgJtYlVtd9ly63URv57ZW0Ncs1LiZB7WATb3svu+1c7HQ==
+-----END PUBLIC KEY-----
+"""
 
-let privateKeyString = """
+let rsaPrivateKey = """
 -----BEGIN RSA PRIVATE KEY-----
 MIICXAIBAAKBgQC0cOtPjzABybjzm3fCg1aCYwnxPmjXpbCkecAWLj/CcDWEcuTZ
 kYDiSG0zgglbbbhcV0vJQDWSv60tnlA3cjSYutAv7FPo5Cq8FkvrdDzeacwRSxYu
@@ -115,7 +168,7 @@ bxEd3Ax0uhHVqKRWNioL7UBvd4lxoReY8RmmfghZHEA=
 -----END RSA PRIVATE KEY-----
 """
 
-let publicKeyString = """
+let rsaPublicKey = """
 -----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC0cOtPjzABybjzm3fCg1aCYwnx
 PmjXpbCkecAWLj/CcDWEcuTZkYDiSG0zgglbbbhcV0vJQDWSv60tnlA3cjSYutAv

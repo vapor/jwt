@@ -6,7 +6,7 @@ extension JWTSigner {
     public static func hs256<Key>(key: Key) -> JWTSigner
         where Key: DataProtocol
     {
-        return .init(algorithm: HMACAlgorithm(
+        return .init(algorithm: HMACSigner(
             key: key.copyBytes(),
             algorithm: convert(EVP_sha256()),
             name: "HS256"
@@ -16,7 +16,7 @@ extension JWTSigner {
     public static func hs384<Key>(key: Key) -> JWTSigner
         where Key: DataProtocol
     {
-        return .init(algorithm: HMACAlgorithm(
+        return .init(algorithm: HMACSigner(
             key: key.copyBytes(),
             algorithm: convert(EVP_sha384()),
             name: "HS384"
@@ -26,7 +26,7 @@ extension JWTSigner {
     public static func hs512<Key>(key: Key) -> JWTSigner
         where Key: DataProtocol
     {
-        return .init(algorithm: HMACAlgorithm(
+        return .init(algorithm: HMACSigner(
             key: key.copyBytes(),
             algorithm: convert(EVP_sha512()),
             name: "HS512"
@@ -34,7 +34,9 @@ extension JWTSigner {
     }
 }
 
-private struct HMACAlgorithm: JWTAlgorithm {
+// MARK: Private
+
+private struct HMACSigner: JWTAlgorithm {
     let key: [UInt8]
     let algorithm: OpaquePointer
     let name: String

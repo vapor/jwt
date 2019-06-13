@@ -6,11 +6,14 @@ extension JWTKitTests {
     //   `swift test --generate-linuxmain`
     // to regenerate.
     static let __allTests__JWTKitTests = [
+        ("testECDSAGenerate", testECDSAGenerate),
+        ("testECDSAPublicPrivate", testECDSAPublicPrivate),
         ("testExpirationDecoding", testExpirationDecoding),
         ("testExpirationEncoding", testExpirationEncoding),
         ("testExpired", testExpired),
         ("testParse", testParse),
         ("testRSA", testRSA),
+        ("testRSASignWithPublic", testRSASignWithPublic),
         ("testSigners", testSigners),
     ]
 }

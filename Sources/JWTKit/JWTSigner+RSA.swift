@@ -5,7 +5,7 @@ extension JWTSigner {
     // MARK: RSA
 
     public static func rs256(key: RSAKey) -> JWTSigner {
-        return .init(algorithm: RSAAlgorithm(
+        return .init(algorithm: RSASigner(
             key: key,
             algorithm: convert(EVP_sha256()),
             name: "RS256"
@@ -13,7 +13,7 @@ extension JWTSigner {
     }
 
     public static func rs384(key: RSAKey) -> JWTSigner {
-        return .init(algorithm: RSAAlgorithm(
+        return .init(algorithm: RSASigner(
             key: key,
             algorithm: convert(EVP_sha384()),
             name: "RS384"
@@ -21,7 +21,7 @@ extension JWTSigner {
     }
 
     public static func rs512(key: RSAKey) -> JWTSigner {
-        return .init(algorithm: RSAAlgorithm(
+        return .init(algorithm: RSASigner(
             key: key,
             algorithm: convert(EVP_sha512()),
             name: "RS512"
@@ -29,149 +29,55 @@ extension JWTSigner {
     }
 }
 
-/// Represents an in-memory RSA key.
-public struct RSAKey {
-    /// Supported RSA key types.
-    public enum Kind {
-        /// A public RSA key. Used for verifying signatures.
-        case `public`
-        /// A private RSA key. Used for creating and verifying signatures.
-        case `private`
-    }
-
-    /// Creates a new `RSAKey` from a private key pem file.
-    public static func `private`<Data>(pem: Data) -> RSAKey
+public final class RSAKey: OpenSSLKey {
+    public static func `public`<Data>(pem data: Data) -> RSAKey
         where Data: DataProtocol
     {
-        return .init(type: .private, key: .make(type: .private, from: pem))
-    }
+        let pkey = self.load(pem: data) { bio in
+            PEM_read_bio_PUBKEY(convert(bio), nil, nil, nil)
+        }
+        defer { EVP_PKEY_free(pkey) }
 
-    /// Creates a new `RSAKey` from a public key pem file.
-    public static func `public`<Data>(pem: Data) -> RSAKey
-        where Data: DataProtocol
-    {
-        return .init(type: .public, key: .make(type: .public, from: pem))
-    }
-
-    /// Creates a new `RSAKey` from a public key certificate file.
-    public static func `public`<Data>(certificate: Data) -> RSAKey
-        where Data: DataProtocol
-    {
-        return .init(type: .public, key: .make(type: .public, from: certificate, x509: true))
-    }
-
-    /// The specific RSA key type. Either public or private.
-    ///
-    /// Note: public keys can only verify signatures. A private key
-    /// is required to create new signatures.
-    public var type: Kind
-
-    /// The C OpenSSL key ref.
-    fileprivate let c: CRSAKey
-
-    /// Creates a new `RSAKey` from a public or private key.
-    fileprivate init(type: Kind, key: CRSAKey) {
-        self.type = type
-        self.c = key
-    }
-
-    /// Creates a new `RSAKey` from components.
-    ///
-    /// For example, if you want to use Google's [public OAuth2 keys](https://www.googleapis.com/oauth2/v3/certs),
-    /// you could parse the request using:
-    ///
-    ///     struct CertKeysResponse: APIResponse {
-    ///         let keys: [Key]
-    ///
-    ///         struct Key: Codable {
-    ///             let kty: String
-    ///             let alg: String
-    ///             let kid: String
-    ///
-    ///             let n: String
-    ///             let e: String
-    ///             let d: String?
-    ///         }
-    ///     }
-    ///
-    /// And then instantiate the key as:
-    ///
-    ///     try RSAKey.components(n: key.n, e: key.e, d: key.d)
-    ///
-    /// - throws: `CryptoError` if key generation fails.
-    public static func components(n: String, e: String, d: String? = nil) -> RSAKey {
-        guard let rsa = RSA_new() else {
+        guard let c = EVP_PKEY_get1_RSA(pkey) else {
             fatalError("RSA key creation failed")
         }
+        return self.init(convert(c), .public)
+    }
 
-        let n = parseBignum(n)
-        let e = parseBignum(e)
-        let d = d.flatMap { parseBignum($0) }
-        RSA_set0_key(rsa, convert(n), convert(e), d.flatMap { convert($0) })
-        return .init(type: d == nil ? .public : .private, key: CRSAKey(convert(rsa)))
+    public static func `private`<Data>(pem data: Data) -> RSAKey
+        where Data: DataProtocol
+    {
+        let pkey = self.load(pem: data) { bio in
+            PEM_read_bio_PrivateKey(convert(bio), nil, nil, nil)
+        }
+        defer { EVP_PKEY_free(pkey) }
+
+        guard let c = EVP_PKEY_get1_RSA(pkey) else {
+            fatalError("RSA key creation failed")
+        }
+        return self.init(convert(c), .private)
+    }
+
+    enum KeyType {
+        case `public`, `private`
+    }
+
+    let type: KeyType
+    let c: OpaquePointer
+
+    init(_ c: OpaquePointer, _ type: KeyType) {
+        self.type = type
+        self.c = c
+    }
+
+    deinit {
+        RSA_free(convert(self.c))
     }
 }
 
 // MARK: Private
 
-private final class CRSAKey {
-    let pointer: OpaquePointer
-
-    internal init(_ pointer: OpaquePointer) {
-        self.pointer = pointer
-    }
-
-    static func make<Data>(type: RSAKey.Kind, from data: Data, x509: Bool = false) -> CRSAKey
-        where Data: DataProtocol
-    {
-        let bio = BIO_new(BIO_s_mem())
-        defer { BIO_free(bio) }
-
-        let bytes = data.copyBytes()
-        let nullTerminatedData = bytes + [0]
-        _ = nullTerminatedData.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> Int32 in
-            return BIO_puts(bio, p.baseAddress?.assumingMemoryBound(to: Int8.self))
-        }
-
-        let maybePkey: OpaquePointer?
-
-        if x509 {
-            guard let x509 = PEM_read_bio_X509(bio, nil, nil, nil) else {
-                fatalError("Key creation from certificate failed")
-            }
-
-            defer { X509_free(x509) }
-            maybePkey = convert(X509_get_pubkey(x509))
-        } else {
-            switch type {
-            case .public:
-                maybePkey = convert(PEM_read_bio_PUBKEY(bio, nil, nil, nil))
-            case .private:
-                maybePkey = convert(PEM_read_bio_PrivateKey(bio, nil, nil, nil))
-            }
-        }
-
-        guard let pkey = maybePkey else {
-            fatalError("RSA key creation failed")
-        }
-        defer { EVP_PKEY_free(convert(pkey)) }
-
-        guard let rsa = EVP_PKEY_get1_RSA(convert(pkey)) else {
-            fatalError("RSA key creation failed")
-        }
-        return .init(convert(rsa))
-    }
-
-    deinit { RSA_free(convert(self.pointer)) }
-}
-
-private func parseBignum(_ s: String) -> OpaquePointer {
-    return Data(s.utf8).base64URLDecodedBytes().withUnsafeBytes { pointer in
-        convert(BN_bin2bn(pointer.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32(pointer.count), nil))
-    }
-}
-
-private struct RSAAlgorithm: JWTAlgorithm {
+private struct RSASigner: JWTAlgorithm, OpenSSLSigner {
     let key: RSAKey
     let algorithm: OpaquePointer
     let name: String
@@ -179,35 +85,28 @@ private struct RSAAlgorithm: JWTAlgorithm {
     func sign<Plaintext>(_ plaintext: Plaintext) throws -> [UInt8]
         where Plaintext: DataProtocol
     {
-        switch key.type {
-        case .public:
-            throw JWTError(identifier: "rsa", reason: "Cannot create RSA signature with a public key. A private key is required.")
-        case .private:
-            break
+        guard case .private = self.key.type else {
+            throw JWTError(identifier: "rsa", reason: "Private key required to sign")
         }
-
-        var siglen: UInt32 = 0
+        var signatureLength: UInt32 = 0
         var signature = [UInt8](
             repeating: 0,
-            count: Int(RSA_size(convert(key.c.pointer)))
+            count: Int(RSA_size(convert(key.c)))
         )
 
-        guard self.hash(plaintext).withUnsafeBytes ({ inputBuffer in
-            signature.withUnsafeMutableBytes({ signatureBuffer in
-                RSA_sign(
-                    EVP_MD_type(convert(self.algorithm)),
-                    inputBuffer.baseAddress!.assumingMemoryBound(to: UInt8.self),
-                    UInt32(inputBuffer.count),
-                    signatureBuffer.baseAddress!.assumingMemoryBound(to: UInt8.self),
-                    &siglen,
-                    convert(key.c.pointer)
-                )
-            })
-        }) == 1 else {
+        let digest = self.digest(plaintext)
+        guard RSA_sign(
+            EVP_MD_type(convert(self.algorithm)),
+            digest,
+            numericCast(digest.count),
+            &signature,
+            &signatureLength,
+            convert(self.key.c)
+        ) == 1 else {
             throw JWTError(identifier: "rsaSign", reason: "RSA signature creation failed")
         }
 
-        return signature
+        return .init(signature[0..<numericCast(signatureLength)])
     }
 
     func verify<Signature, Plaintext>(
@@ -216,42 +115,15 @@ private struct RSAAlgorithm: JWTAlgorithm {
     ) throws -> Bool
         where Signature: DataProtocol, Plaintext: DataProtocol
     {
-        return self.hash(plaintext).withUnsafeBytes({ inputBuffer in
-            signature.copyBytes().withUnsafeBytes({ signatureBuffer in
-                RSA_verify(
-                    EVP_MD_type(convert(self.algorithm)),
-                    inputBuffer.baseAddress?.assumingMemoryBound(to: UInt8.self),
-                    UInt32(inputBuffer.count),
-                    signatureBuffer.baseAddress?.assumingMemoryBound(to: UInt8.self),
-                    UInt32(signatureBuffer.count),
-                    convert(key.c.pointer)
-                )
-            })
-        }) == 1
-    }
-
-    private func hash<Plaintext>(_ plaintext: Plaintext) -> [UInt8]
-        where Plaintext: DataProtocol
-    {
-        let context = EVP_MD_CTX_new()
-        defer { EVP_MD_CTX_free(context) }
-
-        guard EVP_DigestInit_ex(context, convert(self.algorithm), nil) == 1 else {
-            fatalError("Failed initializing digest context")
-        }
-        guard plaintext.copyBytes().withUnsafeBytes({
-            EVP_DigestUpdate(context, $0.baseAddress, $0.count)
-        }) == 1 else {
-            fatalError("Failed updating digest")
-        }
-        var hash: [UInt8] = .init(repeating: 0, count: Int(EVP_MAX_MD_SIZE))
-        var count: UInt32 = 0
-
-        guard hash.withUnsafeMutableBytes({
-            EVP_DigestFinal_ex(context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), &count)
-        }) == 1 else {
-            fatalError("Failed finalizing digest")
-        }
-        return .init(hash[0..<Int(count)])
+        let digest = self.digest(plaintext)
+        let signature = signature.copyBytes()
+        return RSA_verify(
+            EVP_MD_type(convert(self.algorithm)),
+            digest,
+            numericCast(digest.count),
+            signature,
+            numericCast(signature.count),
+            convert(self.key.c)
+        ) == 1
     }
 }

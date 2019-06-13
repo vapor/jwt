@@ -6,7 +6,6 @@ jobs:
       xcode: "10.2.0"
     steps:
       - checkout
-      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install openssl@1.1
       - run: swift build
       - run: swift test
   macos-release:
@@ -14,7 +13,6 @@ jobs:
       xcode: "10.2.0"
     steps:
       - checkout
-      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install openssl@1.1
       - run: swift build -c release
   bionic:
     docker:

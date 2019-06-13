@@ -1,4 +1,6 @@
+import class Foundation.JSONEncoder
 import class Foundation.JSONDecoder
+import struct Foundation.Data
 
 /// A JSON Web Token with a generic, codable payload.
 ///
@@ -21,28 +23,61 @@ public struct JWT<Payload> where Payload: JWTPayload {
     }
     
     /// Parses a JWT string into a JSON Web Signature
-    public init<Header, Payload>(header: Header, payload: Payload) throws
-        where Header: DataProtocol, Payload: DataProtocol
+    public init<Message>(message: Message, using signer: JWTSigner) throws
+        where Message: DataProtocol
     {
+        let message = message.copyBytes().split(separator: .period)
+        guard message.count == 3 else {
+            throw JWTError(identifier: "invalidJWT", reason: "Malformed JWT")
+        }
+        
+        let encodedHeader = message[0]
+        let encodedPayload = message[1]
+        let encodedSignature = message[2]
+        
+        
         let jsonDecoder = JSONDecoder()
         jsonDecoder.dateDecodingStrategy = .secondsSince1970
+        let header = try jsonDecoder.decode(JWTHeader.self, from: Data(encodedHeader.base64URLDecodedBytes()))
+        let payload = try jsonDecoder.decode(Payload.self, from: Data(encodedPayload.base64URLDecodedBytes()))
         
-        self.header = try jsonDecoder.decode(JWTHeader.self, from: .init(header.copyBytes()))
-        self.payload = try jsonDecoder.decode(Payload.self, from: .init(payload.copyBytes()))
-    }
-
-    /// Signs the message and returns the serialized JSON web token
-    public func sign(using signers: JWTSigners) throws -> Data {
-        guard let kid = self.header.kid else {
-            throw JWTError(identifier: "missingKID", reason: "`kid` header property required to identify signer")
+        guard try signer.verify(
+            encodedSignature.base64URLDecodedBytes(),
+            signs: encodedHeader + [.period] + encodedPayload,
+            header: header
+        ) else {
+            throw JWTError(identifier: "invalidSignature", reason: "Invalid JWT signature")
         }
-
-        let signer = try signers.requireSigner(kid: kid)
-        return try signer.sign(self)
+        
+        self.header = header
+        self.payload = payload
+        
+        try self.payload.verify(using: signer)
     }
 
     /// Signs the message and returns the serialized JSON web token
-    public func sign(using signer: JWTSigner) throws -> Data {
-        return try signer.sign(self)
+    public func sign(using signer: JWTSigner) throws -> [UInt8] {
+        let jsonEncoder = JSONEncoder()
+        jsonEncoder.dateEncodingStrategy = .secondsSince1970
+        
+        // encode header, copying header struct to mutate alg
+        var header = self.header
+        header.alg = signer.algorithm.jwtAlgorithmName
+        let headerData = try jsonEncoder.encode(header)
+        let encodedHeader = headerData.base64URLEncodedBytes()
+        
+        // encode payload
+        let payloadData = try jsonEncoder.encode(self.payload)
+        let encodedPayload = payloadData.base64URLEncodedBytes()
+        
+        // combine header and payload to create signature
+        let signatureData = try signer.algorithm.sign(encodedHeader + [.period] + encodedPayload)
+        
+        // yield complete jwt
+        return encodedHeader
+                + [.period]
+                + encodedPayload
+                + [.period]
+                + signatureData.base64URLEncodedBytes()
     }
 }

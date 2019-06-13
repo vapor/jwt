@@ -1,5 +1,7 @@
+import Foundation
+
 /// Errors that can be thrown while working with JWT.
-public struct JWTError: Error {
+public struct JWTError: Error, LocalizedError {
     /// See `Debuggable`.
     public static var readableName = "JWT Error"
 
@@ -8,6 +10,10 @@ public struct JWTError: Error {
 
     /// See `Debuggable`.
     public var identifier: String
+    
+    public var errorDescription: String? {
+        return self.reason
+    }
 
     /// Create a new `JWTError`.
     public init(identifier: String, reason: String) {

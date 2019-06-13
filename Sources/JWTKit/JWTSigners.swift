@@ -25,4 +25,11 @@ public final class JWTSigners {
         }
         return signer
     }
+    
+    
+    public func verify<Message, Payload>(_ message: Message, as payload: Payload.Type) throws -> JWT<Payload>
+        where Message: DataProtocol
+    {
+        fatalError()
+    }
 }

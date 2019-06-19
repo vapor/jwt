@@ -17,12 +17,4 @@ public final class JWTSigners {
     public func signer(kid: String) -> JWTSigner? {
         return storage[kid]
     }
-
-    /// Returns a signer for the `kid` or throws an error.
-    public func requireSigner(kid: String) throws -> JWTSigner {
-        guard let signer = self.signer(kid: kid) else {
-            throw JWTError(identifier: "unknownKID", reason: "No signers are available for the supplied `kid`")
-        }
-        return signer
-    }
 }

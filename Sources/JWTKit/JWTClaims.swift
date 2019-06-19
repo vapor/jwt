@@ -2,7 +2,7 @@
 /// JWT.  The processing of this claim is generally application specific.
 /// The "iss" value is a case-sensitive string containing a StringOrURI
 /// value.  Use of this claim is OPTIONAL.
-public struct IssuerClaim: JWTClaim, ExpressibleByStringLiteral {
+public struct IssuerClaim: JWTClaim, Equatable, ExpressibleByStringLiteral {
     /// See `JWTClaim`.
     public var value: String
     
@@ -19,7 +19,7 @@ public struct IssuerClaim: JWTClaim, ExpressibleByStringLiteral {
 /// The processing of this claim is generally application specific.  The
 /// "sub" value is a case-sensitive string containing a StringOrURI
 /// value.  Use of this claim is OPTIONAL.
-public struct SubjectClaim: JWTClaim, ExpressibleByStringLiteral {
+public struct SubjectClaim: JWTClaim, Equatable, ExpressibleByStringLiteral {
     /// See `JWTClaim`.
     public var value: String
     
@@ -40,7 +40,7 @@ public struct SubjectClaim: JWTClaim, ExpressibleByStringLiteral {
 /// single case-sensitive string containing a StringOrURI value.  The
 /// interpretation of audience values is generally application specific.
 /// Use of this claim is OPTIONAL.
-public struct AudienceClaim: JWTClaim, ExpressibleByStringLiteral {
+public struct AudienceClaim: JWTClaim, Equatable, ExpressibleByStringLiteral {
     /// See `JWTClaim`.
     public var value: String
     
@@ -58,7 +58,7 @@ public struct AudienceClaim: JWTClaim, ExpressibleByStringLiteral {
 /// produced by different issuers as well.  The "jti" claim can be used
 /// to prevent the JWT from being replayed.  The "jti" value is a case-
 /// sensitive string.  Use of this claim is OPTIONAL.
-public struct IDClaim: JWTClaim, ExpressibleByStringLiteral {
+public struct IDClaim: JWTClaim, Equatable, ExpressibleByStringLiteral {
     /// See `JWTClaim`.
     public var value: String
     
@@ -72,7 +72,7 @@ public struct IDClaim: JWTClaim, ExpressibleByStringLiteral {
 /// issued.  This claim can be used to determine the age of the JWT.  Its
 /// value MUST be a number containing a NumericDate value.  Use of this
 /// claim is OPTIONAL.
-public struct IssuedAtClaim: JWTUnixEpochClaim {
+public struct IssuedAtClaim: JWTUnixEpochClaim, Equatable {
     /// See `JWTClaim`.
     public var value: Date
     
@@ -89,7 +89,7 @@ public struct IssuedAtClaim: JWTUnixEpochClaim {
 /// Implementers MAY provide for some small leeway, usually no more than
 /// a few minutes, to account for clock skew.  Its value MUST be a number
 /// containing a NumericDate value.  Use of this claim is OPTIONAL.
-public struct ExpirationClaim: JWTUnixEpochClaim {
+public struct ExpirationClaim: JWTUnixEpochClaim, Equatable {
     /// See `JWTClaim`.
     public var value: Date
     
@@ -100,9 +100,11 @@ public struct ExpirationClaim: JWTUnixEpochClaim {
     
     /// Throws an error if the claim's date is later than current date.
     public func verifyNotExpired(currentDate: Date = .init()) throws {
-        switch value.compare(currentDate) {
-        case .orderedAscending, .orderedSame: throw JWTError(identifier: "exp", reason: "Expiration claim failed")
-        case .orderedDescending: break
+        switch self.value.compare(currentDate) {
+        case .orderedAscending, .orderedSame:
+            throw JWTError.claimVerificationFailure(name: "exp", reason: "expired")
+        case .orderedDescending:
+            break
         }
     }
 }
@@ -114,7 +116,7 @@ public struct ExpirationClaim: JWTUnixEpochClaim {
 /// provide for some small leeway, usually no more than a few minutes, to
 /// account for clock skew.  Its value MUST be a number containing a
 /// NumericDate value.  Use of this claim is OPTIONAL.
-public struct NotBeforeClaim: JWTUnixEpochClaim {
+public struct NotBeforeClaim: JWTUnixEpochClaim, Equatable {
     /// See `JWTClaim`.
     public var value: Date
     
@@ -126,8 +128,10 @@ public struct NotBeforeClaim: JWTUnixEpochClaim {
     /// Throws an error if the claim's date is earlier than current date.
     public func verifyNotBefore(currentDate: Date = .init()) throws {
         switch value.compare(currentDate) {
-        case .orderedDescending: throw JWTError(identifier: "nbf", reason: "Not before claim failed")
-        case .orderedAscending, .orderedSame: break
+        case .orderedDescending:
+            throw JWTError.claimVerificationFailure(name: "nbf", reason: "too soon")
+        case .orderedAscending, .orderedSame:
+            break
         }
     }
 }

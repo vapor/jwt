@@ -50,17 +50,17 @@ private struct HMACSigner: JWTAlgorithm {
     func sign<Plaintext>(_ plaintext: Plaintext) throws -> [UInt8]
         where Plaintext: DataProtocol
     {
-        var context = HMAC_CTX()
-        defer { HMAC_CTX_cleanup(&context) }
+        let context = jwtkit_HMAC_CTX_new()
+        defer { jwtkit_HMAC_CTX_free(context) }
         
         guard self.key.withUnsafeBytes({
-            return HMAC_Init_ex(&context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32($0.count), convert(self.algorithm), nil)
+            return HMAC_Init_ex(context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32($0.count), convert(self.algorithm), nil)
         }) == 1 else {
             throw JWTError.signingAlgorithmFailure(HMACError.initializationFailure)
         }
         
         guard plaintext.copyBytes().withUnsafeBytes({
-            return HMAC_Update(&context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), $0.count)
+            return HMAC_Update(context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), $0.count)
         }) == 1 else {
             throw JWTError.signingAlgorithmFailure(HMACError.updateFailure)
         }
@@ -68,7 +68,7 @@ private struct HMACSigner: JWTAlgorithm {
         var count: UInt32 = 0
         
         guard hash.withUnsafeMutableBytes({
-            return HMAC_Final(&context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), &count)
+            return HMAC_Final(context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), &count)
         }) == 1 else {
             throw JWTError.signingAlgorithmFailure(HMACError.finalizationFailure)
         }

@@ -50,8 +50,8 @@ private struct HMACSigner: JWTAlgorithm {
     func sign<Plaintext>(_ plaintext: Plaintext) throws -> [UInt8]
         where Plaintext: DataProtocol
     {
-        let context = HMAC_CTX_new()
-        defer { HMAC_CTX_free(context) }
+        let context = jwtkit_HMAC_CTX_new()
+        defer { jwtkit_HMAC_CTX_free(context) }
         
         guard self.key.withUnsafeBytes({
             return HMAC_Init_ex(context, $0.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32($0.count), convert(self.algorithm), nil)

@@ -16,8 +16,8 @@ extension OpenSSLSigner {
     func digest<Plaintext>(_ plaintext: Plaintext) throws -> [UInt8]
         where Plaintext: DataProtocol
     {
-        let context = EVP_MD_CTX_new()
-        defer { EVP_MD_CTX_free(context) }
+        let context = jwtkit_EVP_MD_CTX_new()
+        defer { jwtkit_EVP_MD_CTX_free(context) }
 
         guard EVP_DigestInit_ex(context, convert(self.algorithm), nil) == 1 else {
             throw JWTError.signingAlgorithmFailure(OpenSSLError.digestInitializationFailure)

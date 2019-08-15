@@ -1,13 +1,5 @@
 #include "include/c_jwtkit_crypto.h"
 
-
-int jwtkit_RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
-    r->n = n;
-    r->e = e;
-    r->d = d;
-    return 0;
-};
-
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
 EVP_MD_CTX *jwtkit_EVP_MD_CTX_new(void) {
     return EVP_MD_CTX_create();

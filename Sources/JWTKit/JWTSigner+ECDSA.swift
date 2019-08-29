@@ -84,25 +84,24 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
     func sign<Plaintext>(_ plaintext: Plaintext) throws -> [UInt8]
         where Plaintext: DataProtocol
     {
-        var signatureLength: UInt32 = 0
-        var signature = [UInt8](
-            repeating: 0,
-            count: Int(ECDSA_size(self.key.c))
-        )
-
         let digest = try self.digest(plaintext)
-        guard ECDSA_sign(
-            0,
+        guard let signature = ECDSA_do_sign(
             digest,
             numericCast(digest.count),
-            &signature,
-            &signatureLength,
             self.key.c
-        ) == 1 else {
+        ) else {
             throw JWTError.signingAlgorithmFailure(ECDSAError.signFailure)
         }
+        defer { ECDSA_SIG_free(signature) }
 
-        return .init(signature[0..<numericCast(signatureLength)])
+        let r = signature.pointee.r
+        let s = signature.pointee.s
+
+        var rBytes = [UInt8](repeating: 0, count: 32)
+        var sBytes = [UInt8](repeating: 0, count: 32)
+        BN_bn2bin(r, &rBytes)
+        BN_bn2bin(s, &sBytes)
+        return .init(rBytes + sBytes)
     }
 
     func verify<Signature, Plaintext>(
@@ -112,14 +111,22 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
         where Signature: DataProtocol, Plaintext: DataProtocol
     {
         let digest = try self.digest(plaintext)
-        let signature = signature.copyBytes()
-        return ECDSA_verify(
-            0,
+        let signatureBytes = signature.copyBytes()
+        let rb = signatureBytes[0..<32].copyBytes()
+        let sb = signatureBytes[32..<64].copyBytes()
+
+        var r = BIGNUM()
+        var s = BIGNUM()
+
+        BN_bin2bn(rb, 32, &r)
+        BN_bin2bn(sb, 32, &s)
+        var signature = ECDSA_SIG(r: &r, s: &s)
+
+        return ECDSA_do_verify(
             digest,
             numericCast(digest.count),
-            signature,
-            numericCast(signature.count),
+            &signature,
             self.key.c
-        )  == 1
+        ) == 1
     }
 }

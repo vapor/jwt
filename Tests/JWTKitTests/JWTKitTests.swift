@@ -119,6 +119,59 @@ class JWTKitTests: XCTestCase {
         // test public signer decoding
         try XCTAssertEqual(JWT<TestPayload>(from: data, verifiedBy: publicSigner).payload, payload)
     }
+
+    func testJWTioExample() throws {
+        let token = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.tyh-VfuzIxCyGYDlkBA7DfyjrqmSHu6pQ2hoZuFqUSLPNY2N0mpHb3nk5K17HWP_3cYHBw7AhHale5wky6-sVA"
+        let corruptedToken = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.tyh-VfuzIxCyGYDlkBA7DfyjrqmSHu6pQ2hoZuFqUSLPNY2N0mpHb3nk5K17HwP_3cYHBw7AhHale5wky6-sVA"
+
+        let publicKey = """
+        -----BEGIN PUBLIC KEY-----
+        MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+uQbTjL3chynL4wXgUg2R9
+        q9UU8I5mEovUf86QZ7kOBIjJwqnzD1omageEHWwHdBO6B+dFabmdT9POxg==
+        -----END PUBLIC KEY-----
+        """
+
+        // {
+        //   "sub": "1234567890",
+        //   "name": "John Doe",
+        //   "admin": true,
+        //   "iat": 1516239022
+        // }
+        struct JWTioPayload: JWTPayload {
+            var sub: SubjectClaim
+            var name: String
+            var admin: Bool
+            var iat: IssuedAtClaim
+
+            func verify(using signer: JWTSigner) throws {
+                // no verifiable claims
+            }
+        }
+
+        // create public key signer (verifier)
+        let publicSigner = try JWTSigner.es256(key: .public(pem: publicKey.bytes))
+
+        // decode jwt and test payload contents
+        let jwt = try JWT<JWTioPayload>(from: token.bytes, verifiedBy: publicSigner)
+        XCTAssertEqual(jwt.payload.sub, "1234567890")
+        XCTAssertEqual(jwt.payload.name, "John Doe")
+        XCTAssertEqual(jwt.payload.admin, true)
+        XCTAssertEqual(jwt.payload.iat.value, .init(timeIntervalSince1970: 1516239022))
+
+        // test corrupted token
+        // this should fail
+        do {
+            _ = try JWT<JWTioPayload>(from: corruptedToken.bytes, verifiedBy: publicSigner)
+        } catch let error as JWTError {
+            switch error {
+            case .signatureVerifictionFailed:
+                // pass
+                XCTAssert(true)
+            default:
+                XCTFail("unexpected error: \(error)")
+            }
+        }
+    }
 }
 
 struct TestPayload: JWTPayload, Equatable {

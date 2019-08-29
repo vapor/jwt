@@ -118,20 +118,22 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
             return false
         }
 
-        let rb = signatureBytes[0..<32].copyBytes()
-        let sb = signatureBytes[32..<64].copyBytes()
-
-        var r = BN_new()
-        var s = BN_new()
-        BN_bin2bn(rb, 32, r)
-        BN_bin2bn(sb, 32, s)
-
         let signature = ECDSA_SIG_new()
         defer { ECDSA_SIG_free(signature) }
 
-        // passing bignums to this method transfers ownership
-        // (they will be freed when the signature is freed)
-        jwtkit_ECDSA_SIG_set0(signature, r, s)
+        signatureBytes[0..<32].withUnsafeBufferPointer { r in
+            signatureBytes[32..<64].withUnsafeBufferPointer { s in
+                // passing bignums to this method transfers ownership
+                // (they will be freed when the signature is freed)
+                guard jwtkit_ECDSA_SIG_set0(
+                    signature,
+                    BN_bin2bn(r.baseAddress, 32, nil),
+                    BN_bin2bn(s.baseAddress, 32, nil)
+                ) == 0 else {
+                    fatalError("ECDSA_SIG_set failed")
+                }
+            }
+        }
 
         return ECDSA_do_verify(
             digest,

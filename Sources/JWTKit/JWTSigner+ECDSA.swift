@@ -129,7 +129,7 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
                     signature,
                     BN_bin2bn(r.baseAddress, 32, nil),
                     BN_bin2bn(s.baseAddress, 32, nil)
-                ) == 0 else {
+                ) == 1 else {
                     fatalError("ECDSA_SIG_set failed")
                 }
             }

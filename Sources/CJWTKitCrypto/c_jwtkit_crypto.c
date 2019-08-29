@@ -4,7 +4,7 @@
 int jwtkit_ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s) {
     sig->r = r;
     sig->s = s;
-    return 0;
+    return 1;
 }
 
 const BIGNUM *jwtkit_ECDSA_SIG_get0_r(const ECDSA_SIG *sig) {

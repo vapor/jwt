@@ -94,13 +94,10 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
         }
         defer { ECDSA_SIG_free(signature) }
 
-        let r = signature.pointee.r
-        let s = signature.pointee.s
-
         var rBytes = [UInt8](repeating: 0, count: 32)
         var sBytes = [UInt8](repeating: 0, count: 32)
-        BN_bn2bin(r, &rBytes)
-        BN_bn2bin(s, &sBytes)
+        BN_bn2bin(jwtkit_ECDSA_SIG_get0_r(signature), &rBytes)
+        BN_bn2bin(jwtkit_ECDSA_SIG_get0_s(signature), &sBytes)
         return .init(rBytes + sBytes)
     }
 
@@ -115,17 +112,23 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
         let rb = signatureBytes[0..<32].copyBytes()
         let sb = signatureBytes[32..<64].copyBytes()
 
-        var r = BIGNUM()
-        var s = BIGNUM()
+        var r = BN_new()
+        var s = BN_new()
+        BN_bin2bn(rb, 32, r)
+        BN_bin2bn(sb, 32, s)
 
-        BN_bin2bn(rb, 32, &r)
-        BN_bin2bn(sb, 32, &s)
-        var signature = ECDSA_SIG(r: &r, s: &s)
+        let signature = ECDSA_SIG_new()
+        defer { ECDSA_SIG_free(signature) }
+
+        // passing bignum's to this method will transfer
+        // memory management. they will be freed when the
+        // signature is freed
+        jwtkit_ECDSA_SIG_set0(signature, r, s)
 
         return ECDSA_do_verify(
             digest,
             numericCast(digest.count),
-            &signature,
+            signature,
             self.key.c
         ) == 1
     }

@@ -18,5 +18,8 @@ EVP_MD_CTX *jwtkit_EVP_MD_CTX_new(void);
 void jwtkit_EVP_MD_CTX_free(EVP_MD_CTX *ctx);
 HMAC_CTX *jwtkit_HMAC_CTX_new(void);
 void jwtkit_HMAC_CTX_free(HMAC_CTX *ctx);
+int jwtkit_ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
+const BIGNUM *jwtkit_ECDSA_SIG_get0_r(const ECDSA_SIG *sig);
+const BIGNUM *jwtkit_ECDSA_SIG_get0_s(const ECDSA_SIG *sig);
 
 #endif

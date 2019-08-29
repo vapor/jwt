@@ -94,6 +94,8 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
         }
         defer { ECDSA_SIG_free(signature) }
 
+        // serialize r+s values
+        // see: https://tools.ietf.org/html/rfc7515#appendix-A.3
         var rBytes = [UInt8](repeating: 0, count: 32)
         var sBytes = [UInt8](repeating: 0, count: 32)
         BN_bn2bin(jwtkit_ECDSA_SIG_get0_r(signature), &rBytes)
@@ -108,6 +110,9 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
         where Signature: DataProtocol, Plaintext: DataProtocol
     {
         let digest = try self.digest(plaintext)
+
+        // parse r+s values
+        // see: https://tools.ietf.org/html/rfc7515#appendix-A.3
         let signatureBytes = signature.copyBytes()
         let rb = signatureBytes[0..<32].copyBytes()
         let sb = signatureBytes[32..<64].copyBytes()
@@ -120,9 +125,8 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
         let signature = ECDSA_SIG_new()
         defer { ECDSA_SIG_free(signature) }
 
-        // passing bignum's to this method will transfer
-        // memory management. they will be freed when the
-        // signature is freed
+        // passing bignums to this method transfers ownership
+        // (they will be freed when the signature is freed)
         jwtkit_ECDSA_SIG_set0(signature, r, s)
 
         return ECDSA_do_verify(

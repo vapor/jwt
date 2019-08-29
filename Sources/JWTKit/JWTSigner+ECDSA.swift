@@ -114,6 +114,10 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
         // parse r+s values
         // see: https://tools.ietf.org/html/rfc7515#appendix-A.3
         let signatureBytes = signature.copyBytes()
+        guard signatureBytes.count == 64 else {
+            return false
+        }
+
         let rb = signatureBytes[0..<32].copyBytes()
         let sb = signatureBytes[32..<64].copyBytes()
 

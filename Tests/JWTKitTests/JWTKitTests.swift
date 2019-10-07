@@ -113,11 +113,14 @@ class JWTKitTests: XCTestCase {
             exp: .init(value: .init(timeIntervalSince1970: 2_000_000_000))
         )
         let jwt = JWT(payload: payload)
-        let data = try jwt.sign(using: privateSigner)
-        // test private signer decoding
-        try XCTAssertEqual(JWT<TestPayload>(from: data, verifiedBy: privateSigner).payload, payload)
-        // test public signer decoding
-        try XCTAssertEqual(JWT<TestPayload>(from: data, verifiedBy: publicSigner).payload, payload)
+        
+        for _ in 0..<1_000 {
+            let data = try jwt.sign(using: privateSigner)
+            // test private signer decoding
+            try XCTAssertEqual(JWT<TestPayload>(from: data, verifiedBy: privateSigner).payload, payload)
+            // test public signer decoding
+            try XCTAssertEqual(JWT<TestPayload>(from: data, verifiedBy: publicSigner).payload, payload)
+        }
     }
 
     func testJWTioExample() throws {

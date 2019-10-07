@@ -98,9 +98,17 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
         // see: https://tools.ietf.org/html/rfc7515#appendix-A.3
         var rBytes = [UInt8](repeating: 0, count: 32)
         var sBytes = [UInt8](repeating: 0, count: 32)
-        BN_bn2bin(jwtkit_ECDSA_SIG_get0_r(signature), &rBytes)
-        BN_bn2bin(jwtkit_ECDSA_SIG_get0_s(signature), &sBytes)
-        return .init(rBytes + sBytes)
+        let rCount = Int(BN_bn2bin(jwtkit_ECDSA_SIG_get0_r(signature), &rBytes))
+        let sCount = Int(BN_bn2bin(jwtkit_ECDSA_SIG_get0_s(signature), &sBytes))
+
+        // BN_bn2bin can return < 32 bytes which will result in the data
+        // being zero-padded on the wrong side
+        return .init(
+            [UInt8](repeating: 0, count: 32 - rCount) +
+            rBytes[0..<rCount] +
+            [UInt8](repeating: 0, count: 32 - sCount) +
+            sBytes[0..<sCount]
+        )
     }
 
     func verify<Signature, Plaintext>(

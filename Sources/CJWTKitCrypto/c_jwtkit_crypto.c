@@ -34,6 +34,12 @@ void jwtkit_HMAC_CTX_free(HMAC_CTX *ctx) {
     HMAC_CTX_cleanup(ctx);
     free(ctx);
 };
+
+void jwtkit_RSA_set0_key(RSA *rsa, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
+    rsa->n = n;
+    rsa->e = e;
+    rsa->d = d;
+}
 #else
 int jwtkit_ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s) {
     return ECDSA_SIG_set0(sig, r, s);
@@ -62,4 +68,7 @@ HMAC_CTX *jwtkit_HMAC_CTX_new(void) {
 void jwtkit_HMAC_CTX_free(HMAC_CTX *ctx) {
     HMAC_CTX_free(ctx);
 };
+void jwtkit_RSA_set0_key(RSA *rsa, BIGNUM *n, BIGNUM *e, BIGNUM *d) {
+    RSA_set0_key(rsa, n, e, d);
+}
 #endif

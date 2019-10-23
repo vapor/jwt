@@ -11,6 +11,8 @@ extension JWTKitTests {
         ("testExpirationDecoding", testExpirationDecoding),
         ("testExpirationEncoding", testExpirationEncoding),
         ("testExpired", testExpired),
+        ("testJWKS", testJWKS),
+        ("testJWKSigner", testJWKSigner),
         ("testJWTioExample", testJWTioExample),
         ("testParse", testParse),
         ("testRSA", testRSA),

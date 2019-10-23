@@ -1,20 +1,23 @@
-// swift-tools-version:4.0
+// swift-tools-version:5.0
 import PackageDescription
 
 let package = Package(
-    name: "JWT",
+    name: "jwt-kit",
     products: [
-        .library(name: "JWT", targets: ["JWT"]),
+        .library(name: "JWTKit", targets: ["JWTKit"]),
     ],
-    dependencies: [
-        // 🌎 Utility package containing tools for byte manipulation, Codable, OS APIs, and debugging.
-        .package(url: "https://github.com/vapor/core.git", from: "3.0.0"),
-
-        // 🔑 Hashing (BCrypt, SHA, HMAC, etc), encryption, and randomness.
-        .package(url: "https://github.com/vapor/crypto.git", from: "3.0.0"),
-    ],
+    dependencies: [ ],
     targets: [
-        .target(name: "JWT", dependencies: ["Core", "Crypto"]),
-        .testTarget(name: "JWTTests", dependencies: ["JWT"]),
+        .systemLibrary(
+            name: "CJWTKitOpenSSL",
+            pkgConfig: "openssl",
+            providers: [
+                .apt(["openssl libssl-dev"]),
+                .brew(["openssl"])
+            ]
+        ),
+        .target(name: "CJWTKitCrypto", dependencies: ["CJWTKitOpenSSL"]),
+        .target(name: "JWTKit", dependencies: ["CJWTKitCrypto"]),
+        .testTarget(name: "JWTKitTests", dependencies: ["JWTKit"]),
     ]
 )

@@ -1,3 +1,12 @@
+/// A JSON Web Key Set.
+///
+/// A JSON object that represents a set of JWKs.
+/// Read specification (RFC 7517) https://tools.ietf.org/html/rfc7517.
+public struct JWKS: Decodable {
+    /// All JSON Web Keys
+    public var keys: [JWK]
+}
+
 /// A JSON Web Key.
 ///
 /// Read specification (RFC 7517) https://tools.ietf.org/html/rfc7517.
@@ -24,7 +33,6 @@ public struct JWK: Decodable {
     ///  family used with the key, such as `RSA` or `EC`. The `kty` value
     ///  is a case-sensitive string.
     public var keyType: KeyType
-    
     
     /// Supported `alg` algorithms
     public enum Algorithm: Decodable {
@@ -61,7 +69,7 @@ public struct JWK: Decodable {
     /// during key rollover.
     ///
     /// The structure of the `kid` value is unspecified. When `kid` values
-    /// are used within a JWK Set, different keys within the JWK Set SHOULD
+    /// are used within a JWK Set, different keys within the JWK set should
     /// use distinct `kid` values.
     ///
     /// (One example in which different keys might use the same `kid` value
@@ -69,7 +77,7 @@ public struct JWK: Decodable {
     /// equivalent alternatives by the application using them.)
     ///
     /// The `kid` value is a case-sensitive string.
-    public var keyID: String?
+    public var keyIdentifier: String?
     
     /// `n` Modulus.
     public var modulus: String?
@@ -83,7 +91,7 @@ public struct JWK: Decodable {
     private enum CodingKeys: String, CodingKey {
         case keyType = "kty"
         case algorithm = "alg"
-        case keyID = "kid"
+        case keyIdentifier = "kid"
         case modulus = "n"
         case exponent = "e"
         case privateExponent = "d"

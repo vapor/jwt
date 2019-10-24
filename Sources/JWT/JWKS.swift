@@ -13,7 +13,7 @@ public struct JWKS: Codable {
     }
 }
 
-public extension JWTSigners {
+extension JWTSigners {
 
     public convenience init(jwks: JWKS, skipAnonymousKeys: Bool = true) throws  {
         self.init()

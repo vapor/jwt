@@ -155,7 +155,7 @@ public struct JWK: Codable {
     }
 }
 
-public extension JWTSigner {
+extension JWTSigner {
 
     /// Creates a JWT signer with the supplied JWK
     public static func jwk(key: JWK) throws -> JWTSigner {

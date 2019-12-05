@@ -1,23 +1,20 @@
-// swift-tools-version:5.0
+// swift-tools-version:5.1
 import PackageDescription
 
 let package = Package(
-    name: "jwt-kit",
-    products: [
-        .library(name: "JWTKit", targets: ["JWTKit"]),
+    name: "jwt",
+    platforms: [
+       .macOS(.v10_14)
     ],
-    dependencies: [ ],
+    products: [
+        .library(name: "JWT", targets: ["JWT"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/vapor/jwt-kit.git", .branch("master")),
+        .package(url: "https://github.com/vapor/vapor.git", .branch("master")),
+    ],
     targets: [
-        .systemLibrary(
-            name: "CJWTKitOpenSSL",
-            pkgConfig: "openssl",
-            providers: [
-                .apt(["openssl libssl-dev"]),
-                .brew(["openssl"])
-            ]
-        ),
-        .target(name: "CJWTKitCrypto", dependencies: ["CJWTKitOpenSSL"]),
-        .target(name: "JWTKit", dependencies: ["CJWTKitCrypto"]),
-        .testTarget(name: "JWTKitTests", dependencies: ["JWTKit"]),
+        .target(name: "JWT", dependencies: ["JWTKit", "Vapor"]),
+        .testTarget(name: "JWTTests", dependencies: ["JWT", "XCTVapor"]),
     ]
 )

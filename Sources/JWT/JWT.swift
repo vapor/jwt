@@ -1,6 +1,6 @@
 import Vapor
 
-public final class JWTProvider: Provider {
+public final class JWT: Provider {
     public let application: Application
     public var signers: JWTSigners
 
@@ -10,36 +10,54 @@ public final class JWTProvider: Provider {
     }
 }
 
-public struct JWTRequest {
-    let request: Request
+extension Request {
+    public struct JWT {
+        let request: Request
 
-    public func sign<Payload>(_ payload: Payload, kid: String? = nil) throws -> String
-        where Payload: JWTPayload
-    {
-        try self.sign(JWT(payload: payload), kid: kid)
+        public func verify<Payload>(as payload: Payload.Type = Payload.self) throws -> Payload
+            where Payload: JWTPayload
+        {
+            guard let token = self.request.headers.bearerAuthorization?.token else {
+                self.request.logger.error("Request is missing JWT bearer header")
+                throw Abort(.unauthorized)
+            }
+            return try self.verify(token, as: Payload.self)
+        }
+
+        public func verify<Payload>(_ message: String, as payload: Payload.Type = Payload.self) throws -> Payload
+            where Payload: JWTPayload
+        {
+            try self.verify([UInt8](message.utf8), as: Payload.self)
+        }
+
+        public func verify<Message, Payload>(_ message: Message, as payload: Payload.Type = Payload.self) throws -> Payload
+            where Message: DataProtocol, Payload: JWTPayload
+        {
+            try self.request.application.jwt.signers.verify(message, as: Payload.self)
+        }
+
+        public func sign<Payload>(_ jwt: Payload, kid: JWKIdentifier? = nil) throws -> String
+            where Payload: JWTPayload
+        {
+            try self.request.application.jwt.signers.sign(jwt, kid: kid)
+        }
     }
+}
 
-    public func sign<Payload>(_ jwt: JWT<Payload>, kid: String? = nil) throws -> String {
-        try String(decoding: self.sign(jwt, kid: kid), as: UTF8.self)
-    }
-
-    public func sign<Payload>(_ jwt: JWT<Payload>, kid: String? = nil) throws -> [UInt8] {
-        var jwt = jwt
-        jwt.header.kid = kid
-        return try jwt.sign(
-            using: self.request.application.jwt.signers.requireSigner(kid: kid)
-        )
+extension JWTError: AbortError {
+    public var status: HTTPResponseStatus {
+        .unauthorized
     }
 }
 
 extension Request {
-    public var jwt: JWTRequest {
+    public var jwt: JWT {
         .init(request: self)
     }
 }
 
 extension Application {
-    public var jwt: JWTProvider {
-        self.providers.require(JWTProvider.self)
+    public var jwt: JWT {
+        self.providers.require(JWT.self)
     }
 }

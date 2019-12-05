@@ -2,28 +2,96 @@ import JWT
 import XCTVapor
 
 class JWTKitTests: XCTestCase {
-    func testJWTioExample() throws {
+    // manual authentication using req.jwt.verify
+    func testManual() throws {
+        // creates a new application for testing
         let app = Application(.testing)
         defer { app.shutdown() }
 
-        app.use(JWTProvider.self)
+        // configures JWT provider
+        app.use(JWT.self)
 
-        try app.jwt.signers.use(.es512(key: .generate()), kid: "default")
+        // configures an es512 signer using random key
+        try app.jwt.signers.use(.es512(key: .generate()))
 
+        // jwt creation using req.jwt.sign
         app.post("login") { req -> LoginResponse in
             let credentials = try req.content.decode(LoginCredentials.self)
             return try LoginResponse(
-                token: req.jwt.sign(TestPayload(name: credentials.name))
+                token: req.jwt.sign(TestUser(name: credentials.name))
             )
         }
 
-        let secure = app.grouped(UserAuthenticator().middleware())
-        secure.get("me") { req in
-            try req.requireAuthenticated(TestUser.self)
+        app.get("me") { req -> String in
+            try req.jwt.verify(as: TestUser.self).name
         }
 
+        // stores the token created during login
         var token: String?
 
+        // test login
+        try app.testable().test(
+            .POST, "login", json: LoginCredentials(name: "foo")
+        ) { res in
+            XCTAssertEqual(res.status, .ok)
+            XCTAssertContent(LoginResponse.self, res) { login in
+                token = login.token
+            }
+        }
+
+        guard let t = token else {
+            XCTFail("login failed")
+            return
+        }
+
+        // test manual authentication using req.jwt.verify
+        try app.testable().test(
+            .GET, "me", headers: ["authorization": "Bearer \(t)"]
+        ) { res in
+            XCTAssertEqual(res.status, .ok)
+            XCTAssertEqual(res.body.string, "foo")
+        }
+
+        // create a token from a different signer
+        let fakeToken = try JWTSigner.es256(key: .generate()).sign(TestUser(name: "bob"))
+        try app.testable().test(
+            .GET, "me", headers: ["authorization": "Bearer \(fakeToken)"]
+        ) { res in
+            XCTAssertEqual(res.status, .unauthorized)
+        }
+    }
+
+    // test middleware-based authentication using req.auth.require
+    func testMiddleware() throws {
+        // creates a new application for testing
+        let app = Application(.testing)
+        defer { app.shutdown() }
+
+        // configures JWT provider
+        app.use(JWT.self)
+
+        // configures an es512 signer using random key
+        try app.jwt.signers.use(.es512(key: .generate()))
+
+        // jwt creation using req.jwt.sign
+        app.post("login") { req -> LoginResponse in
+            let credentials = try req.content.decode(LoginCredentials.self)
+            return try LoginResponse(
+                token: req.jwt.sign(TestUser(name: credentials.name))
+            )
+        }
+
+        // middleware-based authentication
+        // using req.auth.require
+        let secure = app.grouped(UserAuthenticator().middleware())
+        secure.get("me") { req in
+            try req.auth.require(TestUser.self)
+        }
+
+        // stores the token created during login
+        var token: String?
+
+        // test login
         try app.testable().test(
             .POST, "login", json: LoginCredentials(name: "foo")
         ) { res in
@@ -46,7 +114,16 @@ class JWTKitTests: XCTestCase {
                 XCTAssertEqual(user.name, "foo")
             }
         }
+
+        // create a token from a different signer
+        let fakeToken = try JWTSigner.es256(key: .generate()).sign(TestUser(name: "bob"))
+        try app.testable().test(
+            .GET, "me", headers: ["authorization": "Bearer \(fakeToken)"]
+        ) { res in
+            XCTAssertEqual(res.status, .unauthorized)
+        }
     }
+
 }
 
 struct LoginResponse: Content {
@@ -57,33 +134,19 @@ struct LoginCredentials: Content {
     let name: String
 }
 
-struct TestUser: Content, Authenticatable {
+struct TestUser: Content, Authenticatable, JWTPayload {
     var name: String
-}
-
-struct UserAuthenticator: JWTPayloadAuthenticator {
-    typealias User = TestUser
-    typealias Payload = TestPayload
-
-    func authenticate(payload: TestPayload, for request: Request) -> EventLoopFuture<TestUser?> {
-        return request.eventLoop.makeSucceededFuture(TestUser(name: payload.name))
-    }
-}
-
-struct TestPayload: JWTPayload {
-    let name: String
 
     func verify(using signer: JWTSigner) throws {
-        // no verifiable claims
+        // nothing to verify
     }
 }
 
-let token = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.tyh-VfuzIxCyGYDlkBA7DfyjrqmSHu6pQ2hoZuFqUSLPNY2N0mpHb3nk5K17HWP_3cYHBw7AhHale5wky6-sVA"
-let corruptedToken = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.tyh-VfuzIxCyGYDlkBA7DfyjrqmSHu6pQ2hoZuFqUSLPNY2N0mpHb3nk5K17HwP_3cYHBw7AhHale5wky6-sVA"
+struct UserAuthenticator: JWTAuthenticator {
+    typealias User = TestUser
+    typealias Payload = TestUser
 
-let publicKey = """
------BEGIN PUBLIC KEY-----
-MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEVs/o5+uQbTjL3chynL4wXgUg2R9
-q9UU8I5mEovUf86QZ7kOBIjJwqnzD1omageEHWwHdBO6B+dFabmdT9POxg==
------END PUBLIC KEY-----
-"""
+    func authenticate(jwt: TestUser, for request: Request) -> EventLoopFuture<TestUser?> {
+        return request.eventLoop.makeSucceededFuture(jwt)
+    }
+}

@@ -1,4 +1,0 @@
-module CJWTKitOpenSSL [system] {
-    link "ssl"
-    link "crypto"
-}

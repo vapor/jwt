@@ -8,9 +8,6 @@ class JWTKitTests: XCTestCase {
         let app = Application(.testing)
         defer { app.shutdown() }
 
-        // configures JWT provider
-        app.use(JWT.self)
-
         // configures an es512 signer using random key
         try app.jwt.signers.use(.es512(key: .generate()))
 
@@ -66,9 +63,6 @@ class JWTKitTests: XCTestCase {
         // creates a new application for testing
         let app = Application(.testing)
         defer { app.shutdown() }
-
-        // configures JWT provider
-        app.use(JWT.self)
 
         // configures an es512 signer using random key
         try app.jwt.signers.use(.es512(key: .generate()))

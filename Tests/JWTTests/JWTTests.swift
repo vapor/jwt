@@ -129,7 +129,7 @@ class JWTKitTests: XCTestCase {
         let request = Request(application: app, on: app.eventLoopGroup.next())
         let keys = try apple.getKeys(on: request).wait()
 
-        let key = keys.find(keyIdentifier: "AIDOPK1", keyType: .rsa)
+        let key = keys.find(identifier: "AIDOPK1", type: .rsa)
         XCTAssertNotNil(key)
         XCTAssertNotNil(key!.algorithm == .rs256)
     }

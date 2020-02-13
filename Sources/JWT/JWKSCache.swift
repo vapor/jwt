@@ -42,7 +42,7 @@ public final class JWKSCache {
             return req.client.get(self.uri, headers: headers)
                 .hop(to: self.eventLoop)
                 .flatMap { (response: ClientResponse) in
-                    let expires = response.headers.getExpirationDate(requestSentAt: requested)
+                    let expires = response.headers.expirationDate(requestSentAt: requested)
 
                     if response.status == .notModified {
                         guard let jwks = self.jwks else {

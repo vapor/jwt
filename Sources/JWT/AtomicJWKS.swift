@@ -2,7 +2,7 @@ import Vapor
 
 /// A thread-safe class for retrieving JSON Web Key Sets which honors the
 /// HTTP `Cache-Control`, `Expires` and `Etag` headers.
-final public class AtomicJWKS {
+public final class AtomicJWKS {
     private let uri: URI
 
     // Uses a private event loop so that read of the cache date and the possible
@@ -16,10 +16,11 @@ final public class AtomicJWKS {
 
     /// The initializer.
     /// - Parameters:
-    ///   - keyUrl: The URL to the JWKS data.
-    public init(keyUrl: String, app: Application) {
-        self.uri = URI(string: keyUrl)
-        eventLoop = app.eventLoopGroup.next()
+    ///   - keyURL: The URL to the JWKS data.
+    ///   - application: The Vapor `Application`.
+    public init(keyURL: String, on application: Application) {
+        self.uri = URI(string: keyURL)
+        eventLoop = application.eventLoopGroup.next()
     }
 
     /// Downloads the JSON Web Key Set, taking into account `Cache-Control`, `Expires` and `Etag` headers..

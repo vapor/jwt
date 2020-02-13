@@ -124,7 +124,7 @@ class JWTKitTests: XCTestCase {
         let app = Application(.testing)
         defer { app.shutdown() }
 
-        let apple = AtomicJWKS(keyUrl: "https://appleid.apple.com/auth/keys", app: app)
+        let apple = AtomicJWKS(keyURL: "https://appleid.apple.com/auth/keys", on: app)
 
         let request = Request(application: app, on: app.eventLoopGroup.next())
         let keys = try apple.getKeys(on: request).wait()

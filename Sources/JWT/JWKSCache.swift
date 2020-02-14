@@ -4,9 +4,9 @@ import Vapor
 /// HTTP `Cache-Control`, `Expires` and `Etag` headers.
 public final class JWKSCache {
     public enum Error: Swift.Error {
-        case missingCache
         case unexpctedResponseStatus(HTTPStatus, uri: URI)
     }
+
     private let uri: URI
     private let client: Client
     private let sync: Lock
@@ -19,6 +19,7 @@ public final class JWKSCache {
     private var cachedETag: String?
     private var cachedJWKS: CachedJWKS?
     private var currentRequest: EventLoopFuture<JWKS>?
+    private var currentHeader: HTTPHeaders.CacheControl?
 
     /// Creates a new `JWKSCache`.
     /// - Parameters:
@@ -48,7 +49,10 @@ public final class JWKSCache {
 
         // Check if we have cached keys that are still valid.
         if let cachedJWKS = self.cachedJWKS, Date() < cachedJWKS.cacheUntil {
-            return eventLoop.makeSucceededFuture(cachedJWKS.jwks)
+            // If no-cache was set on the header, you *always* have to validate with the server.
+            if self.currentHeader == nil || self.currentHeader?.noCache == false {
+                return eventLoop.makeSucceededFuture(cachedJWKS.jwks)
+            }
         }
 
         // Check if there is already a request happening
@@ -61,7 +65,8 @@ public final class JWKSCache {
 
         // Create a new key request and store it.
         logger.debug("Requesting JWKS from \(self.uri).")
-        let keys = self.requestKeys(logger: logger)
+
+        let keys = self.requestKeys(logger: logger, on: eventLoop)
         self.currentRequest = keys
 
         // Once the key request finishes, clear the current
@@ -75,7 +80,7 @@ public final class JWKSCache {
         }.hop(to: eventLoop)
     }
 
-    private func requestKeys(logger: Logger) -> EventLoopFuture<JWKS> {
+    private func requestKeys(logger: Logger, on eventLoop: EventLoop) -> EventLoopFuture<JWKS> {
         // Add cached eTag header to this request if we have it.
         var headers: HTTPHeaders = [:]
         if let eTag = self.cachedETag {
@@ -88,53 +93,89 @@ public final class JWKSCache {
         // Send the GET request for the JWKs.
         return self.client.get(
             self.uri, headers: headers
-        ).flatMapThrowing { response in
+        ).flatMapThrowing { response -> ClientResponse in
+            if !(response.status == .notModified || response.status == .ok) {
+                throw Error.unexpctedResponseStatus(response.status, uri: self.uri)
+            }
+
+            return response
+        }.flatMap { response -> EventLoopFuture<JWKS> in
             // Synchronize access to shared state.
             self.sync.lock()
             defer { self.sync.unlock() }
 
-            let expirationDate = response.headers.expirationDate(requestSentAt: requestSentAt)
+            self.currentHeader = response.headers.cacheControl
             self.cachedETag = response.headers.firstValue(name: .eTag)
+
+            let expirationDate = response.headers.expirationDate(requestSentAt: requestSentAt)
+
             switch response.status {
             case .notModified:
                 // The cached JWKS are still the latest version.
                 logger.debug("Cached JWKS are still valid.")
+
                 guard var cachedJWKS = self.cachedJWKS else {
-                    throw Error.missingCache
+                    // This should never happen. If it somehow does, just grab a full copy.
+                    self.cachedETag = nil
+                    return self.requestKeys(logger: logger, on: eventLoop)
                 }
 
-                // Update the JWKS cache if there is an expiration date.
+                // If they give a new expiration date, use that.  Otherwise, the spec says
+                // that a NotModified status code should return all the same headers that
+                // a Success status could would return.
                 if let expirationDate = expirationDate {
-                    // Update the cache metadata.
                     cachedJWKS.cacheUntil = expirationDate
-                    self.cachedJWKS = cachedJWKS
-                } else {
-                    self.cachedJWKS = nil
                 }
-                return cachedJWKS.jwks
+
+                return eventLoop.makeSucceededFuture(cachedJWKS.jwks)
+
             case .ok:
                 // New JWKS have been returned.
                 logger.debug("New JWKS have been returned.")
-                let jwks = try response.content.decode(JWKS.self)
+
+                let jwks: JWKS
+
+                do {
+                    jwks = try response.content.decode(JWKS.self)
+                } catch {
+                    return eventLoop.makeFailedFuture(error)
+                }
 
                 // Cache the JWKS if there is an expiration date.
                 if let expirationDate = expirationDate {
-                    if var cachedJWKS = self.cachedJWKS {
-                        // Update the existing cache.
-                        cachedJWKS.cacheUntil = expirationDate
-                        cachedJWKS.jwks = jwks
-                        self.cachedJWKS = cachedJWKS
-                    } else {
-                        // Create a new cache.
-                        self.cachedJWKS = .init(cacheUntil: expirationDate, jwks: jwks)
+                    if let header = self.currentHeader, header.noStore == true {
+                        // The server *shouldn't* give an expiration with no-store, but...
+                        self.cachedJWKS = nil
+
+                        return eventLoop.makeSucceededFuture(jwks)
                     }
+
+                    self.cachedJWKS = .init(cacheUntil: expirationDate, jwks: jwks)
                 } else {
                     self.cachedJWKS = nil
                 }
-                return jwks
+
+                return eventLoop.makeSucceededFuture(jwks)
+
             default:
-                throw Error.unexpctedResponseStatus(response.status, uri: self.uri)
+                // This won't ever happen due to the previous flatMapThrowing block.
+                return eventLoop.makeFailedFuture(Abort(.internalServerError))
             }
+        }.flatMapError { error -> EventLoopFuture<JWKS> in
+            guard let header = self.currentHeader, let jwks = self.cachedJWKS?.jwks else {
+                return eventLoop.makeFailedFuture(error)
+            }
+
+            // Not allowed to use the cache after the expiration date has passed.
+            if header.mustRevalidate {
+                self.cachedJWKS = nil
+                self.currentHeader = nil
+                self.cachedETag = nil
+
+                return eventLoop.makeFailedFuture(error)
+            }
+
+            return eventLoop.makeSucceededFuture(jwks)
         }
     }
 }

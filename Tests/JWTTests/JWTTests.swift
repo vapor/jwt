@@ -1,4 +1,5 @@
 import JWT
+import JWTKit
 import XCTVapor
 
 class JWTKitTests: XCTestCase {
@@ -118,6 +119,20 @@ class JWTKitTests: XCTestCase {
         }
     }
 
+    func testJWKSDownload() throws {
+        // creates a new application for testing
+        let app = Application(.testing)
+        defer { app.shutdown() }
+
+        let apple = JWKSCache(keyURL: "https://appleid.apple.com/auth/keys", on: app)
+
+        let request = Request(application: app, on: app.eventLoopGroup.next())
+        let keys = try apple.keys(on: request).wait()
+
+        let key = keys.find(identifier: "AIDOPK1", type: .rsa)
+        XCTAssertNotNil(key)
+        XCTAssertNotNil(key!.algorithm == .rs256)
+    }
 }
 
 struct LoginResponse: Content {

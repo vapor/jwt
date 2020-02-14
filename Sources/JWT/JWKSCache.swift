@@ -25,7 +25,7 @@ public final class JWKSCache {
 
     /// Downloads the JSON Web Key Set, taking into account `Cache-Control`, `Expires` and `Etag` headers..
     /// - Parameter req: The Vapor `Request` object
-    public func getKeys(on req: Request) -> EventLoopFuture<JWKS> {
+    public func keys(on req: Request) -> EventLoopFuture<JWKS> {
         eventLoop.flatSubmit {
             if let jwks = self.jwks, let cacheUntil = self.cacheUntil, Date() < cacheUntil {
                 return self.eventLoop.makeSucceededFuture(jwks)

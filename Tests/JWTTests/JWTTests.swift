@@ -127,7 +127,7 @@ class JWTKitTests: XCTestCase {
         let apple = JWKSCache(keyURL: "https://appleid.apple.com/auth/keys", on: app)
 
         let request = Request(application: app, on: app.eventLoopGroup.next())
-        let keys = try apple.getKeys(on: request).wait()
+        let keys = try apple.keys(on: request).wait()
 
         let key = keys.find(identifier: "AIDOPK1", type: .rsa)
         XCTAssertNotNil(key)

@@ -1,4 +1,5 @@
 import JWT
+import JWTKit
 import XCTVapor
 
 class JWTKitTests: XCTestCase {
@@ -118,7 +119,44 @@ class JWTKitTests: XCTestCase {
         }
     }
 
+    func testJWKSDownload() throws {
+        // creates a new application for testing
+        let app = Application(.testing)
+        defer { app.shutdown() }
+
+        app.client.configuration.ignoreUncleanSSLShutdown = true
+
+        let google = JWKSCache(
+            keyURL: "https://www.googleapis.com/oauth2/v3/certs",
+            client: app.client
+        )
+
+        app.get("keys") { req in
+            google.keys(on: req).map { jwks in
+                jwks.keys.count
+            }
+        }
+
+        try app.test(.GET, "keys") { res in
+            XCTAssertEqual(res.status, .ok)
+            XCTAssertEqual(res.body.string, "2")
+        }
+    }
+
+    override func setUp() {
+        XCTAssert(isLoggingConfigured)
+    }
 }
+
+let isLoggingConfigured: Bool = {
+    LoggingSystem.bootstrap { label in
+        var handler = StreamLogHandler.standardOutput(label: label)
+        handler.logLevel = .debug
+        return handler
+    }
+    return true
+}()
+
 
 struct LoginResponse: Content {
     var token: String

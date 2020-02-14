@@ -50,7 +50,7 @@ public final class JWKSCache {
         // Check if we have cached keys that are still valid.
         if let cachedJWKS = self.cachedJWKS, Date() < cachedJWKS.cacheUntil {
             // If no-cache was set on the header, you *always* have to validate with the server.
-            if self.currentHeader == nil || self.currentHeader?.noCache == false {
+            if self.currentHeader == nil || (self.currentHeader?.noCache == false && self.currentHeader?.mustRevalidate == false) {
                 return eventLoop.makeSucceededFuture(cachedJWKS.jwks)
             }
         }

@@ -90,7 +90,7 @@ extension Request {
             return self.verify(identity: identity, cache: self.request.application.jwt.googleJWKS)
                 .flatMapThrowing { (token: GoogleIdentityToken) in
                     if let gSuiteDomainName = gSuiteDomainName {
-                        guard let hd = token.hd else {
+                        guard let hd = token.hostedDomain else {
                             throw JWTError.claimVerificationFailure(name: "hd", reason: "hd claim is missing")
                         }
 

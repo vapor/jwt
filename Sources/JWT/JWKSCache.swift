@@ -14,9 +14,9 @@ public final class JWKSCache {
     struct CachedJWKS {
         var cacheUntil: Date
         var jwks: JWKS
-        var eTag: String?
     }
 
+    private var cachedETag: String?
     private var cachedJWKS: CachedJWKS?
     private var currentRequest: EventLoopFuture<JWKS>?
 
@@ -78,7 +78,7 @@ public final class JWKSCache {
     private func requestKeys(logger: Logger) -> EventLoopFuture<JWKS> {
         // Add cached eTag header to this request if we have it.
         var headers: HTTPHeaders = [:]
-        if let eTag = self.cachedJWKS?.eTag {
+        if let eTag = self.cachedETag {
             headers.add(name: .ifNoneMatch, value: eTag)
         }
 
@@ -94,7 +94,7 @@ public final class JWKSCache {
             defer { self.sync.unlock() }
 
             let expirationDate = response.headers.expirationDate(requestSentAt: requestSentAt)
-            let eTag = response.headers.firstValue(name: .eTag)
+            self.cachedETag = response.headers.firstValue(name: .eTag)
             switch response.status {
             case .notModified:
                 // The cached JWKS are still the latest version.
@@ -107,7 +107,6 @@ public final class JWKSCache {
                 if let expirationDate = expirationDate {
                     // Update the cache metadata.
                     cachedJWKS.cacheUntil = expirationDate
-                    cachedJWKS.eTag = eTag
                     self.cachedJWKS = cachedJWKS
                 } else {
                     self.cachedJWKS = nil
@@ -123,12 +122,11 @@ public final class JWKSCache {
                     if var cachedJWKS = self.cachedJWKS {
                         // Update the existing cache.
                         cachedJWKS.cacheUntil = expirationDate
-                        cachedJWKS.eTag = eTag
                         cachedJWKS.jwks = jwks
                         self.cachedJWKS = cachedJWKS
                     } else {
                         // Create a new cache.
-                        self.cachedJWKS = .init(cacheUntil: expirationDate, jwks: jwks, eTag: eTag)
+                        self.cachedJWKS = .init(cacheUntil: expirationDate, jwks: jwks)
                     }
                 } else {
                     self.cachedJWKS = nil

@@ -126,13 +126,13 @@ class JWTKitTests: XCTestCase {
 
         app.client.configuration.ignoreUncleanSSLShutdown = true
 
-        let apple = JWKSCache(
+        let google = JWKSCache(
             keyURL: "https://www.googleapis.com/oauth2/v3/certs",
             client: app.client
         )
 
         app.get("keys") { req in
-            apple.keys(on: req).map { jwks in
+            google.keys(on: req).map { jwks in
                 jwks.keys.count
             }
         }

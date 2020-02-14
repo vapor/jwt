@@ -69,7 +69,7 @@ public final class JWKSCache {
         return keys.map { keys in
             self.currentRequest = nil
             return keys
-        }
+        }.hop(to: eventLoop)
     }
 
     private func requestKeys(logger: Logger) -> EventLoopFuture<JWKS> {

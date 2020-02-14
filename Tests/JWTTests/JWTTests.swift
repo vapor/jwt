@@ -124,16 +124,39 @@ class JWTKitTests: XCTestCase {
         let app = Application(.testing)
         defer { app.shutdown() }
 
-        let apple = JWKSCache(keyURL: "https://appleid.apple.com/auth/keys", on: app)
+        app.client.configuration.ignoreUncleanSSLShutdown = true
 
-        let request = Request(application: app, on: app.eventLoopGroup.next())
-        let keys = try apple.keys(on: request).wait()
+        let apple = JWKSCache(
+            keyURL: "https://www.googleapis.com/oauth2/v3/certs",
+            client: app.client
+        )
 
-        let key = keys.find(identifier: "AIDOPK1", type: .rsa)
-        XCTAssertNotNil(key)
-        XCTAssertNotNil(key!.algorithm == .rs256)
+        app.get("keys") { req in
+            apple.keys(on: req).map { jwks in
+                jwks.keys.count
+            }
+        }
+
+        try app.test(.GET, "keys") { res in
+            XCTAssertEqual(res.status, .ok)
+            XCTAssertEqual(res.body.string, "2")
+        }
+    }
+
+    override func setUp() {
+        XCTAssert(isLoggingConfigured)
     }
 }
+
+let isLoggingConfigured: Bool = {
+    LoggingSystem.bootstrap { label in
+        var handler = StreamLogHandler.standardOutput(label: label)
+        handler.logLevel = .debug
+        return handler
+    }
+    return true
+}()
+
 
 struct LoginResponse: Content {
     var token: String

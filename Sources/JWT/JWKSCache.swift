@@ -67,6 +67,9 @@ public final class JWKSCache {
         // Once the key request finishes, clear the current
         // request and return the keys.
         return keys.map { keys in
+            // Synchronize access to shared state.
+            self.sync.lock()
+            defer { self.sync.unlock() }
             self.currentRequest = nil
             return keys
         }.hop(to: eventLoop)

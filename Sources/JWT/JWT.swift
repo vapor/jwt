@@ -40,8 +40,8 @@ extension Application {
 
         public init(application: Application) {
             self.application = application
-            self.appleJWKS = .init(keyURL: "https://appleid.apple.com/auth/keys", client: application.client)
-            self.googleJWKS = .init(keyURL: "https://www.googleapis.com/oauth2/v3/certs", client: application.client)
+            self.appleJWKS = .init(uri: "https://appleid.apple.com/auth/keys")
+            self.googleJWKS = .init(uri: "https://www.googleapis.com/oauth2/v3/certs")
         }
     }
 }
@@ -104,7 +104,7 @@ extension Request {
         }
 
         private func verify<T>(identity: String, cache: JWKSCache) -> EventLoopFuture<T> where T: JWTPayload {
-            return cache.keys(on: self.request).flatMap { jwks in
+            return cache.get(on: self.request).flatMap { jwks in
                 let signers = JWTSigners()
 
                 do {

@@ -119,27 +119,6 @@ class JWTKitTests: XCTestCase {
         }
     }
 
-    func testJWKSDownload() throws {
-        // creates a new application for testing
-        let app = Application(.testing)
-        defer { app.shutdown() }
-
-        app.client.configuration.ignoreUncleanSSLShutdown = true
-
-        let google = JWKSCache(uri: "https://www.googleapis.com/oauth2/v3/certs")
-
-        app.get("keys") { req in
-            google.get(on: req).map { jwks in
-                jwks.keys.count
-            }
-        }
-
-        try app.test(.GET, "keys") { res in
-            XCTAssertEqual(res.status, .ok)
-            XCTAssertEqual(res.body.string, "2")
-        }
-    }
-
     override func setUp() {
         XCTAssert(isLoggingConfigured)
     }

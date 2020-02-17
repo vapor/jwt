@@ -2,17 +2,17 @@ import Vapor
 
 extension Request.JWT {
     public var apple: Apple {
-        .init(jwt: self)
+        .init(request: self.request)
     }
 
     public struct Apple {
-        let jwt: Request.JWT
+        let request: Request
 
         /// Verifies an identity token provided by Apple
         public func verify() -> EventLoopFuture<AppleIdentityToken> {
-            guard let token = self.jwt.request.headers.bearerAuthorization?.token else {
-                self.jwt.request.logger.error("Request is missing JWT bearer header")
-                return self.jwt.request.eventLoop.makeFailedFuture(Abort(.unauthorized))
+            guard let token = self.request.headers.bearerAuthorization?.token else {
+                self.request.logger.error("Request is missing JWT bearer header.")
+                return self.request.eventLoop.makeFailedFuture(Abort(.unauthorized))
             }
             return self.verify(token)
         }
@@ -28,11 +28,11 @@ extension Request.JWT {
         public func verify<Message>(_ message: Message) -> EventLoopFuture<AppleIdentityToken>
             where Message: DataProtocol
         {
-            self.jwt.request.application.jwt.apple.signers(
-                on: self.jwt.request
+            self.request.application.jwt.apple.signers(
+                on: self.request
             ).flatMapThrowing {
                 let token = try $0.verify(message, as: AppleIdentityToken.self)
-                if let applicationIdentifier = self.jwt.request.application.jwt.apple.applicationIdentifier {
+                if let applicationIdentifier = self.request.application.jwt.apple.applicationIdentifier {
                     guard token.audience.value == applicationIdentifier else {
                         throw JWTError.claimVerificationFailure(
                             name: "subject",

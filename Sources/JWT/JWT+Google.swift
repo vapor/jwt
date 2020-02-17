@@ -2,17 +2,17 @@ import Vapor
 
 extension Request.JWT {
     public var google: Google {
-        .init(jwt: self)
+        .init(request: self.request)
     }
 
     public struct Google {
-        let jwt: Request.JWT
+        let request: Request
 
         /// Verifies an identity token provided by Apple
         public func verify() -> EventLoopFuture<GoogleIdentityToken> {
-            guard let token = self.jwt.request.headers.bearerAuthorization?.token else {
-                self.jwt.request.logger.error("Request is missing JWT bearer header.")
-                return self.jwt.request.eventLoop.makeFailedFuture(Abort(.unauthorized))
+            guard let token = self.request.headers.bearerAuthorization?.token else {
+                self.request.logger.error("Request is missing JWT bearer header.")
+                return self.request.eventLoop.makeFailedFuture(Abort(.unauthorized))
             }
             return self.verify(token)
         }
@@ -30,11 +30,11 @@ extension Request.JWT {
         public func verify<Message>(_ message: Message) -> EventLoopFuture<GoogleIdentityToken>
             where Message: DataProtocol
         {
-            self.jwt.request.application.jwt.google.signers(
-                on: self.jwt.request
+            self.request.application.jwt.google.signers(
+                on: self.request
             ).flatMapThrowing {
                 let token = try $0.verify(message, as: GoogleIdentityToken.self)
-                if let gSuiteDomainName = self.jwt.request.application.jwt.google.gSuiteDomainName {
+                if let gSuiteDomainName = self.request.application.jwt.google.gSuiteDomainName {
                     guard let hd = token.hostedDomain, hd.value == gSuiteDomainName else {
                         throw JWTError.claimVerificationFailure(
                             name: "hostedDomain",

@@ -7,28 +7,25 @@ extension Application {
     }
 
     public struct JWT {
-        final class Storage {
+        private final class Storage {
             var signers: JWTSigners
             init() {
                 self.signers = .init()
             }
         }
 
-        struct Key: StorageKey {
+        private struct Key: StorageKey {
             typealias Value = Storage
         }
 
         let application: Application
-
-        public let appleJWKS: JWKSCache
-        public let googleJWKS: JWKSCache
 
         public var signers: JWTSigners {
             get { self.storage.signers }
             set { self.storage.signers = newValue }
         }
 
-        var storage: Storage {
+        private var storage: Storage {
             if let existing = self.application.storage[Key.self] {
                 return existing
             } else {
@@ -40,8 +37,6 @@ extension Application {
 
         public init(application: Application) {
             self.application = application
-            self.appleJWKS = .init(uri: "https://appleid.apple.com/auth/keys")
-            self.googleJWKS = .init(uri: "https://www.googleapis.com/oauth2/v3/certs")
         }
     }
 }
@@ -75,49 +70,6 @@ extension Request {
         {
             try self.request.application.jwt.signers.verify(message, as: Payload.self)
         }
-
-        /// Verifies an identity token provided by Apple
-        /// - Parameter identity: The identity token to validate.
-        public func verify(apple identity: String) -> EventLoopFuture<AppleIdentityToken> {
-            return self.verify(identity: identity, cache: self.request.application.jwt.appleJWKS)
-        }
-
-        /// Verifies an identity token provided by Google
-        /// - Parameters:
-        ///   - identity: The identity token to validate.
-        ///   - gSuiteDomainName: Your G Suite domain name.
-        public func verify(google identity: String, gSuiteDomainName: String? = nil) -> EventLoopFuture<GoogleIdentityToken> {
-            return self.verify(identity: identity, cache: self.request.application.jwt.googleJWKS)
-                .flatMapThrowing { (token: GoogleIdentityToken) in
-                    if let gSuiteDomainName = gSuiteDomainName {
-                        guard let hd = token.hostedDomain else {
-                            throw JWTError.claimVerificationFailure(name: "hd", reason: "hd claim is missing")
-                        }
-
-                        guard hd.value == gSuiteDomainName else {
-                            throw JWTError.claimVerificationFailure(name: "hd", reason: "hd claim does not match gSuiteDomainName")
-                        }
-                    }
-
-                    return token
-            }
-        }
-
-        private func verify<T>(identity: String, cache: JWKSCache) -> EventLoopFuture<T> where T: JWTPayload {
-            return cache.get(on: self.request).flatMap { jwks in
-                let signers = JWTSigners()
-
-                do {
-                    try signers.use(jwks: jwks)
-                    let token = try signers.verify(identity, as: T.self)
-
-                    return self.request.eventLoop.makeSucceededFuture(token)
-                } catch {
-                    return self.request.eventLoop.makeFailedFuture(error)
-                }
-            }
-        }
-
 
         public func sign<Payload>(_ jwt: Payload, kid: JWKIdentifier? = nil) throws -> String
             where Payload: JWTPayload

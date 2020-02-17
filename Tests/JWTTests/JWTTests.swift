@@ -119,6 +119,31 @@ class JWTKitTests: XCTestCase {
         }
     }
 
+    func testApple() throws {
+        // creates a new application for testing
+        let app = Application(.testing)
+        defer { app.shutdown() }
+
+        app.jwt.apple.applicationIdentifier = "com.gargoylesoft.SignInWithApple"
+
+        app.get("test") { req in
+            req.jwt.apple.verify().map {
+                $0.email ?? "none"
+            }
+        }
+
+        var headers = HTTPHeaders()
+        headers.bearerAuthorization = .init(token: """
+        eyJraWQiOiI4NkQ4OEtmIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoiY29tLmdhcmdveWxlc29mdC5TaWduSW5XaXRoQXBwbGUiLCJleHAiOjE1ODE5ODE3NDAsImlhdCI6MTU4MTk4MTE0MCwic3ViIjoiMDAwNjg1LmUyMGY4YzE4NjQzODQyZTA5MmYyMWVmYmJiYzkyNDgzLjE4MjUiLCJjX2hhc2giOiJpY0wwZUxtR1lfMzJyVU4waWVXLVN3IiwiZW1haWwiOiJpajhocmNncXBoQHByaXZhdGVyZWxheS5hcHBsZWlkLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjoidHJ1ZSIsImlzX3ByaXZhdGVfZW1haWwiOiJ0cnVlIiwiYXV0aF90aW1lIjoxNTgxOTgxMTQwfQ.CkHWktKcOsMtLKsFyDHerGScWZmpx0_fdHaIizyzSS-y1sqK4qy5WrLxGI5LURZR7dpTVMmXgyfbZKtxV5GKwE4JG1AnotADQQIJL56473medcgXaYI6Bu78omt0W0inJUEa_kQRf-pO44UM0uzCGROoFdoSNdSA4qyA5rkecihkKnG1h2kzSowRnyIIlawXRiNbrnAmuQr6o4Hbuox0abIWa1ZgWmtrSsNDcnlbHTZ1gQti6oewSbGXdmS7Dl6GBDrLZP8vvbXJZP--CBMIYHvfxMDvHhXxk4G2RGAq5TDJIUdbLGCfsxz6DsFkimM89gcS4XSienqfmgfDy8JY2Q
+        """)
+
+        try app.test(.GET, "test", headers: headers) { res in
+            XCTAssertEqual(res.status, .ok)
+            XCTAssertEqual(res.body.string, "ij8hrcgqph@privaterelay.appleid.com")
+        }
+
+    }
+
     override func setUp() {
         XCTAssert(isLoggingConfigured)
     }

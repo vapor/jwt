@@ -131,6 +131,11 @@ class JWTKitTests: XCTestCase {
                 $0.email ?? "none"
             }
         }
+        app.get("test2") { req in
+            req.jwt.apple.verify(applicationIdentifier: "com.gargoylesoft.SignInWithApple").map {
+                $0.email ?? "none"
+            }
+        }
 
         var headers = HTTPHeaders()
         headers.bearerAuthorization = .init(token: """
@@ -138,10 +143,12 @@ class JWTKitTests: XCTestCase {
         """)
 
         try app.test(.GET, "test", headers: headers) { res in
-            XCTAssertEqual(res.status, .ok)
-            XCTAssertEqual(res.body.string, "ij8hrcgqph@privaterelay.appleid.com")
+            XCTAssertEqual(res.status, .unauthorized)
+            XCTAssertContains(res.body.string, "expired")
+        }.test(.GET, "test2", headers: headers) { res in
+            XCTAssertEqual(res.status, .unauthorized)
+            XCTAssertContains(res.body.string, "expired")
         }
-
     }
 
     override func setUp() {

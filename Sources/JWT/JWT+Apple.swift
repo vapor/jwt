@@ -8,35 +8,30 @@ extension Request.JWT {
     public struct Apple {
         let request: Request
 
-        /// Verifies an identity token provided by Apple
-        public func verify() -> EventLoopFuture<AppleIdentityToken> {
+        public func verify(applicationIdentifier: String? = nil) -> EventLoopFuture<AppleIdentityToken> {
             guard let token = self.request.headers.bearerAuthorization?.token else {
                 self.request.logger.error("Request is missing JWT bearer header.")
                 return self.request.eventLoop.makeFailedFuture(Abort(.unauthorized))
             }
-            return self.verify(token)
+            return self.verify(token, applicationIdentifier: applicationIdentifier)
         }
 
-        /// Verifies an identity token provided by Apple
-        /// - Parameter message: The identity token to validate.
-        public func verify(_ message: String) -> EventLoopFuture<AppleIdentityToken> {
-            self.verify([UInt8](message.utf8))
+        public func verify(_ message: String, applicationIdentifier: String? = nil) -> EventLoopFuture<AppleIdentityToken> {
+            self.verify([UInt8](message.utf8), applicationIdentifier: applicationIdentifier)
         }
 
-        /// Verifies an identity token provided by Apple
-        /// - Parameter message: The identity token to validate.
-        public func verify<Message>(_ message: Message) -> EventLoopFuture<AppleIdentityToken>
+        public func verify<Message>(_ message: Message, applicationIdentifier: String? = nil) -> EventLoopFuture<AppleIdentityToken>
             where Message: DataProtocol
         {
             self.request.application.jwt.apple.signers(
                 on: self.request
-            ).flatMapThrowing {
-                let token = try $0.verify(message, as: AppleIdentityToken.self)
-                if let applicationIdentifier = self.request.application.jwt.apple.applicationIdentifier {
+            ).flatMapThrowing { signers in
+                let token = try signers.verify(message, as: AppleIdentityToken.self)
+                if let applicationIdentifier = applicationIdentifier ?? self.request.application.jwt.apple.applicationIdentifier {
                     guard token.audience.value == applicationIdentifier else {
                         throw JWTError.claimVerificationFailure(
-                            name: "subject",
-                            reason: "Subject claim does not match application identifier"
+                            name: "audience",
+                            reason: "Audience claim does not match application identifier"
                         )
                     }
                 }

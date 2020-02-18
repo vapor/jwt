@@ -8,33 +8,54 @@ extension Request.JWT {
     public struct Google {
         let request: Request
 
-        /// Verifies an identity token provided by Apple
-        public func verify() -> EventLoopFuture<GoogleIdentityToken> {
+        public func verify(
+            applicationIdentifier: String? = nil,
+            gSuiteDomainName: String? = nil
+        ) -> EventLoopFuture<GoogleIdentityToken> {
             guard let token = self.request.headers.bearerAuthorization?.token else {
                 self.request.logger.error("Request is missing JWT bearer header.")
                 return self.request.eventLoop.makeFailedFuture(Abort(.unauthorized))
             }
-            return self.verify(token)
+            return self.verify(
+                token,
+                applicationIdentifier: applicationIdentifier,
+                gSuiteDomainName: gSuiteDomainName
+            )
         }
 
-        /// Verifies an identity token provided by Apple
-        /// - Parameter message: The identity token to validate.
-        public func verify(_ message: String) -> EventLoopFuture<GoogleIdentityToken> {
-            self.verify([UInt8](message.utf8))
+        public func verify(
+            _ message: String,
+            applicationIdentifier: String? = nil,
+            gSuiteDomainName: String? = nil
+        ) -> EventLoopFuture<GoogleIdentityToken> {
+            self.verify(
+                [UInt8](message.utf8),
+                applicationIdentifier: applicationIdentifier,
+                gSuiteDomainName: gSuiteDomainName
+            )
         }
 
-        /// Verifies an identity token provided by Google
-        /// - Parameters:
-        ///   - identity: The identity token to validate.
-        ///   - gSuiteDomainName: Your G Suite domain name.
-        public func verify<Message>(_ message: Message) -> EventLoopFuture<GoogleIdentityToken>
+        public func verify<Message>(
+            _ message: Message,
+            applicationIdentifier: String? = nil,
+            gSuiteDomainName: String? = nil
+        ) -> EventLoopFuture<GoogleIdentityToken>
             where Message: DataProtocol
         {
             self.request.application.jwt.google.signers(
                 on: self.request
-            ).flatMapThrowing {
-                let token = try $0.verify(message, as: GoogleIdentityToken.self)
-                if let gSuiteDomainName = self.request.application.jwt.google.gSuiteDomainName {
+            ).flatMapThrowing { signers in
+                let token = try signers.verify(message, as: GoogleIdentityToken.self)
+                if let applicationIdentifier = applicationIdentifier ?? self.request.application.jwt.google.applicationIdentifier {
+                    guard token.audience.value == applicationIdentifier else {
+                        throw JWTError.claimVerificationFailure(
+                            name: "audience",
+                            reason: "Audience claim does not match application identifier"
+                        )
+                    }
+
+                }
+                if let gSuiteDomainName = gSuiteDomainName ?? self.request.application.jwt.google.gSuiteDomainName {
                     guard let hd = token.hostedDomain, hd.value == gSuiteDomainName else {
                         throw JWTError.claimVerificationFailure(
                             name: "hostedDomain",
@@ -69,6 +90,15 @@ extension Application.JWT {
             self.storage.jwks
         }
 
+        public var applicationIdentifier: String? {
+            get {
+                self.storage.applicationIdentifier
+            }
+            nonmutating set {
+                self.storage.applicationIdentifier = newValue
+            }
+        }
+
         public var gSuiteDomainName: String? {
             get {
                 self.storage.gSuiteDomainName
@@ -84,9 +114,11 @@ extension Application.JWT {
 
         private final class Storage {
             let jwks: EndpointCache<JWKS>
+            var applicationIdentifier: String?
             var gSuiteDomainName: String?
             init() {
                 self.jwks = .init(uri: "https://www.googleapis.com/oauth2/v3/certs")
+                self.applicationIdentifier = nil
                 self.gSuiteDomainName = nil
             }
         }

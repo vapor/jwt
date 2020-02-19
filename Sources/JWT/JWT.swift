@@ -1,4 +1,5 @@
 import Vapor
+import JWTKit
 
 extension Application {
     public var jwt: JWT {
@@ -6,14 +7,14 @@ extension Application {
     }
 
     public struct JWT {
-        final class Storage {
+        private final class Storage {
             var signers: JWTSigners
             init() {
                 self.signers = .init()
             }
         }
 
-        struct Key: StorageKey {
+        private struct Key: StorageKey {
             typealias Value = Storage
         }
 
@@ -24,7 +25,7 @@ extension Application {
             set { self.storage.signers = newValue }
         }
 
-        var storage: Storage {
+        private var storage: Storage {
             if let existing = self.application.storage[Key.self] {
                 return existing
             } else {
@@ -32,6 +33,10 @@ extension Application {
                 self.application.storage[Key.self] = new
                 return new
             }
+        }
+
+        public init(application: Application) {
+            self.application = application
         }
     }
 }

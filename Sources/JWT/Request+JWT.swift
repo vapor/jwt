@@ -1,46 +1,6 @@
 import Vapor
 import JWTKit
 
-extension Application {
-    public var jwt: JWT {
-        .init(application: self)
-    }
-
-    public struct JWT {
-        private final class Storage {
-            var signers: JWTSigners
-            init() {
-                self.signers = .init()
-            }
-        }
-
-        private struct Key: StorageKey {
-            typealias Value = Storage
-        }
-
-        let application: Application
-
-        public var signers: JWTSigners {
-            get { self.storage.signers }
-            set { self.storage.signers = newValue }
-        }
-
-        private var storage: Storage {
-            if let existing = self.application.storage[Key.self] {
-                return existing
-            } else {
-                let new = Storage()
-                self.application.storage[Key.self] = new
-                return new
-            }
-        }
-
-        public init(application: Application) {
-            self.application = application
-        }
-    }
-}
-
 extension Request {
     public var jwt: JWT {
         .init(request: self)
@@ -76,11 +36,5 @@ extension Request {
         {
             try self.request.application.jwt.signers.sign(jwt, kid: kid)
         }
-    }
-}
-
-extension JWTError: AbortError {
-    public var status: HTTPResponseStatus {
-        .unauthorized
     }
 }

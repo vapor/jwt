@@ -28,9 +28,9 @@ class JWTKitTests: XCTestCase {
         var token: String?
 
         // test login
-        try app.testable().test(
-            .POST, "login", json: LoginCredentials(name: "foo")
-        ) { res in
+        try app.testable().test(.POST, "login", beforeRequest: { req in
+            try req.content.encode(LoginCredentials(name: "foo"))
+        }) { res in
             XCTAssertEqual(res.status, .ok)
             XCTAssertContent(LoginResponse.self, res) { login in
                 token = login.token
@@ -87,9 +87,9 @@ class JWTKitTests: XCTestCase {
         var token: String?
 
         // test login
-        try app.testable().test(
-            .POST, "login", json: LoginCredentials(name: "foo")
-        ) { res in
+        try app.testable().test(.POST, "login", beforeRequest: { req in
+            try req.content.encode(LoginCredentials(name: "foo"))
+        }) { res in
             XCTAssertEqual(res.status, .ok)
             XCTAssertContent(LoginResponse.self, res) { login in
                 token = login.token
@@ -153,6 +153,12 @@ class JWTKitTests: XCTestCase {
 
     override func setUp() {
         XCTAssert(isLoggingConfigured)
+    }
+}
+
+extension ByteBuffer {
+    var string: String {
+        .init(decoding: self.readableBytesView, as: UTF8.self)
     }
 }
 

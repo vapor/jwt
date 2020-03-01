@@ -1,6 +1,6 @@
 <p align="center">
     <img 
-        src="https://user-images.githubusercontent.com/1342803/59471117-1c77b300-8e08-11e9-838e-441b280855b3.png" 
+        src="https://user-images.githubusercontent.com/1342803/75635005-ad81fa80-5be0-11ea-9b03-d666d4c0eea1.png" 
         height="64" 
         alt="JWTKit"
     >

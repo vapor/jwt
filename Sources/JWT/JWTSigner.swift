@@ -80,11 +80,11 @@ extension JWTSigner {
     }
 
     /// Creates an HMAC-based `CustomJWTAlgorithm` and `JWTSigner`.
-    private static func hmac(_ hmac: HMAC, name: String, key: LosslessDataConvertible) -> JWTSigner {
+    private static func hmac(_ hmac: @autoclosure @escaping () -> HMAC, name: String, key: LosslessDataConvertible) -> JWTSigner {
         let alg = CustomJWTAlgorithm(name: name, sign: { plaintext in
-            return try hmac.authenticate(plaintext, key: key)
+            return try hmac().authenticate(plaintext, key: key)
         }, verify: { signature, plaintext in
-            return try hmac.authenticate(plaintext, key: key) == signature.convertToData()
+            return try hmac().authenticate(plaintext, key: key) == signature.convertToData()
         })
         return .init(algorithm: alg)
     }

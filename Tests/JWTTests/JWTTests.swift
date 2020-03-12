@@ -79,6 +79,36 @@ class JWTTests: XCTestCase {
         XCTAssertEqual(publicVerified.payload.name, "Foo")
         XCTAssertEqual(privateVerified.payload.name, "Foo")
     }
+
+    func testThreadSafety() throws {
+        let signer = JWTSigner.hs256(key: "test")
+
+        let start = DispatchGroup()
+        start.enter()
+        start.enter()
+
+        let done = DispatchGroup()
+        done.enter()
+        done.enter()
+
+        Thread.async {
+            start.leave()
+            start.wait()
+            for _ in 0..<100 {
+                _ = try? signer.verify("foo", header: "bar", payload: "baz")
+            }
+            done.leave()
+        }
+        Thread.async {
+            start.leave()
+            start.wait()
+            for _ in 0..<100 {
+                _ = try? signer.verify("foo", header: "bar", payload: "baz")
+            }
+            done.leave()
+        }
+        done.wait()
+    }
     
     static var allTests = [
         ("testParse", testParse),
@@ -87,6 +117,7 @@ class JWTTests: XCTestCase {
         ("testExpirationEncoding", testExpirationEncoding),
         ("testSigners", testSigners),
         ("testRSA", testRSA),
+        ("testThreadSafety", testThreadSafety),
     ]
 }
 

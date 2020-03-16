@@ -47,14 +47,9 @@ extension Request.JWT {
             ).flatMapThrowing { signers in
                 let token = try signers.verify(message, as: GoogleIdentityToken.self)
                 if let applicationIdentifier = applicationIdentifier ?? self.request.application.jwt.google.applicationIdentifier {
-                    guard token.audience.value == applicationIdentifier else {
-                        throw JWTError.claimVerificationFailure(
-                            name: "audience",
-                            reason: "Audience claim does not match application identifier"
-                        )
-                    }
-
+                    try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
                 }
+
                 if let gSuiteDomainName = gSuiteDomainName ?? self.request.application.jwt.google.gSuiteDomainName {
                     guard let hd = token.hostedDomain, hd.value == gSuiteDomainName else {
                         throw JWTError.claimVerificationFailure(

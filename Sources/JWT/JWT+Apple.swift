@@ -28,12 +28,7 @@ extension Request.JWT {
             ).flatMapThrowing { signers in
                 let token = try signers.verify(message, as: AppleIdentityToken.self)
                 if let applicationIdentifier = applicationIdentifier ?? self.request.application.jwt.apple.applicationIdentifier {
-                    guard token.audience.value == applicationIdentifier else {
-                        throw JWTError.claimVerificationFailure(
-                            name: "audience",
-                            reason: "Audience claim does not match application identifier"
-                        )
-                    }
+                    try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
                 }
                 return token
             }

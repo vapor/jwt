@@ -78,9 +78,15 @@ class JWTKitTests: XCTestCase {
 
         // middleware-based authentication
         // using req.auth.require
-        let secure = app.grouped(UserAuthenticator().middleware())
-        secure.get("me") { req in
-            try req.auth.require(TestUser.self)
+        let secure = app.grouped(UserAuthenticator(), TestUser.guardMiddleware())
+        secure.get("me") { req -> TestUser in
+            if let user = req.auth.get(TestUser.self) {
+                return user
+            } else {
+                // throw something other than unauthorized to prove the guard middleware let us get here (it shouldn't)
+                XCTFail("Shouldn't get here if the guard middleware is working.")
+                throw Abort(.internalServerError)
+            }
         }
 
         // stores the token created during login
@@ -108,6 +114,15 @@ class JWTKitTests: XCTestCase {
             XCTAssertContent(TestUser.self, res) { user in
                 XCTAssertEqual(user.name, "foo")
             }
+        }
+
+        // token from same signer but for a different user
+        // this tests that the guard middleware catches the failure to auth before it reaches the route handler
+        let wrongNameToken = try app.jwt.signers.sign(TestUser(name: "bob"))
+        try app.testable().test(
+            .GET, "me", headers: ["authorization": "Bearer \(wrongNameToken)"]
+        ) { res in
+            XCTAssertEqual(res.status, .unauthorized)
         }
 
         // create a token from a different signer
@@ -189,10 +204,13 @@ struct TestUser: Content, Authenticatable, JWTPayload {
 }
 
 struct UserAuthenticator: JWTAuthenticator {
-    typealias User = TestUser
     typealias Payload = TestUser
 
-    func authenticate(jwt: TestUser, for request: Request) -> EventLoopFuture<TestUser?> {
-        return request.eventLoop.makeSucceededFuture(jwt)
+    func authenticate(jwt: TestUser, for request: Request) -> EventLoopFuture<Void> {
+        if jwt.name == "foo" {
+            // Requiring this specific username makes the test for the guard middleware in testMiddleware() valid.
+            request.auth.login(jwt)
+        }
+        return request.eventLoop.makeSucceededFuture(())
     }
 }

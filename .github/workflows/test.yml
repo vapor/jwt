@@ -2,17 +2,20 @@ name: test
 on:
 - pull_request
 jobs:
-  jwt_xenial:
-    container: 
-      image: vapor/swift:5.2-xenial
-    runs-on: ubuntu-latest
+  jwt_macos:
+    runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
+    - run: sudo xcode-select -s /Applications/Xcode_11.4.app/Contents/Developer
+    - uses: actions/checkout@v2
     - run: swift test --enable-test-discovery --sanitize=thread
-  jwt_bionic:
+  jwt_ubuntu:
+    strategy:
+      fail-fast: false
+      matrix:
+        base: ['xenial', 'bionic']
     container: 
-      image: vapor/swift:5.2-bionic
+      image: vapor/swift:5.2-${{ matrix.base }}-ci
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - run: swift test --enable-test-discovery --sanitize=thread

@@ -23,15 +23,21 @@ extension Request.JWT {
         public func verify<Message>(_ message: Message, applicationIdentifier: String? = nil) -> EventLoopFuture<AppleIdentityToken>
             where Message: DataProtocol
         {
-            self.request.application.jwt.apple.signers(
-                on: self.request
-            ).flatMapThrowing { signers in
-                let token = try signers.verify(message, as: AppleIdentityToken.self)
-                if let applicationIdentifier = applicationIdentifier ?? self.request.application.jwt.apple.applicationIdentifier {
-                    try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
+            self.request.application.jwt.apple
+                .signers(on: self.request)
+                .flatMapThrowing { jwks in
+                    try self.verify(message, jwks: jwks, applicationIdentifier: applicationIdentifier)
                 }
-                return token
+        }
+        
+        public func verify<Message: DataProtocol>(_ message: Message, jwks: JWKS, applicationIdentifier: String? = nil) throws -> AppleIdentityToken {
+            let signers = try self.request.application.jwt.apple.signers(on: jwks)
+            let token = try signers.verify(message, as: AppleIdentityToken.self)
+            let applicationIdentifier = applicationIdentifier ?? self.request.application.jwt.apple.applicationIdentifier
+            if let applicationIdentifier = applicationIdentifier {
+                try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
             }
+            return token
         }
     }
 }
@@ -44,12 +50,14 @@ extension Application.JWT {
     public struct Apple {
         let jwt: Application.JWT
 
-        public func signers(on request: Request) -> EventLoopFuture<JWTSigners> {
-            self.jwks.get(on: request).flatMapThrowing {
-                let signers = JWTSigners()
-                try signers.use(jwks: $0)
-                return signers
-            }
+        public func signers(on request: Request) -> EventLoopFuture<JWKS> {
+            jwks.get(on: request)
+        }
+        
+        public func signers(on jwks: JWKS) throws -> JWTSigners {
+            let signers = JWTSigners()
+            try signers.use(jwks: jwks)
+            return signers
         }
 
         public var jwks: EndpointCache<JWKS> {

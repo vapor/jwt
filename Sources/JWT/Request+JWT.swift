@@ -9,6 +9,10 @@ extension Request {
     public struct JWT {
         let request: Request
 
+        public init(request: Request) {
+            self.request = request
+        }
+
         public func verify<Payload>(as payload: Payload.Type = Payload.self) throws -> Payload
             where Payload: JWTPayload
         {

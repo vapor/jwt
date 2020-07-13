@@ -217,7 +217,7 @@ class JWTTests: XCTestCase {
             return accessToken
         }
 
-        for i in 0..<1_000 {
+        for _ in 0..<1_000 {
             try app.test(.GET, "/") { res in 
                 XCTAssertEqual(res.status, .ok)
             }

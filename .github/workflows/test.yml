@@ -1,21 +1,40 @@
 name: test
 on:
-- pull_request
+  pull_request:
+  push:
+    branches:
+    - master
 jobs:
-  jwt_macos:
-    runs-on: macos-latest
-    steps:
-    - run: sudo xcode-select -s /Applications/Xcode_11.4.app/Contents/Developer
-    - uses: actions/checkout@v2
-    - run: swift test --enable-test-discovery --sanitize=thread
-  jwt_ubuntu:
+  linux:
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        base: ['xenial', 'bionic']
-    container: 
-      image: vapor/swift:5.2-${{ matrix.base }}-ci
-    runs-on: ubuntu-latest
+        image:
+          # 5.2 Stable
+          - swift:5.2-xenial
+          - swift:5.2-bionic
+          - swift:5.2-focal
+          - swift:5.2-centos8
+          - swift:5.2-amazonlinux2
+          # 5.2 Unstable
+          - swiftlang/swift:nightly-5.2-xenial
+          - swiftlang/swift:nightly-5.2-bionic
+          # 5.3 Unstable
+          - swiftlang/swift:nightly-5.3-xenial
+          - swiftlang/swift:nightly-5.3-bionic
+          # Master Unstable
+          - swiftlang/swift:nightly-master-xenial
+          - swiftlang/swift:nightly-master-bionic
+          - swiftlang/swift:nightly-master-focal
+          - swiftlang/swift:nightly-master-centos8
+          - swiftlang/swift:nightly-master-amazonlinux2
+    container: ${{ matrix.image }}
+    steps:
+    - uses: actions/checkout@v2
+    - run: swift test --enable-test-discovery --sanitize=thread
+  macOS:
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
     - run: swift test --enable-test-discovery --sanitize=thread

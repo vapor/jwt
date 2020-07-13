@@ -2,7 +2,7 @@ import JWT
 import JWTKit
 import XCTVapor
 
-class JWTKitTests: XCTestCase {
+class JWTTests: XCTestCase {
     // manual authentication using req.jwt.verify
     func testManual() throws {
         // creates a new application for testing
@@ -163,6 +163,64 @@ class JWTKitTests: XCTestCase {
         }.test(.GET, "test2", headers: headers) { res in
             XCTAssertEqual(res.status, .unauthorized)
             XCTAssertContains(res.body.string, "expired")
+        }
+    }
+
+    // https://github.com/vapor/jwt-kit/issues/26
+    func testSignFailureSegfault() throws {
+        struct UserPayload: JWTPayload {
+            var id: UUID
+            var userName: String
+
+            func verify(using signer: JWTSigner) throws { }
+        }
+
+        // creates a new application for testing
+        let app = Application(.testing)
+        defer { app.shutdown() }
+
+        let privateKeyString = """
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEowIBAAKCAQEAhAHFb1M+P7qjwVlR7Es/3GBq3yICZP1eZ/JShBuLO4stTGHR
+        akqlOYGC+ayTxOomjp4aHFNxzHxdVe9keGv0UltP8HbRTJTubOlWl2w7zG8xAKOy
+        2/9s+eE3obxPrf92Ffpbx3nef9hVh8PtiV9vSd8J9QoPtODujCBf+F8n/zIrLB0m
+        7Tf6e5POZ8aJ93hNyjekljITNHoCwqmkD1HSgXiaoMC17CItJoRLANIMQPNVwe8d
+        /2ZejydBVEWxNwbTzz6DPBX5uFXhmDmOcUfqT0L9l8iy66e6M/8g6roAYkTKs1vP
+        PT+NfM8KwyDpx/aMTxaDwjwyOO39erV95GY6ywIDAQABAoIBAC9OazCwBjjUa+bY
+        WZFyjhotu17nUzBZ1EEwB/4r2MOn5r3euCt9QKTREtziybnhp5uocPcBuGBtmQ04
+        0yqMlWwGKSmlivAE10TUgiGVugBTQJ5YC7rnWGhcG5GsaGmUiP7rT4S22dO69TvI
+        LRHzz3ALrAfSaTqK+THiUEIz56N+D3F9B8z35Epxug7+6o3OSWQ9u4fejnOqFexH
+        TsWWaX1nlic4hp6rQ771cVI1plNxmJEfXCI62fNMa25phTUDEszp3ubjdJw/tkEM
+        2WwNCyt+eocs54GA2HEmBVkOgsAYeAV8S7RjvWc7khkyR8AeP+2t7bfBZGlodGNx
+        KMmrt0ECgYEA95u+OQwQRk1gkpn/mPLpZxgHvYqUQLbhu3Lutv+RyIohGvPstb95
+        xtZDWJWbm71rUYQ1k72+K0mo+LrFVDKA4vtiUSj754A33Q3yWLWrbjCG35Ol6z9X
+        XkaK/KZ1WHWoH6kM067nreacvDRKpWJD45ck/y5UJKL0gu45e4GHYnsCgYEAiHsR
+        HDR6mKo4rZ1p4ZjgtE9avhC3f9fzbgZQv1vGw3HIKsa4Kd2AoaxNlojfRsEjvEVP
+        4ettKc77ts/92X26uJrd9qORaTokI1t7nMtjub5Q+As/uSZTbvsjoMcdWi2VzL5w
+        t2asQ6kyGJ2oMWeo74bDgRJFLon/K7hlHdhu//ECgYBjGsQVYz20Vc4cf2TtW/SN
+        nfGjLK9QA6Lv+v2O41X/VUIQ3qbUy/G64xGLiD4DJNqqgudK3fwaqV3nSCIpJBmw
+        P/vHDkddDlXNtYJVfUlDTkr9e8RCF1Up18RTgXCgWl9TZL9MjsoOMap0Ld3euikA
+        FAPr2yg0jcCeEymQxHRitwKBgD0CRnPFQchcz1lMtLgUDt6LWpT8BAsyDa9xQ0dH
+        T2KuyjvU+R491fJvg393T9fhHohas4raIsI9tGfUMjW27nD3SaGnHKldRCpKCsfc
+        Y4f0e11mKeYqK8HAofyNBaH6HqyXtOtHClp0l+BJGZZ8MBhitaJM+IAFT/vLQehF
+        h9kBAoGBANLA9PaqoPdS0zt2pFQ9P3nTPsbceFY4Uvz3gYcoCaY+ePPaPIhVAjqf
+        M1Bzv2/nwqtOLc7yGwiaC1kxJeKQ/9Q+sbsGHs2KKZMoeS9sYwPRpH34Kkg9h4Dc
+        waNSUrQp9XZJLA9SgN+N2JwuDi0bxsr0saaLdmWn3S3L6rsg5Cja
+        -----END RSA PRIVATE KEY-----
+        """
+        
+        try app.jwt.signers.use(.rs512(key: .private(pem: [UInt8](privateKeyString.utf8))))
+
+        app.get { req -> String in
+            let authorizationPayload = UserPayload(id: UUID(), userName: "John Smith")
+            let accessToken = try req.jwt.sign(authorizationPayload)
+            return accessToken
+        }
+
+        for _ in 0..<1_000 {
+            try app.test(.GET, "/") { res in 
+                XCTAssertEqual(res.status, .ok)
+            }
         }
     }
 

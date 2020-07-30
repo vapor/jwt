@@ -3,21 +3,17 @@ import JWTKit
 
 extension Request {
     public var jwt: JWT {
-        .init(request: self)
+        .init(_request: self)
     }
 
     public struct JWT {
-        let request: Request
-
-        public init(request: Request) {
-            self.request = request
-        }
+        public let _request: Request
 
         public func verify<Payload>(as payload: Payload.Type = Payload.self) throws -> Payload
             where Payload: JWTPayload
         {
-            guard let token = self.request.headers.bearerAuthorization?.token else {
-                self.request.logger.error("Request is missing JWT bearer header")
+            guard let token = self._request.headers.bearerAuthorization?.token else {
+                self._request.logger.error("Request is missing JWT bearer header")
                 throw Abort(.unauthorized)
             }
             return try self.verify(token, as: Payload.self)
@@ -32,13 +28,13 @@ extension Request {
         public func verify<Message, Payload>(_ message: Message, as payload: Payload.Type = Payload.self) throws -> Payload
             where Message: DataProtocol, Payload: JWTPayload
         {
-            try self.request.application.jwt.signers.verify(message, as: Payload.self)
+            try self._request.application.jwt.signers.verify(message, as: Payload.self)
         }
 
         public func sign<Payload>(_ jwt: Payload, kid: JWKIdentifier? = nil) throws -> String
             where Payload: JWTPayload
         {
-            try self.request.application.jwt.signers.sign(jwt, kid: kid)
+            try self._request.application.jwt.signers.sign(jwt, kid: kid)
         }
     }
 }

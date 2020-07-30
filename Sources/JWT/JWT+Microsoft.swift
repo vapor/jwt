@@ -2,16 +2,16 @@ import Vapor
 
 extension Request.JWT {
     public var microsoft: Microsoft {
-        .init(request: self.request)
+        .init(_jwt: self)
     }
 
     public struct Microsoft {
-        let request: Request
+        public let _jwt: Request.JWT
 
         public func verify(applicationIdentifier: String? = nil) -> EventLoopFuture<MicrosoftIdentityToken> {
-            guard let token = self.request.headers.bearerAuthorization?.token else {
-                self.request.logger.error("Request is missing JWT bearer header.")
-                return self.request.eventLoop.makeFailedFuture(Abort(.unauthorized))
+            guard let token = self._jwt._request.headers.bearerAuthorization?.token else {
+                self._jwt._request.logger.error("Request is missing JWT bearer header.")
+                return self._jwt._request.eventLoop.makeFailedFuture(Abort(.unauthorized))
             }
             return self.verify(token, applicationIdentifier: applicationIdentifier)
         }
@@ -23,11 +23,11 @@ extension Request.JWT {
         public func verify<Message>(_ message: Message, applicationIdentifier: String? = nil) -> EventLoopFuture<MicrosoftIdentityToken>
             where Message: DataProtocol
         {
-            self.request.application.jwt.microsoft.signers(
-                on: self.request
+            self._jwt._request.application.jwt.microsoft.signers(
+                on: self._jwt._request
             ).flatMapThrowing { signers in
                 let token = try signers.verify(message, as: MicrosoftIdentityToken.self)
-                if let applicationIdentifier = applicationIdentifier ?? self.request.application.jwt.microsoft.applicationIdentifier {
+                if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.microsoft.applicationIdentifier {
                     try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
                 }
                 return token
@@ -38,11 +38,11 @@ extension Request.JWT {
 
 extension Application.JWT {
     public var microsoft: Microsoft {
-        .init(jwt: self)
+        .init(_jwt: self)
     }
 
     public struct Microsoft {
-        let jwt: Application.JWT
+        public let _jwt: Application.JWT
 
         public func signers(on request: Request) -> EventLoopFuture<JWTSigners> {
             self.jwks.get(on: request).flatMapThrowing {
@@ -79,17 +79,17 @@ extension Application.JWT {
         }
 
         private var storage: Storage {
-            if let existing = self.jwt.application.storage[Key.self] {
+            if let existing = self._jwt._application.storage[Key.self] {
                 return existing
             } else {
-                let lock = self.jwt.application.locks.lock(for: Key.self)
+                let lock = self._jwt._application.locks.lock(for: Key.self)
                 lock.lock()
                 defer { lock.unlock() }
-                if let existing = self.jwt.application.storage[Key.self] {
+                if let existing = self._jwt._application.storage[Key.self] {
                     return existing
                 }
                 let new = Storage()
-                self.jwt.application.storage[Key.self] = new
+                self._jwt._application.storage[Key.self] = new
                 return new
             }
         }

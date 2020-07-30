@@ -3,7 +3,7 @@ import JWTKit
 
 extension Application {
     public var jwt: JWT {
-        .init(application: self)
+        .init(_application: self)
     }
 
     public struct JWT {
@@ -18,7 +18,7 @@ extension Application {
             typealias Value = Storage
         }
 
-        let application: Application
+        public let _application: Application
 
         public var signers: JWTSigners {
             get { self.storage.signers }
@@ -26,17 +26,13 @@ extension Application {
         }
 
         private var storage: Storage {
-            if let existing = self.application.storage[Key.self] {
+            if let existing = self._application.storage[Key.self] {
                 return existing
             } else {
                 let new = Storage()
-                self.application.storage[Key.self] = new
+                self._application.storage[Key.self] = new
                 return new
             }
-        }
-
-        public init(application: Application) {
-            self.application = application
         }
     }
 }

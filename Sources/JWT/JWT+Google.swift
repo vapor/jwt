@@ -2,19 +2,19 @@ import Vapor
 
 extension Request.JWT {
     public var google: Google {
-        .init(request: self.request)
+        .init(_jwt: self)
     }
 
     public struct Google {
-        let request: Request
+        public let _jwt: Request.JWT
 
         public func verify(
             applicationIdentifier: String? = nil,
             gSuiteDomainName: String? = nil
         ) -> EventLoopFuture<GoogleIdentityToken> {
-            guard let token = self.request.headers.bearerAuthorization?.token else {
-                self.request.logger.error("Request is missing JWT bearer header.")
-                return self.request.eventLoop.makeFailedFuture(Abort(.unauthorized))
+            guard let token = self._jwt._request.headers.bearerAuthorization?.token else {
+                self._jwt._request.logger.error("Request is missing JWT bearer header.")
+                return self._jwt._request.eventLoop.makeFailedFuture(Abort(.unauthorized))
             }
             return self.verify(
                 token,
@@ -42,15 +42,15 @@ extension Request.JWT {
         ) -> EventLoopFuture<GoogleIdentityToken>
             where Message: DataProtocol
         {
-            self.request.application.jwt.google.signers(
-                on: self.request
+            self._jwt._request.application.jwt.google.signers(
+                on: self._jwt._request
             ).flatMapThrowing { signers in
                 let token = try signers.verify(message, as: GoogleIdentityToken.self)
-                if let applicationIdentifier = applicationIdentifier ?? self.request.application.jwt.google.applicationIdentifier {
+                if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.google.applicationIdentifier {
                     try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
                 }
 
-                if let gSuiteDomainName = gSuiteDomainName ?? self.request.application.jwt.google.gSuiteDomainName {
+                if let gSuiteDomainName = gSuiteDomainName ?? self._jwt._request.application.jwt.google.gSuiteDomainName {
                     guard let hd = token.hostedDomain, hd.value == gSuiteDomainName else {
                         throw JWTError.claimVerificationFailure(
                             name: "hostedDomain",
@@ -67,11 +67,11 @@ extension Request.JWT {
 
 extension Application.JWT {
     public var google: Google {
-        .init(jwt: self)
+        .init(_jwt: self)
     }
 
     public struct Google {
-        let jwt: Application.JWT
+        public let _jwt: Application.JWT
 
         public func signers(on request: Request) -> EventLoopFuture<JWTSigners> {
             self.jwks.get(on: request).flatMapThrowing {
@@ -119,17 +119,17 @@ extension Application.JWT {
         }
 
         private var storage: Storage {
-            if let existing = self.jwt.application.storage[Key.self] {
+            if let existing = self._jwt._application.storage[Key.self] {
                 return existing
             } else {
-                let lock = self.jwt.application.locks.lock(for: Key.self)
+                let lock = self._jwt._application.locks.lock(for: Key.self)
                 lock.lock()
                 defer { lock.unlock() }
-                if let existing = self.jwt.application.storage[Key.self] {
+                if let existing = self._jwt._application.storage[Key.self] {
                     return existing
                 }
                 let new = Storage()
-                self.jwt.application.storage[Key.self] = new
+                self._jwt._application.storage[Key.self] = new
                 return new
             }
         }

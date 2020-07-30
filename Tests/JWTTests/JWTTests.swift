@@ -3,6 +3,123 @@ import JWTKit
 import XCTVapor
 
 class JWTTests: XCTestCase {
+    func testDocs() throws {
+        // creates a new application for testing
+        let app = Application(.testing)
+        defer { app.shutdown() }
+
+        // Add HMAC with SHA-256 signer.
+        app.jwt.signers.use(.hs256(key: "secret"))
+
+        app.jwt.signers.use(.hs256(key: "foo"), kid: "a")
+        app.jwt.signers.use(.hs256(key: "bar"), kid: "b")
+
+        app.jwt.apple.applicationIdentifier = "..."
+        app.get("apple") { req -> EventLoopFuture<HTTPStatus> in
+            req.jwt.apple.verify().map { token in
+                print(token) // AppleIdentityToken
+                return .ok
+            }
+        }
+
+        app.jwt.google.applicationIdentifier = "..."
+        app.jwt.google.gSuiteDomainName = "..."
+        app.get("google") { req -> EventLoopFuture<HTTPStatus> in
+            req.jwt.google.verify().map { token in
+                print(token) // GoogleIdentityToken
+                return .ok
+            }
+        }
+
+        app.jwt.microsoft.applicationIdentifier = "..."
+        app.get("microsoft") { req -> EventLoopFuture<HTTPStatus> in
+            req.jwt.microsoft.verify().map { token in
+                print(token) // MicrosoftIdentityToken
+                return .ok
+            }
+        }
+
+        // JWT payload structure.
+        struct TestPayload: JWTPayload {
+            // Maps the longer Swift property names to the
+            // shortened keys used in the JWT payload.
+            enum CodingKeys: String, CodingKey {
+                case subject = "sub"
+                case expiration = "exp"
+                case isAdmin = "admin"
+            }
+
+            // The "sub" (subject) claim identifies the principal that is the
+            // subject of the JWT.
+            var subject: SubjectClaim
+
+            // The "exp" (expiration time) claim identifies the expiration time on
+            // or after which the JWT MUST NOT be accepted for processing.
+            var expiration: ExpirationClaim
+
+            // Custom data.
+            // If true, the user is an admin.
+            var isAdmin: Bool
+
+            // Run any additional verification logic beyond
+            // signature verification here.
+            // Since we have an ExpirationClaim, we will
+            // call its verify method.
+            func verify(using signer: JWTSigner) throws {
+                try self.expiration.verifyNotExpired()
+            }
+        }
+
+        // Fetch and verify JWT from incoming request.
+        app.get("me") { req -> HTTPStatus in
+            let payload = try req.jwt.verify(as: TestPayload.self)
+            print(payload)
+            return .ok
+        }
+
+        // Generate and return a new JWT.
+        app.post("login") { req -> [String: String] in
+            // Create a new instance of our JWTPayload
+            let payload = TestPayload(
+                subject: "vapor",
+                expiration: .init(value: .distantFuture),
+                isAdmin: true
+            )
+            // Return the signed JWT
+            return try [
+                "token": req.jwt.sign(payload, kid: "a")
+            ]
+        }
+
+        // middleware-based authentication
+        // using req.auth.require
+        let secure = app.grouped(TestUser.authenticator(), TestUser.guardMiddleware())
+        secure.get("auth") { req -> TestUser in
+            if let user = req.auth.get(TestUser.self) {
+                return user
+            } else {
+                // throw something other than unauthorized to prove the guard middleware let us get here (it shouldn't)
+                XCTFail("Shouldn't get here if the guard middleware is working.")
+                throw Abort(.internalServerError)
+            }
+        }
+
+        try app.test(.GET, "me", beforeRequest: { req in
+            req.headers.bearerAuthorization = .init(token: """
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ2YXBvciIsImV4cCI6NjQwOTIyMTEyMDAsImFkbWluIjp0cnVlfQ.lS5lpwfRNSZDvpGQk6x5JI1g40gkYCOWqbc3J_ghowo
+            """)
+            print(req)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, .ok)
+        }).test(.POST, "login", beforeRequest: { req in
+            print(req)
+        }, afterResponse: { res in
+            XCTAssertEqual(res.status, .ok)
+            print(res.body.string)
+            try XCTAssertNotNil(res.content.decode([String: String].self)["token"])
+        })
+    }
+
     // manual authentication using req.jwt.verify
     func testManual() throws {
         // creates a new application for testing

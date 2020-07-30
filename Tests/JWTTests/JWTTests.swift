@@ -11,6 +11,34 @@ class JWTTests: XCTestCase {
         // Add HMAC with SHA-256 signer.
         app.jwt.signers.use(.hs256(key: "secret"))
 
+        app.jwt.signers.use(.hs256(key: "foo"), kid: "a")
+        app.jwt.signers.use(.hs256(key: "bar"), kid: "b")
+
+        app.jwt.apple.applicationIdentifier = "..."
+        app.get("apple") { req -> EventLoopFuture<HTTPStatus> in
+            req.jwt.apple.verify().map { token in
+                print(token) // AppleIdentityToken
+                return .ok
+            }
+        }
+
+        app.jwt.google.applicationIdentifier = "..."
+        app.jwt.google.gSuiteDomainName = "..."
+        app.get("google") { req -> EventLoopFuture<HTTPStatus> in
+            req.jwt.google.verify().map { token in
+                print(token) // GoogleIdentityToken
+                return .ok
+            }
+        }
+
+        app.jwt.microsoft.applicationIdentifier = "..."
+        app.get("microsoft") { req -> EventLoopFuture<HTTPStatus> in
+            req.jwt.microsoft.verify().map { token in
+                print(token) // MicrosoftIdentityToken
+                return .ok
+            }
+        }
+
         // JWT payload structure.
         struct TestPayload: JWTPayload {
             // Maps the longer Swift property names to the
@@ -59,8 +87,21 @@ class JWTTests: XCTestCase {
             )
             // Return the signed JWT
             return try [
-                "token": req.jwt.sign(payload)
+                "token": req.jwt.sign(payload, kid: "a")
             ]
+        }
+
+        // middleware-based authentication
+        // using req.auth.require
+        let secure = app.grouped(TestUser.authenticator(), TestUser.guardMiddleware())
+        secure.get("auth") { req -> TestUser in
+            if let user = req.auth.get(TestUser.self) {
+                return user
+            } else {
+                // throw something other than unauthorized to prove the guard middleware let us get here (it shouldn't)
+                XCTFail("Shouldn't get here if the guard middleware is working.")
+                throw Abort(.internalServerError)
+            }
         }
 
         try app.test(.GET, "me", beforeRequest: { req in

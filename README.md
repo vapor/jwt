@@ -6,7 +6,7 @@
     >
     <br>
     <br>
-    <a href="https://api.vapor.codes/jwt-kit/master/JWTKit/index.html">
+    <a href="https://docs.vapor.codes/4.0/jwt/">
         <img src="http://img.shields.io/badge/api-docs-2196f3.svg" alt="Documentation">
     </a>
     <a href="https://discord.gg/vapor">

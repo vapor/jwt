@@ -23,4 +23,4 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
-    - run: swift test --enable-test-discovery --sanitize=thread
+    - run: swift test --sanitize=thread

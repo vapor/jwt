@@ -256,7 +256,7 @@ class JWTTests: XCTestCase {
         let app = Application(.testing)
         defer { app.shutdown() }
 
-        app.jwt.apple.applicationIdentifier = "com.gargoylesoft.SignInWithApple"
+        app.jwt.apple.applicationIdentifier = "com.raywenderlich.TILiOS"
 
         app.get("test") { req in
             req.jwt.apple.verify().map {
@@ -264,14 +264,14 @@ class JWTTests: XCTestCase {
             }
         }
         app.get("test2") { req in
-            req.jwt.apple.verify(applicationIdentifier: "com.gargoylesoft.SignInWithApple").map {
+            req.jwt.apple.verify(applicationIdentifier: "com.raywenderlich.TILiOS").map {
                 $0.email ?? "none"
             }
         }
 
         var headers = HTTPHeaders()
         headers.bearerAuthorization = .init(token: """
-        eyJraWQiOiI4NkQ4OEtmIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoiY29tLmdhcmdveWxlc29mdC5TaWduSW5XaXRoQXBwbGUiLCJleHAiOjE1ODE5ODE3NDAsImlhdCI6MTU4MTk4MTE0MCwic3ViIjoiMDAwNjg1LmUyMGY4YzE4NjQzODQyZTA5MmYyMWVmYmJiYzkyNDgzLjE4MjUiLCJjX2hhc2giOiJpY0wwZUxtR1lfMzJyVU4waWVXLVN3IiwiZW1haWwiOiJpajhocmNncXBoQHByaXZhdGVyZWxheS5hcHBsZWlkLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjoidHJ1ZSIsImlzX3ByaXZhdGVfZW1haWwiOiJ0cnVlIiwiYXV0aF90aW1lIjoxNTgxOTgxMTQwfQ.CkHWktKcOsMtLKsFyDHerGScWZmpx0_fdHaIizyzSS-y1sqK4qy5WrLxGI5LURZR7dpTVMmXgyfbZKtxV5GKwE4JG1AnotADQQIJL56473medcgXaYI6Bu78omt0W0inJUEa_kQRf-pO44UM0uzCGROoFdoSNdSA4qyA5rkecihkKnG1h2kzSowRnyIIlawXRiNbrnAmuQr6o4Hbuox0abIWa1ZgWmtrSsNDcnlbHTZ1gQti6oewSbGXdmS7Dl6GBDrLZP8vvbXJZP--CBMIYHvfxMDvHhXxk4G2RGAq5TDJIUdbLGCfsxz6DsFkimM89gcS4XSienqfmgfDy8JY2Q
+        eyJraWQiOiJXNldjT0tCIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoiY29tLnJheXdlbmRlcmxpY2guVElMaU9TIiwiZXhwIjoxNjQ5NTEwMTMzLCJpYXQiOjE2NDk0MjM3MzMsInN1YiI6IjAwMTU0Mi5iMDQxMDBjNTFhY2I0OGQzYTU3MDY4NGYxN2Q2Mzk0ZC4xNjAzIiwiY19oYXNoIjoiUzJsLUU3R3dxcVZrczFSd3pmaGxDdyIsImVtYWlsIjoiOHlzYmNodmMybUBwcml2YXRlcmVsYXkuYXBwbGVpZC5jb20iLCJlbWFpbF92ZXJpZmllZCI6InRydWUiLCJpc19wcml2YXRlX2VtYWlsIjoidHJ1ZSIsImF1dGhfdGltZSI6MTY0OTQyMzczMywibm9uY2Vfc3VwcG9ydGVkIjp0cnVlLCJyZWFsX3VzZXJfc3RhdHVzIjoyfQ.hk95IS36QyYNkyj1pD55n3tdptMlUPAMuEd94AoBnTLRNpXpQ0vee9-mqAzuD1FKoqSTIOcVnH6781VkZ3KIWAqBhZLsLShAWJXvJrBH3pvt0Uyk-mN4wU8l30NqEaHoa3HRwg85feiom4EhYywj2b3cZLGnlHF-LOADs4evI-7aoBSI8z6lYrpMfzMiMTDUob82BxrGyuFHKemnoVrylHheIeFm21_AMNlKW41YspXa05S3FpJaNrOnnrBA5RgYQ4uFhYCbi8mvC1jANaQRvP0agANdUf9XpMcFtIqD9bAYOJ65zmbCjwU1VjlIiQRZsELptY4H_Oo17MQ8d7yUwQ
         """)
 
         try app.test(.GET, "test", headers: headers) { res in

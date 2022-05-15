@@ -5,21 +5,8 @@ on:
     branches:
     - main
 jobs:
-  linux:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        image:
-          - swift:5.4-focal
-          - swift:5.5-focal
-          - swift:5.6-focal
-    container: ${{ matrix.image }}
-    steps:
-    - uses: actions/checkout@v2
-    - run: swift test --enable-test-discovery --sanitize=thread
-  macOS:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v2
-    - run: swift test --sanitize=thread
+  unit-tests:
+    uses: vapor/ci/.github/workflows/run-unit-tests.yml@reusable-workflows
+    with:
+      with_coverage: true
+      with_tsan: true

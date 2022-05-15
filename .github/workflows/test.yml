@@ -11,10 +11,9 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - swift:5.2-xenial
-          - swift:5.3-bionic
           - swift:5.4-focal
-          - swift:5.5-centos8
+          - swift:5.5-focal
+          - swift:5.6-focal
     container: ${{ matrix.image }}
     steps:
     - uses: actions/checkout@v2

@@ -8,7 +8,8 @@ extension Request {
 
     public struct JWT {
         public let _request: Request
-
+        
+        @discardableResult
         public func verify<Payload>(as payload: Payload.Type = Payload.self) throws -> Payload
             where Payload: JWTPayload
         {
@@ -18,13 +19,15 @@ extension Request {
             }
             return try self.verify(token, as: Payload.self)
         }
-
+        
+        @discardableResult
         public func verify<Payload>(_ message: String, as payload: Payload.Type = Payload.self) throws -> Payload
             where Payload: JWTPayload
         {
             try self.verify([UInt8](message.utf8), as: Payload.self)
         }
-
+        
+        @discardableResult
         public func verify<Message, Payload>(_ message: Message, as payload: Payload.Type = Payload.self) throws -> Payload
             where Message: DataProtocol, Payload: JWTPayload
         {

@@ -1,16 +1,36 @@
 import JWTKit
 import Vapor
+import NIOConcurrencyHelpers
 
 public extension Application {
     var jwt: JWT {
         .init(_application: self)
     }
 
-    struct JWT {
-        private final class Storage {
-            var keys: JWTKeyCollection
+    struct JWT: Sendable {
+        private final class Storage: Sendable {
+            private struct SendableBox: Sendable {
+                var keys: JWTKeyCollection
+            }
+            
+            private let sendableBox: NIOLockedValueBox<SendableBox>
+            
+            var keys: JWTKeyCollection {
+                get {
+                    self.sendableBox.withLockedValue { box in
+                        box.keys
+                    }
+                }
+                set {
+                    self.sendableBox.withLockedValue { box in
+                        box.keys = newValue
+                    }
+                }
+            }
+            
             init() {
-                self.keys = .init()
+                let box = SendableBox(keys: .init())
+                self.sendableBox = .init(box)
             }
         }
 

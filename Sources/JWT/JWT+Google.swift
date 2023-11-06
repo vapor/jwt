@@ -1,11 +1,12 @@
+import NIOConcurrencyHelpers
 import Vapor
 
-extension Request.JWT {
-    public var google: Google {
+public extension Request.JWT {
+    var google: Google {
         .init(_jwt: self)
     }
 
-    public struct Google {
+    struct Google: Sendable {
         public let _jwt: Request.JWT
 
         public func verify(
@@ -28,7 +29,7 @@ extension Request.JWT {
         }
 
         public func verify(
-            _ message: some DataProtocol,
+            _ message: some DataProtocol & Sendable,
             applicationIdentifier: String? = nil,
             gSuiteDomainName: String? = nil
         ) async throws -> GoogleIdentityToken {
@@ -50,12 +51,12 @@ extension Request.JWT {
     }
 }
 
-extension Application.JWT {
-    public var google: Google {
+public extension Application.JWT {
+    var google: Google {
         .init(_jwt: self)
     }
 
-    public struct Google {
+    struct Google: Sendable {
         public let _jwt: Application.JWT
 
         public func keys(on request: Request) async throws -> JWTKeyCollection {
@@ -88,14 +89,45 @@ extension Application.JWT {
             typealias Value = Storage
         }
 
-        private final class Storage {
+        private final class Storage: Sendable {
+            private struct SendableBox: Sendable {
+                var applicationIdentifier: String?
+                var gSuiteDomainName: String?
+            }
+
             let jwks: EndpointCache<JWKS>
-            var applicationIdentifier: String?
-            var gSuiteDomainName: String?
+            private let sendableBox: NIOLockedValueBox<SendableBox>
+
+            var applicationIdentifier: String? {
+                get {
+                    self.sendableBox.withLockedValue { box in
+                        box.applicationIdentifier
+                    }
+                }
+                set {
+                    self.sendableBox.withLockedValue { box in
+                        box.applicationIdentifier = newValue
+                    }
+                }
+            }
+
+            var gSuiteDomainName: String? {
+                get {
+                    self.sendableBox.withLockedValue { box in
+                        box.gSuiteDomainName
+                    }
+                }
+                set {
+                    self.sendableBox.withLockedValue { box in
+                        box.gSuiteDomainName = newValue
+                    }
+                }
+            }
+
             init() {
                 self.jwks = .init(uri: "https://www.googleapis.com/oauth2/v3/certs")
-                self.applicationIdentifier = nil
-                self.gSuiteDomainName = nil
+                let box = SendableBox(applicationIdentifier: nil, gSuiteDomainName: nil)
+                self.sendableBox = .init(box)
             }
         }
 

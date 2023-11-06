@@ -6,7 +6,7 @@ public extension Request {
         .init(_request: self)
     }
 
-    struct JWT {
+    struct JWT: Sendable {
         public let _request: Request
 
         @discardableResult
@@ -28,8 +28,8 @@ public extension Request {
         }
 
         @discardableResult
-        public func verify<Message, Payload>(_ message: Message, as _: Payload.Type = Payload.self) async throws -> Payload
-            where Message: DataProtocol, Payload: JWTPayload
+        public func verify<Payload>(_ message: some DataProtocol & Sendable, as _: Payload.Type = Payload.self) async throws -> Payload
+            where Payload: JWTPayload
         {
             try await self._request.application.jwt.keys.verify(message, as: Payload.self)
         }

@@ -1,14 +1,17 @@
+import NIOConcurrencyHelpers
 import Vapor
 
-extension Request.JWT {
-    public var microsoft: Microsoft {
+public extension Request.JWT {
+    var microsoft: Microsoft {
         .init(_jwt: self)
     }
 
-    public struct Microsoft {
+    struct Microsoft {
         public let _jwt: Request.JWT
 
-        public func verify(applicationIdentifier: String? = nil) async throws -> MicrosoftIdentityToken {
+        public func verify(
+            applicationIdentifier: String? = nil
+        ) async throws -> MicrosoftIdentityToken {
             guard let token = self._jwt._request.headers.bearerAuthorization?.token else {
                 self._jwt._request.logger.error("Request is missing JWT bearer header.")
                 throw Abort(.unauthorized)
@@ -16,11 +19,17 @@ extension Request.JWT {
             return try await self.verify(token, applicationIdentifier: applicationIdentifier)
         }
 
-        public func verify(_ message: String, applicationIdentifier: String? = nil) async throws -> MicrosoftIdentityToken {
+        public func verify(
+            _ message: String,
+            applicationIdentifier: String? = nil
+        ) async throws -> MicrosoftIdentityToken {
             try await self.verify([UInt8](message.utf8), applicationIdentifier: applicationIdentifier)
         }
 
-        public func verify(_ message: some DataProtocol, applicationIdentifier: String? = nil) async throws -> MicrosoftIdentityToken {
+        public func verify(
+            _ message: some DataProtocol & Sendable,
+            applicationIdentifier: String? = nil
+        ) async throws -> MicrosoftIdentityToken {
             let keys = try await self._jwt._request.application.jwt.microsoft.keys(on: self._jwt._request)
             let token = try await keys.verify(message, as: MicrosoftIdentityToken.self)
             if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.microsoft.applicationIdentifier {
@@ -31,12 +40,12 @@ extension Request.JWT {
     }
 }
 
-extension Application.JWT {
-    public var microsoft: Microsoft {
+public extension Application.JWT {
+    var microsoft: Microsoft {
         .init(_jwt: self)
     }
 
-    public struct Microsoft {
+    struct Microsoft {
         public let _jwt: Application.JWT
 
         public func keys(on request: Request) async throws -> JWTKeyCollection {
@@ -60,12 +69,31 @@ extension Application.JWT {
             typealias Value = Storage
         }
 
-        private final class Storage {
+        private final class Storage: Sendable {
+            private struct SendableBox: Sendable {
+                var applicationIdentifier: String?
+            }
+
             let jwks: EndpointCache<JWKS>
-            var applicationIdentifier: String?
+            private let sendableBox: NIOLockedValueBox<SendableBox>
+
+            var applicationIdentifier: String? {
+                get {
+                    self.sendableBox.withLockedValue { box in
+                        box.applicationIdentifier
+                    }
+                }
+                set {
+                    self.sendableBox.withLockedValue { box in
+                        box.applicationIdentifier = newValue
+                    }
+                }
+            }
+
             init() {
                 self.jwks = .init(uri: "https://login.microsoftonline.com/common/discovery/keys")
-                self.applicationIdentifier = nil
+                let box = SendableBox(applicationIdentifier: nil)
+                self.sendableBox = .init(box)
             }
         }
 

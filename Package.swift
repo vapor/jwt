@@ -17,13 +17,21 @@ let package = Package(
         .package(url: "https://github.com/vapor/vapor.git", from: "4.50.0"),
     ],
     targets: [
-        .target(name: "JWT", dependencies: [
-            .product(name: "JWTKit", package: "jwt-kit"),
-            .product(name: "Vapor", package: "vapor"),
-        ]),
-        .testTarget(name: "JWTTests", dependencies: [
-            .target(name: "JWT"),
-            .product(name: "XCTVapor", package: "vapor"),
-        ]),
+        .target(
+            name: "JWT",
+            dependencies: [
+                .product(name: "JWTKit", package: "jwt-kit"),
+                .product(name: "Vapor", package: "vapor"),
+            ],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+        .testTarget(
+            name: "JWTTests",
+            dependencies: [
+                .target(name: "JWT"),
+                .product(name: "XCTVapor", package: "vapor"),
+            ],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
     ]
 )

@@ -1,16 +1,16 @@
-import Vapor
 import JWTKit
+import Vapor
 
-extension Application {
-    public var jwt: JWT {
+public extension Application {
+    var jwt: JWT {
         .init(_application: self)
     }
 
-    public struct JWT {
+    struct JWT {
         private final class Storage {
-            var signers: JWTSigners
+            var keys: JWTKeyCollection
             init() {
-                self.signers = .init()
+                self.keys = .init()
             }
         }
 
@@ -20,9 +20,9 @@ extension Application {
 
         public let _application: Application
 
-        public var signers: JWTSigners {
-            get { self.storage.signers }
-            set { self.storage.signers = newValue }
+        public var keys: JWTKeyCollection {
+            get { self.storage.keys }
+            set { self.storage.keys = newValue }
         }
 
         private var storage: Storage {

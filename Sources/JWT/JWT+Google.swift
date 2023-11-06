@@ -11,57 +11,42 @@ extension Request.JWT {
         public func verify(
             applicationIdentifier: String? = nil,
             gSuiteDomainName: String? = nil
-        ) -> EventLoopFuture<GoogleIdentityToken> {
+        ) async throws -> GoogleIdentityToken {
             guard let token = self._jwt._request.headers.bearerAuthorization?.token else {
                 self._jwt._request.logger.error("Request is missing JWT bearer header.")
-                return self._jwt._request.eventLoop.makeFailedFuture(Abort(.unauthorized))
+                throw Abort(.unauthorized)
             }
-            return self.verify(
-                token,
-                applicationIdentifier: applicationIdentifier,
-                gSuiteDomainName: gSuiteDomainName
-            )
+            return try await self.verify(token, applicationIdentifier: applicationIdentifier, gSuiteDomainName: gSuiteDomainName)
         }
 
         public func verify(
             _ message: String,
             applicationIdentifier: String? = nil,
             gSuiteDomainName: String? = nil
-        ) -> EventLoopFuture<GoogleIdentityToken> {
-            self.verify(
-                [UInt8](message.utf8),
-                applicationIdentifier: applicationIdentifier,
-                gSuiteDomainName: gSuiteDomainName
-            )
+        ) async throws -> GoogleIdentityToken {
+            try await self.verify([UInt8](message.utf8), applicationIdentifier: applicationIdentifier, gSuiteDomainName: gSuiteDomainName)
         }
 
-        public func verify<Message>(
-            _ message: Message,
+        public func verify(
+            _ message: some DataProtocol,
             applicationIdentifier: String? = nil,
             gSuiteDomainName: String? = nil
-        ) -> EventLoopFuture<GoogleIdentityToken>
-            where Message: DataProtocol
-        {
-            self._jwt._request.application.jwt.google.signers(
-                on: self._jwt._request
-            ).flatMapThrowing { signers in
-                let token = try signers.verify(message, as: GoogleIdentityToken.self)
-                if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.google.applicationIdentifier {
-                    try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
-                }
-
-                if let gSuiteDomainName = gSuiteDomainName ?? self._jwt._request.application.jwt.google.gSuiteDomainName {
-                    guard let hd = token.hostedDomain, hd.value == gSuiteDomainName else {
-                        throw JWTError.claimVerificationFailure(
-                            name: "hostedDomain",
-                            reason: "Hosted domain claim does not match gSuite domain name"
-                        )
-                    }
-                }
-                return token
+        ) async throws -> GoogleIdentityToken {
+            let keys = try await self._jwt._request.application.jwt.google.keys(on: self._jwt._request)
+            let token = try await keys.verify(message, as: GoogleIdentityToken.self)
+            if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.google.applicationIdentifier {
+                try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
             }
+            if let gSuiteDomainName = gSuiteDomainName ?? self._jwt._request.application.jwt.google.gSuiteDomainName {
+                guard let hd = token.hostedDomain, hd.value == gSuiteDomainName else {
+                    throw JWTError.claimVerificationFailure(
+                        name: "hostedDomain",
+                        reason: "Hosted domain claim does not match gSuite domain name"
+                    )
+                }
+            }
+            return token
         }
-
     }
 }
 
@@ -73,12 +58,8 @@ extension Application.JWT {
     public struct Google {
         public let _jwt: Application.JWT
 
-        public func signers(on request: Request) -> EventLoopFuture<JWTSigners> {
-            self.jwks.get(on: request).flatMapThrowing {
-                let signers = JWTSigners()
-                try signers.use(jwks: $0)
-                return signers
-            }
+        public func keys(on request: Request) async throws -> JWTKeyCollection {
+            try await JWTKeyCollection().add(jwks: jwks.get(on: request).get())
         }
 
         public var jwks: EndpointCache<JWKS> {

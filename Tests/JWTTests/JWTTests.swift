@@ -3,40 +3,37 @@ import JWTKit
 import XCTVapor
 
 class JWTTests: XCTestCase {
-    func testDocs() throws {
+    func testDocs() async throws {
         // creates a new application for testing
         let app = Application(.testing)
         defer { app.shutdown() }
 
         // Add HMAC with SHA-256 signer.
-        app.jwt.signers.use(.hs256(key: "secret"))
+        await app.jwt.keys.addHS256(key: "secret")
 
-        app.jwt.signers.use(.hs256(key: "foo"), kid: "a")
-        app.jwt.signers.use(.hs256(key: "bar"), kid: "b")
+        await app.jwt.keys.addHS256(key: "foo", kid: "a")
+        await app.jwt.keys.addHS256(key: "bar", kid: "b")
 
         app.jwt.apple.applicationIdentifier = "..."
-        app.get("apple") { req -> EventLoopFuture<HTTPStatus> in
-            req.jwt.apple.verify().map { token in
-                print(token) // AppleIdentityToken
-                return .ok
-            }
+        app.get("apple") { req async throws -> HTTPStatus in
+            let token = try await req.jwt.apple.verify()
+            print(token) // AppleIdentityToken
+            return .ok
         }
 
         app.jwt.google.applicationIdentifier = "..."
         app.jwt.google.gSuiteDomainName = "..."
-        app.get("google") { req -> EventLoopFuture<HTTPStatus> in
-            req.jwt.google.verify().map { token in
-                print(token) // GoogleIdentityToken
-                return .ok
-            }
+        app.get("google") { req async throws -> HTTPStatus in
+            let token = try await req.jwt.google.verify()
+            print(token) // GoogleIdentityToken
+            return .ok
         }
 
         app.jwt.microsoft.applicationIdentifier = "..."
-        app.get("microsoft") { req -> EventLoopFuture<HTTPStatus> in
-            req.jwt.microsoft.verify().map { token in
-                print(token) // MicrosoftIdentityToken
-                return .ok
-            }
+        app.get("microsoft") { req async throws -> HTTPStatus in
+            let token = try await req.jwt.microsoft.verify()
+            print(token) // MicrosoftIdentityToken
+            return .ok
         }
 
         // JWT payload structure.
@@ -65,20 +62,20 @@ class JWTTests: XCTestCase {
             // signature verification here.
             // Since we have an ExpirationClaim, we will
             // call its verify method.
-            func verify(using signer: JWTSigner) throws {
+            func verify(using _: JWTAlgorithm) async throws {
                 try self.expiration.verifyNotExpired()
             }
         }
 
         // Fetch and verify JWT from incoming request.
-        app.get("me") { req -> HTTPStatus in
-            let payload = try req.jwt.verify(as: TestPayload.self)
+        app.get("me") { req async throws -> HTTPStatus in
+            let payload = try await req.jwt.verify(as: TestPayload.self)
             print(payload)
             return .ok
         }
 
         // Generate and return a new JWT.
-        app.post("login") { req -> [String: String] in
+        app.post("login") { req async throws -> [String: String] in
             // Create a new instance of our JWTPayload
             let payload = TestPayload(
                 subject: "vapor",
@@ -86,8 +83,8 @@ class JWTTests: XCTestCase {
                 isAdmin: true
             )
             // Return the signed JWT
-            return try [
-                "token": req.jwt.sign(payload, kid: "a")
+            return try await [
+                "token": req.jwt.sign(payload, kid: "a"),
             ]
         }
 
@@ -121,24 +118,24 @@ class JWTTests: XCTestCase {
     }
 
     // manual authentication using req.jwt.verify
-    func testManual() throws {
+    func testManual() async throws {
         // creates a new application for testing
         let app = Application(.testing)
         defer { app.shutdown() }
 
         // configures an es512 signer using random key
-        try app.jwt.signers.use(.es512(key: .generate()))
+        try await app.jwt.keys.addES512(key: .generate())
 
         // jwt creation using req.jwt.sign
-        app.post("login") { req -> LoginResponse in
+        app.post("login") { req async throws -> LoginResponse in
             let credentials = try req.content.decode(LoginCredentials.self)
-            return try LoginResponse(
+            return try await LoginResponse(
                 token: req.jwt.sign(TestUser(name: credentials.name))
             )
         }
 
-        app.get("me") { req -> String in
-            try req.jwt.verify(as: TestUser.self).name
+        app.get("me") { req async throws -> String in
+            try await req.jwt.verify(as: TestUser.self).name
         }
 
         // stores the token created during login
@@ -168,7 +165,8 @@ class JWTTests: XCTestCase {
         }
 
         // create a token from a different signer
-        let fakeToken = try JWTSigner.es256(key: .generate()).sign(TestUser(name: "bob"))
+        let fakeToken = try await JWTKeyCollection()
+            .addES512(key: .generate()).sign(TestUser(name: "bob"))
         try app.testable().test(
             .GET, "me", headers: ["authorization": "Bearer \(fakeToken)"]
         ) { res in
@@ -177,18 +175,18 @@ class JWTTests: XCTestCase {
     }
 
     // test middleware-based authentication using req.auth.require
-    func testMiddleware() throws {
+    func testMiddleware() async throws {
         // creates a new application for testing
         let app = Application(.testing)
         defer { app.shutdown() }
 
         // configures an es512 signer using random key
-        try app.jwt.signers.use(.es512(key: .generate()))
+        try await app.jwt.keys.addES512(key: .generate())
 
         // jwt creation using req.jwt.sign
-        app.post("login") { req -> LoginResponse in
+        app.post("login") { req async throws -> LoginResponse in
             let credentials = try req.content.decode(LoginCredentials.self)
-            return try LoginResponse(
+            return try await LoginResponse(
                 token: req.jwt.sign(TestUser(name: credentials.name))
             )
         }
@@ -235,7 +233,7 @@ class JWTTests: XCTestCase {
 
         // token from same signer but for a different user
         // this tests that the guard middleware catches the failure to auth before it reaches the route handler
-        let wrongNameToken = try app.jwt.signers.sign(TestUser(name: "bob"))
+        let wrongNameToken = try await app.jwt.keys.sign(TestUser(name: "bob"))
         try app.testable().test(
             .GET, "me", headers: ["authorization": "Bearer \(wrongNameToken)"]
         ) { res in
@@ -243,7 +241,7 @@ class JWTTests: XCTestCase {
         }
 
         // create a token from a different signer
-        let fakeToken = try JWTSigner.es256(key: .generate()).sign(TestUser(name: "bob"))
+        let fakeToken = try await JWTKeyCollection().addES512(key: .generate()).sign(TestUser(name: "bob"))
         try app.testable().test(
             .GET, "me", headers: ["authorization": "Bearer \(fakeToken)"]
         ) { res in
@@ -251,22 +249,18 @@ class JWTTests: XCTestCase {
         }
     }
 
-    func testApple() throws {
+    func testApple() async throws {
         // creates a new application for testing
         let app = Application(.testing)
         defer { app.shutdown() }
 
         app.jwt.apple.applicationIdentifier = "com.raywenderlich.TILiOS"
 
-        app.get("test") { req in
-            req.jwt.apple.verify().map {
-                $0.email ?? "none"
-            }
+        app.get("test") { req async throws in
+            try await req.jwt.apple.verify().email ?? "none"
         }
-        app.get("test2") { req in
-            req.jwt.apple.verify(applicationIdentifier: "com.raywenderlich.TILiOS").map {
-                $0.email ?? "none"
-            }
+        app.get("test2") { req async throws in
+            try await req.jwt.apple.verify(applicationIdentifier: "com.raywenderlich.TILiOS").email ?? "none"
         }
 
         var headers = HTTPHeaders()
@@ -284,12 +278,12 @@ class JWTTests: XCTestCase {
     }
 
     // https://github.com/vapor/jwt-kit/issues/26
-    func testSignFailureSegfault() throws {
+    func testSignFailureSegfault() async throws {
         struct UserPayload: JWTPayload {
             var id: UUID
             var userName: String
 
-            func verify(using signer: JWTSigner) throws { }
+            func verify(using _: JWTAlgorithm) throws {}
         }
 
         // creates a new application for testing
@@ -325,17 +319,17 @@ class JWTTests: XCTestCase {
         waNSUrQp9XZJLA9SgN+N2JwuDi0bxsr0saaLdmWn3S3L6rsg5Cja
         -----END RSA PRIVATE KEY-----
         """
-        
-        try app.jwt.signers.use(.rs512(key: .private(pem: [UInt8](privateKeyString.utf8))))
 
-        app.get { req -> String in
+        try await app.jwt.keys.addRS512(key: .private(pem: [UInt8](privateKeyString.utf8)))
+
+        app.get { req async throws -> String in
             let authorizationPayload = UserPayload(id: UUID(), userName: "John Smith")
-            let accessToken = try req.jwt.sign(authorizationPayload)
+            let accessToken = try await req.jwt.sign(authorizationPayload)
             return accessToken
         }
 
-        for _ in 0..<1_000 {
-            try app.test(.GET, "/") { res in 
+        for _ in 0 ..< 1000 {
+            try app.test(.GET, "/") { res in
                 XCTAssertEqual(res.status, .ok)
             }
         }
@@ -361,7 +355,6 @@ let isLoggingConfigured: Bool = {
     return true
 }()
 
-
 struct LoginResponse: Content {
     var token: String
 }
@@ -373,7 +366,7 @@ struct LoginCredentials: Content {
 struct TestUser: Content, Authenticatable, JWTPayload {
     var name: String
 
-    func verify(using signer: JWTSigner) throws {
+    func verify(using _: JWTAlgorithm) throws {
         // nothing to verify
     }
 }
@@ -381,11 +374,10 @@ struct TestUser: Content, Authenticatable, JWTPayload {
 struct UserAuthenticator: JWTAuthenticator {
     typealias Payload = TestUser
 
-    func authenticate(jwt: TestUser, for request: Request) -> EventLoopFuture<Void> {
+    func authenticate(jwt: TestUser, for request: Request) async throws {
         if jwt.name == "foo" {
             // Requiring this specific username makes the test for the guard middleware in testMiddleware() valid.
             request.auth.login(jwt)
         }
-        return request.eventLoop.makeSucceededFuture(())
     }
 }

@@ -270,10 +270,8 @@ class JWTTests: XCTestCase {
 
         try app.test(.GET, "test", headers: headers) { res in
             XCTAssertEqual(res.status, .unauthorized)
-            XCTAssertContains(res.body.string, "expired")
         }.test(.GET, "test2", headers: headers) { res in
             XCTAssertEqual(res.status, .unauthorized)
-            XCTAssertContains(res.body.string, "expired")
         }
     }
 

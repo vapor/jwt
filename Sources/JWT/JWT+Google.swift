@@ -41,7 +41,7 @@ public extension Request.JWT {
             if let gSuiteDomainName = gSuiteDomainName ?? self._jwt._request.application.jwt.google.gSuiteDomainName {
                 guard let hd = token.hostedDomain, hd.value == gSuiteDomainName else {
                     throw JWTError.claimVerificationFailure(
-                        name: "hostedDomain",
+                        failedClaim: token.hostedDomain,
                         reason: "Hosted domain claim does not match gSuite domain name"
                     )
                 }

@@ -84,7 +84,7 @@ class JWTTests: XCTestCase {
             )
             // Return the signed JWT
             return try await [
-                "token": req.jwt.sign(payload, kid: "a"),
+                "token": req.jwt.sign(payload, header: ["kid": "a"]),
             ]
         }
 
@@ -124,7 +124,7 @@ class JWTTests: XCTestCase {
         defer { app.shutdown() }
 
         // configures an es512 signer using random key
-        try await app.jwt.keys.addES512(key: .generate())
+        await app.jwt.keys.addES512(key: ES512PrivateKey())
 
         // jwt creation using req.jwt.sign
         app.post("login") { req async throws -> LoginResponse in
@@ -166,7 +166,7 @@ class JWTTests: XCTestCase {
 
         // create a token from a different signer
         let fakeToken = try await JWTKeyCollection()
-            .addES512(key: .generate()).sign(TestUser(name: "bob"))
+            .addES512(key: ES512PrivateKey()).sign(TestUser(name: "bob"))
         try app.testable().test(
             .GET, "me", headers: ["authorization": "Bearer \(fakeToken)"]
         ) { res in
@@ -181,7 +181,7 @@ class JWTTests: XCTestCase {
         defer { app.shutdown() }
 
         // configures an es512 signer using random key
-        try await app.jwt.keys.addES512(key: .generate())
+        await app.jwt.keys.addES512(key: ES512PrivateKey())
 
         // jwt creation using req.jwt.sign
         app.post("login") { req async throws -> LoginResponse in
@@ -241,7 +241,7 @@ class JWTTests: XCTestCase {
         }
 
         // create a token from a different signer
-        let fakeToken = try await JWTKeyCollection().addES512(key: .generate()).sign(TestUser(name: "bob"))
+        let fakeToken = try await JWTKeyCollection().addES512(key: ES512PrivateKey()).sign(TestUser(name: "bob"))
         try app.testable().test(
             .GET, "me", headers: ["authorization": "Bearer \(fakeToken)"]
         ) { res in
@@ -318,7 +318,7 @@ class JWTTests: XCTestCase {
         -----END RSA PRIVATE KEY-----
         """
 
-        try await app.jwt.keys.addRS512(key: .private(pem: [UInt8](privateKeyString.utf8)))
+        try await app.jwt.keys.addRS256(key: Insecure.RSA.PrivateKey(pem: [UInt8](privateKeyString.utf8)))
 
         app.get { req async throws -> String in
             let authorizationPayload = UserPayload(id: UUID(), userName: "John Smith")

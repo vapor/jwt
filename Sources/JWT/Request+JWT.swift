@@ -34,10 +34,10 @@ public extension Request {
             try await self._request.application.jwt.keys.verify(message, as: Payload.self)
         }
 
-        public func sign<Payload>(_ jwt: Payload, kid: JWKIdentifier? = nil) async throws -> String
+        public func sign<Payload>(_ jwt: Payload, header: JWTHeader = .init()) async throws -> String
             where Payload: JWTPayload
         {
-            try await self._request.application.jwt.keys.sign(jwt, kid: kid)
+            return try await self._request.application.jwt.keys.sign(jwt, header: header)
         }
     }
 }

@@ -251,12 +251,17 @@ class JWTTests: XCTestCase {
         }
     }
 
+    /*
+     If this test expires you might need to regenerate the JWT. Use https://github.com/0xTim/vapor-jwt-test-siwa and run the project on a real device
+     Try signing in with Apple and it will print a new JWT to use.
+     Note that it takes a day for the JWT to expire before the test passes
+    */
     func testApple() throws {
         // creates a new application for testing
         let app = Application(.testing)
         defer { app.shutdown() }
 
-        app.jwt.apple.applicationIdentifier = "com.raywenderlich.TILiOS"
+        app.jwt.apple.applicationIdentifier = "dev.timc.siwa-demo.TILiOS"
 
         app.get("test") { req in
             req.jwt.apple.verify().map {
@@ -264,14 +269,14 @@ class JWTTests: XCTestCase {
             }
         }
         app.get("test2") { req in
-            req.jwt.apple.verify(applicationIdentifier: "com.raywenderlich.TILiOS").map {
+            req.jwt.apple.verify(applicationIdentifier: "dev.timc.siwa-demo.TILiOS").map {
                 $0.email ?? "none"
             }
         }
 
         var headers = HTTPHeaders()
         headers.bearerAuthorization = .init(token: """
-        eyJraWQiOiJXNldjT0tCIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoiY29tLnJheXdlbmRlcmxpY2guVElMaU9TIiwiZXhwIjoxNjQ5NTEwMTMzLCJpYXQiOjE2NDk0MjM3MzMsInN1YiI6IjAwMTU0Mi5iMDQxMDBjNTFhY2I0OGQzYTU3MDY4NGYxN2Q2Mzk0ZC4xNjAzIiwiY19oYXNoIjoiUzJsLUU3R3dxcVZrczFSd3pmaGxDdyIsImVtYWlsIjoiOHlzYmNodmMybUBwcml2YXRlcmVsYXkuYXBwbGVpZC5jb20iLCJlbWFpbF92ZXJpZmllZCI6InRydWUiLCJpc19wcml2YXRlX2VtYWlsIjoidHJ1ZSIsImF1dGhfdGltZSI6MTY0OTQyMzczMywibm9uY2Vfc3VwcG9ydGVkIjp0cnVlLCJyZWFsX3VzZXJfc3RhdHVzIjoyfQ.hk95IS36QyYNkyj1pD55n3tdptMlUPAMuEd94AoBnTLRNpXpQ0vee9-mqAzuD1FKoqSTIOcVnH6781VkZ3KIWAqBhZLsLShAWJXvJrBH3pvt0Uyk-mN4wU8l30NqEaHoa3HRwg85feiom4EhYywj2b3cZLGnlHF-LOADs4evI-7aoBSI8z6lYrpMfzMiMTDUob82BxrGyuFHKemnoVrylHheIeFm21_AMNlKW41YspXa05S3FpJaNrOnnrBA5RgYQ4uFhYCbi8mvC1jANaQRvP0agANdUf9XpMcFtIqD9bAYOJ65zmbCjwU1VjlIiQRZsELptY4H_Oo17MQ8d7yUwQ
+        eyJraWQiOiJmaDZCczhDIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoiZGV2LnRpbWMuc2l3YS1kZW1vLlRJTGlPUyIsImV4cCI6MTcwODUxNTY3NiwiaWF0IjoxNzA4NDI5Mjc2LCJzdWIiOiIwMDE1NDIuYjA0MTAwYzUxYWNiNDhkM2E1NzA2ODRmMTdkNjM5NGQuMTYwMyIsImNfaGFzaCI6ImFxQjM1RXR1bWFtVUg0VjZBYklmaXciLCJlbWFpbCI6Ijh5c2JjaHZjMm1AcHJpdmF0ZXJlbGF5LmFwcGxlaWQuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzX3ByaXZhdGVfZW1haWwiOnRydWUsImF1dGhfdGltZSI6MTcwODQyOTI3Niwibm9uY2Vfc3VwcG9ydGVkIjp0cnVlLCJyZWFsX3VzZXJfc3RhdHVzIjoyfQ.E4SmBvvsr-L1f4rbwoXIg23XJEdA6WQxLfT6Z0TaFRTNbufuUtvG41MwJvf62T3HdCsY1VXlhdVYmTNbzqCuax6CUObue2ndx6osInDzfTkzysx17eUeCaG1XCfq9mScuVgW8xh3ZPfIeQdsII-MnP8ZG7q-CAxf6soSza_BKrrw4TArvEXrjbZO7FI1U2K72JtVZ118wcuEWfv8JO-FWFOHgWzJujqxI_7ayVG-mQfZitmYXv5ws-stZMxA0RvIbuYLWAksI6-ehYEgeEQa6NzzcJNWm3oArB0ithQE59fqFDoKCwpLchBMANz3tmNpN194Rc4ppL-niIDWFE-0Ug
         """)
 
         try app.test(.GET, "test", headers: headers) { res in

@@ -250,10 +250,10 @@ class JWTTests: XCTestCase {
     }
 
     /*
-     If this test expires you might need to regenerate the JWT. Use https://github.com/0xTim/vapor-jwt-test-siwa and run the project on a real device
-     Try signing in with Apple and it will print a new JWT to use.
-     Note that it takes a day for the JWT to expire before the test passes
-    */
+      If this test expires you might need to regenerate the JWT. Use https://github.com/0xTim/vapor-jwt-test-siwa and run the project on a real device
+      Try signing in with Apple and it will print a new JWT to use.
+      Note that it takes a day for the JWT to expire before the test passes
+     */
     func testApple() async throws {
         // creates a new application for testing
         let app = Application(.testing)
@@ -264,11 +264,9 @@ class JWTTests: XCTestCase {
         app.get("test") { req async throws in
             try await req.jwt.apple.verify().email ?? "none"
         }
-      
+
         app.get("test2") { req async throws in
-            try await req.jwt.apple.verify(applicationIdentifier: "dev.timc.siwa-demo.TILiOS").map {
-                $0.email ?? "none"
-            }
+            try await req.jwt.apple.verify(applicationIdentifier: "dev.timc.siwa-demo.TILiOS").email ?? "none"
         }
 
         var headers = HTTPHeaders()

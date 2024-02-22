@@ -14,7 +14,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.0.0-beta.1"),
-        .package(url: "https://github.com/vapor/vapor.git", from: "4.50.0"),
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.92.0"),
     ],
     targets: [
         .target(

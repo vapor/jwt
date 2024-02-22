@@ -65,15 +65,32 @@ extension Application.JWT {
             }
         }
 
+        public var jwksEndpoint: URI {
+            get {
+                self.storage.jwksEndpoint
+            }
+            nonmutating set {
+                let lock = self._jwt._application.locks.lock(for: EndpointLock.self)
+                lock.lock()
+                defer { lock.unlock() }
+                self.storage.jwksEndpoint = newValue
+                self.storage.jwks = .init(uri: newValue)
+            }
+        }
+
+        private struct EndpointLock: LockKey {}
+
         private struct Key: StorageKey, LockKey {
             typealias Value = Storage
         }
 
         private final class Storage {
-            let jwks: EndpointCache<JWKS>
+            var jwksEndpoint: URI
+            var jwks: EndpointCache<JWKS>
             var applicationIdentifier: String?
             init() {
-                self.jwks = .init(uri: "https://appleid.apple.com/auth/keys")
+                self.jwksEndpoint = "https://appleid.apple.com/auth/keys"
+                self.jwks = .init(uri: self.jwksEndpoint)
                 self.applicationIdentifier = nil
             }
         }

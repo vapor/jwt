@@ -18,9 +18,6 @@
     <a href="https://github.com/vapor/jwt/actions/workflows/test.yml">
         <img src="https://img.shields.io/github/actions/workflow/status/vapor/jwt/test.yml?event=push&style=plastic&logo=github&label=tests&logoColor=%23ccc" alt="Continuous Integration">
     </a>
-    <a href="https://codecov.io/github/vapor/jwt">
-        <img src="https://img.shields.io/codecov/c/github/vapor/jwt?style=plastic&logo=codecov&label=codecov">
-    </a>
     <a href="https://swift.org">
         <img src="https://design.vapor.codes/images/swift59up.svg" alt="Swift 5.9+">
     </a>

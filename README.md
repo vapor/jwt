@@ -27,6 +27,8 @@
 </p>
 <br>
 
+Support for JWT (JSON Web Tokens) in Vapor.
+
 **Original author**
 
 - Siemen Sikkema, [@siemensikkema](http://github.com/siemensikkema)  

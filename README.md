@@ -16,7 +16,7 @@
         <img src="https://design.vapor.codes/images/mitlicense.svg" alt="MIT License">
     </a>
     <a href="https://github.com/vapor/jwt/actions/workflows/test.yml">
-        <img src="https://img.shields.io/github/actions/workflow/status/vapor/jwt-kit/test.yml?event=push&style=plastic&logo=github&label=tests&logoColor=%23ccc" alt="Continuous Integration">
+        <img src="https://img.shields.io/github/actions/workflow/status/vapor/jwt/test.yml?event=push&style=plastic&logo=github&label=tests&logoColor=%23ccc" alt="Continuous Integration">
     </a>
     <a href="https://swift.org">
         <img src="https://design.vapor.codes/images/swift59up.svg" alt="Swift 5.9+">

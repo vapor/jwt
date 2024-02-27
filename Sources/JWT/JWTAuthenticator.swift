@@ -1,7 +1,7 @@
 import Vapor
 
-extension JWTPayload where Self: Authenticatable {
-    public static func authenticator() -> Authenticator {
+public extension JWTPayload where Self: Authenticatable {
+    static func authenticator() -> AsyncAuthenticator {
         JWTPayloadAuthenticator<Self>()
     }
 }
@@ -9,26 +9,18 @@ extension JWTPayload where Self: Authenticatable {
 private struct JWTPayloadAuthenticator<Payload>: JWTAuthenticator
     where Payload: JWTPayload & Authenticatable
 {
-    func authenticate(jwt: Payload, for request: Request) -> EventLoopFuture<Void> {
+    func authenticate(jwt: Payload, for request: Request) async throws {
         request.auth.login(jwt)
-        return request.eventLoop.makeSucceededFuture(())
     }
 }
 
-public protocol JWTAuthenticator: BearerAuthenticator {
+public protocol JWTAuthenticator: AsyncBearerAuthenticator {
     associatedtype Payload: JWTPayload
-    func authenticate(jwt: Payload, for request: Request) -> EventLoopFuture<Void>
+    func authenticate(jwt: Payload, for request: Request) async throws
 }
 
-extension JWTAuthenticator {
-    public func authenticate(bearer: BearerAuthorization, for request: Request) -> EventLoopFuture<Void> {
-        do {
-            return try self.authenticate(
-                jwt: request.jwt.verify(bearer.token),
-                for: request
-            )
-        } catch {
-            return request.eventLoop.makeFailedFuture(error)
-        }
+public extension JWTAuthenticator {
+    func authenticate(bearer: BearerAuthorization, for request: Request) async throws {
+        try await self.authenticate(jwt: request.jwt.verify(bearer.token), for: request)
     }
 }

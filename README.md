@@ -18,16 +18,13 @@
     <a href="https://github.com/vapor/jwt/actions/workflows/test.yml">
         <img src="https://img.shields.io/github/actions/workflow/status/vapor/jwt/test.yml?event=push&style=plastic&logo=github&label=tests&logoColor=%23ccc" alt="Continuous Integration">
     </a>
+    <a href="https://swift.org">
+        <img src="https://design.vapor.codes/images/swift59up.svg" alt="Swift 5.9+">
+    </a>
 </p>
 <br>
 
 Support for JWT (JSON Web Tokens) in Vapor.
-
-Supported versions:
-
-|Version|Swift|SPM|
-|---|---|---|
-|4.0|5.4+|`from: "4.0.0"`|
 
 **Original author**
 

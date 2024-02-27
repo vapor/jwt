@@ -1,55 +1,55 @@
+import NIOConcurrencyHelpers
 import Vapor
 
-extension Request.JWT {
-    public var microsoft: Microsoft {
+public extension Request.JWT {
+    var microsoft: Microsoft {
         .init(_jwt: self)
     }
 
-    public struct Microsoft {
+    struct Microsoft {
         public let _jwt: Request.JWT
 
-        public func verify(applicationIdentifier: String? = nil) -> EventLoopFuture<MicrosoftIdentityToken> {
+        public func verify(
+            applicationIdentifier: String? = nil
+        ) async throws -> MicrosoftIdentityToken {
             guard let token = self._jwt._request.headers.bearerAuthorization?.token else {
                 self._jwt._request.logger.error("Request is missing JWT bearer header.")
-                return self._jwt._request.eventLoop.makeFailedFuture(Abort(.unauthorized))
+                throw Abort(.unauthorized)
             }
-            return self.verify(token, applicationIdentifier: applicationIdentifier)
+            return try await self.verify(token, applicationIdentifier: applicationIdentifier)
         }
 
-        public func verify(_ message: String, applicationIdentifier: String? = nil) -> EventLoopFuture<MicrosoftIdentityToken> {
-            self.verify([UInt8](message.utf8), applicationIdentifier: applicationIdentifier)
+        public func verify(
+            _ message: String,
+            applicationIdentifier: String? = nil
+        ) async throws -> MicrosoftIdentityToken {
+            try await self.verify([UInt8](message.utf8), applicationIdentifier: applicationIdentifier)
         }
 
-        public func verify<Message>(_ message: Message, applicationIdentifier: String? = nil) -> EventLoopFuture<MicrosoftIdentityToken>
-            where Message: DataProtocol
-        {
-            self._jwt._request.application.jwt.microsoft.signers(
-                on: self._jwt._request
-            ).flatMapThrowing { signers in
-                let token = try signers.verify(message, as: MicrosoftIdentityToken.self)
-                if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.microsoft.applicationIdentifier {
-                    try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
-                }
-                return token
+        public func verify(
+            _ message: some DataProtocol & Sendable,
+            applicationIdentifier: String? = nil
+        ) async throws -> MicrosoftIdentityToken {
+            let keys = try await self._jwt._request.application.jwt.microsoft.keys(on: self._jwt._request)
+            let token = try await keys.verify(message, as: MicrosoftIdentityToken.self)
+            if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.microsoft.applicationIdentifier {
+                try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
             }
+            return token
         }
     }
 }
 
-extension Application.JWT {
-    public var microsoft: Microsoft {
+public extension Application.JWT {
+    var microsoft: Microsoft {
         .init(_jwt: self)
     }
 
-    public struct Microsoft {
+    struct Microsoft {
         public let _jwt: Application.JWT
 
-        public func signers(on request: Request) -> EventLoopFuture<JWTSigners> {
-            self.jwks.get(on: request).flatMapThrowing {
-                let signers = JWTSigners()
-                try signers.use(jwks: $0)
-                return signers
-            }
+        public func keys(on request: Request) async throws -> JWTKeyCollection {
+            try await JWTKeyCollection().add(jwks: jwks.get(on: request).get())
         }
 
         public var jwks: EndpointCache<JWKS> {
@@ -69,12 +69,31 @@ extension Application.JWT {
             typealias Value = Storage
         }
 
-        private final class Storage {
+        private final class Storage: Sendable {
+            private struct SendableBox: Sendable {
+                var applicationIdentifier: String?
+            }
+
             let jwks: EndpointCache<JWKS>
-            var applicationIdentifier: String?
+            private let sendableBox: NIOLockedValueBox<SendableBox>
+
+            var applicationIdentifier: String? {
+                get {
+                    self.sendableBox.withLockedValue { box in
+                        box.applicationIdentifier
+                    }
+                }
+                set {
+                    self.sendableBox.withLockedValue { box in
+                        box.applicationIdentifier = newValue
+                    }
+                }
+            }
+
             init() {
                 self.jwks = .init(uri: "https://login.microsoftonline.com/common/discovery/keys")
-                self.applicationIdentifier = nil
+                let box = SendableBox(applicationIdentifier: nil)
+                self.sendableBox = .init(box)
             }
         }
 

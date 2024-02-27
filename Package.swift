@@ -1,29 +1,37 @@
-// swift-tools-version:5.4
+// swift-tools-version:5.9
 import PackageDescription
 
 let package = Package(
     name: "jwt",
     platforms: [
-        .macOS(.v10_15),
-        .iOS(.v13),
-        .tvOS(.v13),
-        .watchOS(.v6)
+        .macOS(.v13),
+        .iOS(.v16),
+        .tvOS(.v16),
+        .watchOS(.v9),
     ],
     products: [
         .library(name: "JWT", targets: ["JWT"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/jwt-kit.git", from: "4.0.0"),
-        .package(url: "https://github.com/vapor/vapor.git", from: "4.50.0"),
+        .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.0.0-beta.1"),
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.92.0"),
     ],
     targets: [
-        .target(name: "JWT", dependencies: [
-            .product(name: "JWTKit", package: "jwt-kit"),
-            .product(name: "Vapor", package: "vapor"),
-        ]),
-        .testTarget(name: "JWTTests", dependencies: [
-            .target(name: "JWT"),
-            .product(name: "XCTVapor", package: "vapor"),
-        ]),
+        .target(
+            name: "JWT",
+            dependencies: [
+                .product(name: "JWTKit", package: "jwt-kit"),
+                .product(name: "Vapor", package: "vapor"),
+            ],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
+        .testTarget(
+            name: "JWTTests",
+            dependencies: [
+                .target(name: "JWT"),
+                .product(name: "XCTVapor", package: "vapor"),
+            ],
+            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+        ),
     ]
 )

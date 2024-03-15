@@ -84,7 +84,7 @@ class JWTTests: XCTestCase {
             )
             // Return the signed JWT
             return try await [
-                "token": req.jwt.sign(payload, header: ["kid": "a"]),
+                "token": req.jwt.sign(payload, kid: "a"),
             ]
         }
 

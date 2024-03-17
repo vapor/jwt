@@ -11,4 +11,4 @@ jobs:
      with:
        package_name: jwt
        modules: JWT
-       pathsToInvalidate: /jwt
+       pathsToInvalidate: /jwt/*

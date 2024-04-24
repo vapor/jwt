@@ -1,4 +1,4 @@
-// swift-tools-version:5.9
+// swift-tools-version:5.10
 import PackageDescription
 
 let package = Package(
@@ -13,7 +13,7 @@ let package = Package(
         .library(name: "JWT", targets: ["JWT"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.0.0-beta.2"),
+        .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.0.0-beta.3"),
         .package(url: "https://github.com/vapor/vapor.git", from: "4.92.0"),
     ],
     targets: [

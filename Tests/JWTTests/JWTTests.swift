@@ -9,10 +9,10 @@ class JWTTests: XCTestCase {
         defer { app.shutdown() }
 
         // Add HMAC with SHA-256 signer.
-        await app.jwt.keys.addHS256(key: "secret")
+        await app.jwt.keys.addHMAC(key: "secret", digestAlgorithm: .sha256)
 
-        await app.jwt.keys.addHS256(key: "foo", kid: "a")
-        await app.jwt.keys.addHS256(key: "bar", kid: "b")
+        await app.jwt.keys.addHMAC(key: "foo", digestAlgorithm: .sha256, kid: "a")
+        await app.jwt.keys.addHMAC(key: "bar", digestAlgorithm: .sha256, kid: "b")
 
         app.jwt.apple.applicationIdentifier = "..."
         app.get("apple") { req async throws -> HTTPStatus in
@@ -62,7 +62,7 @@ class JWTTests: XCTestCase {
             // signature verification here.
             // Since we have an ExpirationClaim, we will
             // call its verify method.
-            func verify(using _: JWTAlgorithm) async throws {
+            func verify(using _: some JWTAlgorithm) async throws {
                 try self.expiration.verifyNotExpired()
             }
         }
@@ -124,7 +124,7 @@ class JWTTests: XCTestCase {
         defer { app.shutdown() }
 
         // configures an es512 signer using random key
-        await app.jwt.keys.addES512(key: ES512PrivateKey())
+        await app.jwt.keys.addECDSA(key: ES512PrivateKey())
 
         // jwt creation using req.jwt.sign
         app.post("login") { req async throws -> LoginResponse in
@@ -166,7 +166,7 @@ class JWTTests: XCTestCase {
 
         // create a token from a different signer
         let fakeToken = try await JWTKeyCollection()
-            .addES512(key: ES512PrivateKey()).sign(TestUser(name: "bob"))
+            .addECDSA(key: ES512PrivateKey()).sign(TestUser(name: "bob"))
         try app.testable().test(
             .GET, "me", headers: ["authorization": "Bearer \(fakeToken)"]
         ) { res in
@@ -181,7 +181,7 @@ class JWTTests: XCTestCase {
         defer { app.shutdown() }
 
         // configures an es512 signer using random key
-        await app.jwt.keys.addES512(key: ES512PrivateKey())
+        await app.jwt.keys.addECDSA(key: ES512PrivateKey())
 
         // jwt creation using req.jwt.sign
         app.post("login") { req async throws -> LoginResponse in
@@ -241,7 +241,7 @@ class JWTTests: XCTestCase {
         }
 
         // create a token from a different signer
-        let fakeToken = try await JWTKeyCollection().addES512(key: ES512PrivateKey()).sign(TestUser(name: "bob"))
+        let fakeToken = try await JWTKeyCollection().addECDSA(key: ES512PrivateKey()).sign(TestUser(name: "bob"))
         try app.testable().test(
             .GET, "me", headers: ["authorization": "Bearer \(fakeToken)"]
         ) { res in
@@ -287,7 +287,7 @@ class JWTTests: XCTestCase {
             var id: UUID
             var userName: String
 
-            func verify(using _: JWTAlgorithm) throws {}
+            func verify(using _: some JWTAlgorithm) throws {}
         }
 
         // creates a new application for testing
@@ -324,7 +324,10 @@ class JWTTests: XCTestCase {
         -----END RSA PRIVATE KEY-----
         """
 
-        try await app.jwt.keys.addRS256(key: Insecure.RSA.PrivateKey(pem: [UInt8](privateKeyString.utf8)))
+        try await app.jwt.keys.addRSA(
+            key: Insecure.RSA.PrivateKey(pem: [UInt8](privateKeyString.utf8)),
+            digestAlgorithm: .sha256
+        )
 
         app.get { req async throws -> String in
             let authorizationPayload = UserPayload(id: UUID(), userName: "John Smith")
@@ -370,7 +373,7 @@ struct LoginCredentials: Content {
 struct TestUser: Content, Authenticatable, JWTPayload {
     var name: String
 
-    func verify(using _: JWTAlgorithm) throws {
+    func verify(using _: some JWTAlgorithm) throws {
         // nothing to verify
     }
 }

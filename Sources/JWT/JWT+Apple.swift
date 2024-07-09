@@ -49,11 +49,21 @@ public extension Application.JWT {
         public let _jwt: Application.JWT
 
         public func keys(on request: Request) async throws -> JWTKeyCollection {
-            try await JWTKeyCollection().add(jwks: jwks.get(on: request).get())
+            try await .init().add(jwks: jwks.get(on: request).get())
         }
 
         public var jwks: EndpointCache<JWKS> {
             self.storage.jwks
+        }
+
+        public var jwksEndpoint: URI {
+            get {
+                self.storage.jwksEndpoint
+            }
+            nonmutating set {
+                self.storage.jwksEndpoint = newValue
+                self.storage.jwks = .init(uri: newValue)
+            }
         }
 
         public var applicationIdentifier: String? {
@@ -71,11 +81,38 @@ public extension Application.JWT {
 
         private final class Storage: Sendable {
             private struct SendableBox: Sendable {
-                var applicationIdentifier: String?
+                var jwks: EndpointCache<JWKS>
+                var jwksEndpoint: URI
+                var applicationIdentifier: String? = nil
             }
 
-            let jwks: EndpointCache<JWKS>
             private let sendableBox: NIOLockedValueBox<SendableBox>
+
+            var jwks: EndpointCache<JWKS> {
+                get {
+                    self.sendableBox.withLockedValue { box in
+                        box.jwks
+                    }
+                }
+                set {
+                    self.sendableBox.withLockedValue { box in
+                        box.jwks = newValue
+                    }
+                }
+            }
+
+            var jwksEndpoint: URI {
+                get {
+                    self.sendableBox.withLockedValue { box in
+                        box.jwksEndpoint
+                    }
+                }
+                set {
+                    self.sendableBox.withLockedValue { box in
+                        box.jwksEndpoint = newValue
+                    }
+                }
+            }
 
             var applicationIdentifier: String? {
                 get {
@@ -91,8 +128,8 @@ public extension Application.JWT {
             }
 
             init() {
-                self.jwks = .init(uri: "https://appleid.apple.com/auth/keys")
-                let box = SendableBox(applicationIdentifier: nil)
+                let jwksEndpoint: URI = "https://appleid.apple.com/auth/keys"
+                let box = SendableBox(jwks: .init(uri: jwksEndpoint), jwksEndpoint: jwksEndpoint)
                 self.sendableBox = .init(box)
             }
         }

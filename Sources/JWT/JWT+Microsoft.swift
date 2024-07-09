@@ -62,6 +62,7 @@ public extension Application.JWT {
             }
             nonmutating set {
                 self.storage.jwksEndpoint = newValue
+                self.storage.jwks = .init(uri: newValue)
             }
         }
 

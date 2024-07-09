@@ -62,6 +62,7 @@ public extension Application.JWT {
             }
             nonmutating set {
                 self.storage.jwksEndpoint = newValue
+                self.storage.jwks = .init(uri: newValue)
             }
         }
 
@@ -80,12 +81,25 @@ public extension Application.JWT {
 
         private final class Storage: Sendable {
             private struct SendableBox: Sendable {
-                var applicationIdentifier: String?
+                var jwks: EndpointCache<JWKS>
                 var jwksEndpoint: URI
+                var applicationIdentifier: String? = nil
             }
 
-            let jwks: EndpointCache<JWKS>
             private let sendableBox: NIOLockedValueBox<SendableBox>
+
+            var jwks: EndpointCache<JWKS> {
+                get {
+                    self.sendableBox.withLockedValue { box in
+                        box.jwks
+                    }
+                }
+                set {
+                    self.sendableBox.withLockedValue { box in
+                        box.jwks = newValue
+                    }
+                }
+            }
 
             var jwksEndpoint: URI {
                 get {
@@ -114,9 +128,9 @@ public extension Application.JWT {
             }
 
             init() {
-                let box = SendableBox(applicationIdentifier: nil, jwksEndpoint: "https://appleid.apple.com/auth/keys")
+                let jwksEndpoint: URI = "https://appleid.apple.com/auth/keys"
+                let box = SendableBox(jwks: .init(uri: jwksEndpoint), jwksEndpoint: jwksEndpoint)
                 self.sendableBox = .init(box)
-                self.jwks = .init(uri: box.jwksEndpoint)
             }
         }
 

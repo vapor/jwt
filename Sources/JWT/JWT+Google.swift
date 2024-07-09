@@ -66,13 +66,14 @@ public extension Application.JWT {
         public var jwks: EndpointCache<JWKS> {
             self.storage.jwks
         }
-        
+
         public var jwksEndpoint: URI {
             get {
                 self.storage.jwksEndpoint
             }
             nonmutating set {
                 self.storage.jwksEndpoint = newValue
+                self.storage.jwks = .init(uri: newValue)
             }
         }
 
@@ -100,13 +101,26 @@ public extension Application.JWT {
 
         private final class Storage: Sendable {
             private struct SendableBox: Sendable {
-                var applicationIdentifier: String?
-                var gSuiteDomainName: String?
+                var jwks: EndpointCache<JWKS>
                 var jwksEndpoint: URI
+                var applicationIdentifier: String? = nil
+                var gSuiteDomainName: String? = nil
             }
 
-            let jwks: EndpointCache<JWKS>
             private let sendableBox: NIOLockedValueBox<SendableBox>
+
+            var jwks: EndpointCache<JWKS> {
+                get {
+                    self.sendableBox.withLockedValue { box in
+                        box.jwks
+                    }
+                }
+                set {
+                    self.sendableBox.withLockedValue { box in
+                        box.jwks = newValue
+                    }
+                }
+            }
 
             var applicationIdentifier: String? {
                 get {
@@ -133,7 +147,7 @@ public extension Application.JWT {
                     }
                 }
             }
-            
+
             var jwksEndpoint: URI {
                 get {
                     self.sendableBox.withLockedValue { box in
@@ -148,13 +162,12 @@ public extension Application.JWT {
             }
 
             init() {
+                let jwksEndpoint: URI = "https://www.googleapis.com/oauth2/v3/certs"
                 let box = SendableBox(
-                    applicationIdentifier: nil,
-                    gSuiteDomainName: nil,
-                    jwksEndpoint: "https://www.googleapis.com/oauth2/v3/certs"
+                    jwks: .init(uri: jwksEndpoint),
+                    jwksEndpoint: jwksEndpoint
                 )
                 self.sendableBox = .init(box)
-                self.jwks = .init(uri: box.jwksEndpoint)
             }
         }
 

@@ -1,40 +1,43 @@
-import Vapor
 import JWTKit
+import Vapor
 
-extension Request {
-    public var jwt: JWT {
+public extension Request {
+    var jwt: JWT {
         .init(_request: self)
     }
 
-    public struct JWT {
+    struct JWT: Sendable {
         public let _request: Request
 
-        public func verify<Payload>(as payload: Payload.Type = Payload.self) throws -> Payload
+        @discardableResult
+        public func verify<Payload>(as _: Payload.Type = Payload.self) async throws -> Payload
             where Payload: JWTPayload
         {
             guard let token = self._request.headers.bearerAuthorization?.token else {
                 self._request.logger.error("Request is missing JWT bearer header")
                 throw Abort(.unauthorized)
             }
-            return try self.verify(token, as: Payload.self)
+            return try await self.verify(token, as: Payload.self)
         }
 
-        public func verify<Payload>(_ message: String, as payload: Payload.Type = Payload.self) throws -> Payload
+        @discardableResult
+        public func verify<Payload>(_ message: String, as _: Payload.Type = Payload.self) async throws -> Payload
             where Payload: JWTPayload
         {
-            try self.verify([UInt8](message.utf8), as: Payload.self)
+            try await self.verify([UInt8](message.utf8), as: Payload.self)
         }
 
-        public func verify<Message, Payload>(_ message: Message, as payload: Payload.Type = Payload.self) throws -> Payload
-            where Message: DataProtocol, Payload: JWTPayload
-        {
-            try self._request.application.jwt.signers.verify(message, as: Payload.self)
-        }
-
-        public func sign<Payload>(_ jwt: Payload, kid: JWKIdentifier? = nil) throws -> String
+        @discardableResult
+        public func verify<Payload>(_ message: some DataProtocol & Sendable, as _: Payload.Type = Payload.self) async throws -> Payload
             where Payload: JWTPayload
         {
-            try self._request.application.jwt.signers.sign(jwt, kid: kid)
+            try await self._request.application.jwt.keys.verify(message, as: Payload.self)
+        }
+
+        public func sign<Payload>(_ jwt: Payload, kid: JWKIdentifier? = nil, header: JWTHeader = .init()) async throws -> String
+            where Payload: JWTPayload
+        {
+            return try await self._request.application.jwt.keys.sign(jwt, kid: kid, header: header)
         }
     }
 }

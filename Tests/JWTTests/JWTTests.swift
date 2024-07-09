@@ -4,16 +4,16 @@ import XCTVapor
 
 class JWTTests: XCTestCase {
     var app: Application!
-    
+
     override func setUp() async throws {
         app = try await Application.make(.testing)
         XCTAssert(isLoggingConfigured)
     }
-    
+
     override func tearDown() async throws {
         try await app.asyncShutdown()
     }
-    
+
     func testDocs() async throws {
         // Add HMAC with SHA-256 signer.
         await app.jwt.keys.add(hmac: "secret", digestAlgorithm: .sha256)
@@ -116,7 +116,7 @@ class JWTTests: XCTestCase {
         }, afterResponse: { res async in
             XCTAssertEqual(res.status, .ok)
         })
-        
+
         try await app.test(.POST, "login", beforeRequest: { req in
             print(req)
         }, afterResponse: { res async throws in
@@ -274,7 +274,7 @@ class JWTTests: XCTestCase {
         try await app.test(.GET, "test", headers: headers) { res async in
             XCTAssertEqual(res.status, .unauthorized)
         }
-        
+
         try await app.test(.GET, "test2", headers: headers) { res async in
             XCTAssertEqual(res.status, .unauthorized)
         }
@@ -334,6 +334,34 @@ class JWTTests: XCTestCase {
             try await app.test(.GET, "/") { res async in
                 XCTAssertEqual(res.status, .ok)
             }
+        }
+    }
+
+    func testMicrosoftEndpointSwitch() async throws {
+        await app.jwt.keys.add(hmac: "secret", digestAlgorithm: .sha256)
+
+        let testUser = TestUser(name: "foo")
+        let token = try await app.jwt.keys.sign(testUser)
+
+        app.jwt.microsoft.applicationIdentifier = ""
+        app.get("microsoft") { req async throws in
+            let token = try await req.jwt.microsoft.verify()
+            return token.name ?? "none"
+        }
+
+        try await app.test(.GET, "microsoft", headers: ["Authorization": "Bearer \(token)"]) { res async in
+            XCTAssertEqual(res.status, .unauthorized)
+        }
+
+        app.jwt.microsoft.jwksEndpoint = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
+        try await app.test(.GET, "microsoft", headers: ["Authorization": "Bearer \(token)"]) { res async in
+            XCTAssertEqual(res.status, .unauthorized)
+        }
+
+        // Use a non-existent endpoint to show that endpoint switching works
+        app.jwt.microsoft.jwksEndpoint = "https://login.microsoftonline.com/nonexistent/endpoint"
+        try await app.test(.GET, "microsoft", headers: ["Authorization": "Bearer \(token)"]) { res async in
+            XCTAssertEqual(res.status, .internalServerError)
         }
     }
 }

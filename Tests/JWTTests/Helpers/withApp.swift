@@ -1,10 +1,9 @@
 import Testing
 import Vapor
 
-func withApp<ReturnType>(_ body: (Application) async throws -> ReturnType) async throws -> ReturnType {
+func withApp(_ body: (Application) async throws -> Void) async throws {
     let app = try await Application.make(.testing)
     try #require(isLoggingConfigured == true)
-    let result = try await body(app)
+    try await body(app)
     try await app.asyncShutdown()
-    return result
 }

@@ -256,8 +256,8 @@ struct JWTTests {
             var headers = HTTPHeaders()
             headers.bearerAuthorization = .init(
                 token: """
-                eyJraWQiOiJmaDZCczhDIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoiZGV2LnRpbWMuc2l3YS1kZW1vLlRJTGlPUyIsImV4cCI6MTcwODUxNTY3NiwiaWF0IjoxNzA4NDI5Mjc2LCJzdWIiOiIwMDE1NDIuYjA0MTAwYzUxYWNiNDhkM2E1NzA2ODRmMTdkNjM5NGQuMTYwMyIsImNfaGFzaCI6ImFxQjM1RXR1bWFtVUg0VjZBYklmaXciLCJlbWFpbCI6Ijh5c2JjaHZjMm1AcHJpdmF0ZXJlbGF5LmFwcGxlaWQuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzX3ByaXZhdGVfZW1haWwiOnRydWUsImF1dGhfdGltZSI6MTcwODQyOTI3Niwibm9uY2Vfc3VwcG9ydGVkIjp0cnVlLCJyZWFsX3VzZXJfc3RhdHVzIjoyfQ.E4SmBvvsr-L1f4rbwoXIg23XJEdA6WQxLfT6Z0TaFRTNbufuUtvG41MwJvf62T3HdCsY1VXlhdVYmTNbzqCuax6CUObue2ndx6osInDzfTkzysx17eUeCaG1XCfq9mScuVgW8xh3ZPfIeQdsII-MnP8ZG7q-CAxf6soSza_BKrrw4TArvEXrjbZO7FI1U2K72JtVZ118wcuEWfv8JO-FWFOHgWzJujqxI_7ayVG-mQfZitmYXv5ws-stZMxA0RvIbuYLWAksI6-ehYEgeEQa6NzzcJNWm3oArB0ithQE59fqFDoKCwpLchBMANz3tmNpN194Rc4ppL-niIDWFE-0Ug
-                """)
+                    eyJraWQiOiJmaDZCczhDIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoiZGV2LnRpbWMuc2l3YS1kZW1vLlRJTGlPUyIsImV4cCI6MTcwODUxNTY3NiwiaWF0IjoxNzA4NDI5Mjc2LCJzdWIiOiIwMDE1NDIuYjA0MTAwYzUxYWNiNDhkM2E1NzA2ODRmMTdkNjM5NGQuMTYwMyIsImNfaGFzaCI6ImFxQjM1RXR1bWFtVUg0VjZBYklmaXciLCJlbWFpbCI6Ijh5c2JjaHZjMm1AcHJpdmF0ZXJlbGF5LmFwcGxlaWQuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzX3ByaXZhdGVfZW1haWwiOnRydWUsImF1dGhfdGltZSI6MTcwODQyOTI3Niwibm9uY2Vfc3VwcG9ydGVkIjp0cnVlLCJyZWFsX3VzZXJfc3RhdHVzIjoyfQ.E4SmBvvsr-L1f4rbwoXIg23XJEdA6WQxLfT6Z0TaFRTNbufuUtvG41MwJvf62T3HdCsY1VXlhdVYmTNbzqCuax6CUObue2ndx6osInDzfTkzysx17eUeCaG1XCfq9mScuVgW8xh3ZPfIeQdsII-MnP8ZG7q-CAxf6soSza_BKrrw4TArvEXrjbZO7FI1U2K72JtVZ118wcuEWfv8JO-FWFOHgWzJujqxI_7ayVG-mQfZitmYXv5ws-stZMxA0RvIbuYLWAksI6-ehYEgeEQa6NzzcJNWm3oArB0ithQE59fqFDoKCwpLchBMANz3tmNpN194Rc4ppL-niIDWFE-0Ug
+                    """)
 
             try await app.test(.GET, "test", headers: headers) { res async in
                 #expect(res.status == .unauthorized)

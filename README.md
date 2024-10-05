@@ -25,6 +25,7 @@
 <br>
 
 Support for JWT (JSON Web Tokens) in Vapor.
+This package integrates [JWTKit](https://github.com/vapor/jwt-kit.git) with Vapor.
 
 ### Installation
 

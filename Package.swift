@@ -10,10 +10,10 @@ let package = Package(
         .watchOS(.v9),
     ],
     products: [
-        .library(name: "JWT", targets: ["JWT"]),
+        .library(name: "JWT", targets: ["JWT"])
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.0.0-rc.1"),
+        .package(url: "https://github.com/vapor/jwt-kit.git", branch: "main"),
         .package(url: "https://github.com/vapor/vapor.git", from: "4.101.0"),
     ],
     targets: [

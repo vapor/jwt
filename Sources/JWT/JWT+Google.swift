@@ -1,12 +1,12 @@
 import NIOConcurrencyHelpers
 import Vapor
 
-public extension Request.JWT {
-    var google: Google {
+extension Request.JWT {
+    public var google: Google {
         .init(_jwt: self)
     }
 
-    struct Google: Sendable {
+    public struct Google: Sendable {
         public let _jwt: Request.JWT
 
         public func verify(
@@ -51,12 +51,12 @@ public extension Request.JWT {
     }
 }
 
-public extension Application.JWT {
-    var google: Google {
+extension Application.JWT {
+    public var google: Google {
         .init(_jwt: self)
     }
 
-    struct Google: Sendable {
+    public struct Google: Sendable {
         public let _jwt: Application.JWT
 
         public func keys(on request: Request) async throws -> JWTKeyCollection {

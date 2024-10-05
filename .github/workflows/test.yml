@@ -4,9 +4,12 @@ on:
   push:
     branches:
     - main
+
 jobs:
   unit-tests:
     uses: vapor/ci/.github/workflows/run-unit-tests.yml@main
     with:
       with_coverage: false
       with_tsan: true
+      warnings_as_errors: true
+      with_linting: true

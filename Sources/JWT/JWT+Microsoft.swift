@@ -1,12 +1,12 @@
 import NIOConcurrencyHelpers
 import Vapor
 
-public extension Request.JWT {
-    var microsoft: Microsoft {
+extension Request.JWT {
+    public var microsoft: Microsoft {
         .init(_jwt: self)
     }
 
-    struct Microsoft {
+    public struct Microsoft {
         public let _jwt: Request.JWT
 
         public func verify(
@@ -40,12 +40,12 @@ public extension Request.JWT {
     }
 }
 
-public extension Application.JWT {
-    var microsoft: Microsoft {
+extension Application.JWT {
+    public var microsoft: Microsoft {
         .init(_jwt: self)
     }
 
-    struct Microsoft {
+    public struct Microsoft {
         public let _jwt: Application.JWT
 
         public func keys(on request: Request) async throws -> JWTKeyCollection {
@@ -55,7 +55,7 @@ public extension Application.JWT {
         public var jwks: EndpointCache<JWKS> {
             self.storage.jwks
         }
-        
+
         public var jwksEndpoint: URI {
             get {
                 self.storage.jwksEndpoint
@@ -87,7 +87,7 @@ public extension Application.JWT {
             }
 
             private let sendableBox: NIOLockedValueBox<SendableBox>
-            
+
             var jwks: EndpointCache<JWKS> {
                 get {
                     self.sendableBox.withLockedValue { box in
@@ -113,7 +113,7 @@ public extension Application.JWT {
                     }
                 }
             }
-            
+
             var jwksEndpoint: URI {
                 get {
                     self.sendableBox.withLockedValue { box in

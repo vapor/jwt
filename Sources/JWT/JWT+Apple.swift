@@ -1,12 +1,12 @@
 import NIOConcurrencyHelpers
 import Vapor
 
-public extension Request.JWT {
-    var apple: Apple {
+extension Request.JWT {
+    public var apple: Apple {
         .init(_jwt: self)
     }
 
-    struct Apple: Sendable {
+    public struct Apple: Sendable {
         public let _jwt: Request.JWT
 
         public func verify(
@@ -40,12 +40,12 @@ public extension Request.JWT {
     }
 }
 
-public extension Application.JWT {
-    var apple: Apple {
+extension Application.JWT {
+    public var apple: Apple {
         .init(_jwt: self)
     }
 
-    struct Apple: Sendable {
+    public struct Apple: Sendable {
         public let _jwt: Application.JWT
 
         public func keys(on request: Request) async throws -> JWTKeyCollection {

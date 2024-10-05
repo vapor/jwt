@@ -25,7 +25,18 @@
 <br>
 
 Support for JWT (JSON Web Tokens) in Vapor.
+This package integrates [JWTKit](https://github.com/vapor/jwt-kit.git) with Vapor.
 
-**Original author**
+### Installation
 
-- Siemen Sikkema, [@siemensikkema](http://github.com/siemensikkema)  
+Use the SPM string to easily include the package in your `Package.swift` file.
+
+```swift
+.package(url: "https://github.com/vapor/jwt.git", from: "5.0.0")
+```
+
+and add it to your target's dependencies:
+
+```swift
+.product(name: "JWT", package: "jwt")
+```

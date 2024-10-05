@@ -1,4 +1,4 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 import PackageDescription
 
 let package = Package(
@@ -10,10 +10,10 @@ let package = Package(
         .watchOS(.v9),
     ],
     products: [
-        .library(name: "JWT", targets: ["JWT"]),
+        .library(name: "JWT", targets: ["JWT"])
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.0.0-rc.1"),
+        .package(url: "https://github.com/vapor/jwt-kit.git", from: "5.0.0"),
         .package(url: "https://github.com/vapor/vapor.git", from: "4.101.0"),
     ],
     targets: [
@@ -22,16 +22,14 @@ let package = Package(
             dependencies: [
                 .product(name: "JWTKit", package: "jwt-kit"),
                 .product(name: "Vapor", package: "vapor"),
-            ],
-            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+            ]
         ),
         .testTarget(
             name: "JWTTests",
             dependencies: [
                 .target(name: "JWT"),
                 .product(name: "XCTVapor", package: "vapor"),
-            ],
-            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+            ]
         ),
     ]
 )

@@ -4,8 +4,16 @@ on:
   push:
     branches:
     - main
-    
+
 jobs:
+  lint: 
+    runs-on: ubuntu-latest
+    container: swift:jammy
+    steps:
+      - name: Check out JWT
+        uses: actions/checkout@v2
+      - name: Lint
+        run: swift format lint --strict --recursive --parallel .
   unit-tests:
     uses: vapor/ci/.github/workflows/run-unit-tests.yml@main
     with:

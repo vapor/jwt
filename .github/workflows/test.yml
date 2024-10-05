@@ -6,17 +6,10 @@ on:
     - main
 
 jobs:
-  lint: 
-    runs-on: ubuntu-latest
-    container: swift:jammy
-    steps:
-      - name: Check out JWT
-        uses: actions/checkout@v2
-      - name: Lint
-        run: swift format lint --strict --recursive --parallel .
   unit-tests:
-    uses: vapor/ci/.github/workflows/run-unit-tests.yml@main
+    uses: vapor/ci/.github/workflows/run-unit-tests.yml@lint-job
     with:
       with_coverage: false
       with_tsan: true
       warnings_as_errors: true
+      with_linting: true

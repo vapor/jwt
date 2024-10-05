@@ -22,16 +22,14 @@ let package = Package(
             dependencies: [
                 .product(name: "JWTKit", package: "jwt-kit"),
                 .product(name: "Vapor", package: "vapor"),
-            ],
-            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+            ]
         ),
         .testTarget(
             name: "JWTTests",
             dependencies: [
                 .target(name: "JWT"),
                 .product(name: "XCTVapor", package: "vapor"),
-            ],
-            swiftSettings: [.enableExperimentalFeature("StrictConcurrency")]
+            ]
         ),
     ]
 )

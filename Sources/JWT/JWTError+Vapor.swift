@@ -1,6 +1,6 @@
 import Vapor
 
-extension JWTError: AbortError {
+extension JWTError: @retroactive AbortError {
     public var status: HTTPResponseStatus {
         .unauthorized
     }

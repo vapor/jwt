@@ -19,7 +19,7 @@
         <img src="https://img.shields.io/github/actions/workflow/status/vapor/jwt/test.yml?event=push&style=plastic&logo=github&label=tests&logoColor=%23ccc" alt="Continuous Integration">
     </a>
     <a href="https://swift.org">
-        <img src="https://design.vapor.codes/images/swift510up.svg" alt="Swift 5.10+">
+        <img src="https://design.vapor.codes/images/swift60up.svg" alt="Swift 6.0+">
     </a>
 </p>
 <br>

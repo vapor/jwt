@@ -50,6 +50,12 @@ struct JWTTests {
                 return .ok
             }
 
+            app.jwt.firebaseAuth.applicationIdentifier = "..."
+            app.get("firebase") { req async throws -> HTTPStatus in
+                _ = try await req.jwt.firebaseAuth.verify()
+                return .ok
+            }
+
             // Fetch and verify JWT from incoming request.
             app.get("me") { req async throws -> HTTPStatus in
                 try await req.jwt.verify(as: TestPayload.self)

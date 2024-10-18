@@ -32,18 +32,14 @@ extension Request.JWT {
         ) async throws -> FirebaseAuthIdentityToken {
             let keys = try await self._jwt._request.application.jwt.firebaseAuth.keys(on: self._jwt._request)
             let token = try await keys.verify(message, as: FirebaseAuthIdentityToken.self)
-            
             if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.firebaseAuth.applicationIdentifier {
-            
                 try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
-
                 guard token.audience.value.first == applicationIdentifier else {
                     throw JWTError.claimVerificationFailure(
                         failedClaim: token.audience,
                         reason: "Audience claim does not match expected value"
                     )
                 }
-
                 guard token.issuer.value == "https://securetoken.google.com/\(applicationIdentifier)" else {
                     throw JWTError.claimVerificationFailure(
                         failedClaim: token.issuer,
@@ -51,7 +47,6 @@ extension Request.JWT {
                     )
                 }
             }
-
             return token
         }
     }

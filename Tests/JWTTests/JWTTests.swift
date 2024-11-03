@@ -262,15 +262,17 @@ struct JWTTests {
             var headers = HTTPHeaders()
             headers.bearerAuthorization = .init(
                 token: """
-                    eyJraWQiOiJmaDZCczhDIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoiZGV2LnRpbWMuc2l3YS1kZW1vLlRJTGlPUyIsImV4cCI6MTcwODUxNTY3NiwiaWF0IjoxNzA4NDI5Mjc2LCJzdWIiOiIwMDE1NDIuYjA0MTAwYzUxYWNiNDhkM2E1NzA2ODRmMTdkNjM5NGQuMTYwMyIsImNfaGFzaCI6ImFxQjM1RXR1bWFtVUg0VjZBYklmaXciLCJlbWFpbCI6Ijh5c2JjaHZjMm1AcHJpdmF0ZXJlbGF5LmFwcGxlaWQuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzX3ByaXZhdGVfZW1haWwiOnRydWUsImF1dGhfdGltZSI6MTcwODQyOTI3Niwibm9uY2Vfc3VwcG9ydGVkIjp0cnVlLCJyZWFsX3VzZXJfc3RhdHVzIjoyfQ.E4SmBvvsr-L1f4rbwoXIg23XJEdA6WQxLfT6Z0TaFRTNbufuUtvG41MwJvf62T3HdCsY1VXlhdVYmTNbzqCuax6CUObue2ndx6osInDzfTkzysx17eUeCaG1XCfq9mScuVgW8xh3ZPfIeQdsII-MnP8ZG7q-CAxf6soSza_BKrrw4TArvEXrjbZO7FI1U2K72JtVZ118wcuEWfv8JO-FWFOHgWzJujqxI_7ayVG-mQfZitmYXv5ws-stZMxA0RvIbuYLWAksI6-ehYEgeEQa6NzzcJNWm3oArB0ithQE59fqFDoKCwpLchBMANz3tmNpN194Rc4ppL-niIDWFE-0Ug
+                    eyJraWQiOiJGZnRPTlR4b0VnIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoiZGV2LnRpbWMuc2l3YS1kZW1vLlRJTGlPUyIsImV4cCI6MTczMDc2MDAxOCwiaWF0IjoxNzMwNjczNjE4LCJzdWIiOiIwMDE1NDIuYjA0MTAwYzUxYWNiNDhkM2E1NzA2ODRmMTdkNjM5NGQuMTYwMyIsImNfaGFzaCI6IlUxc1d0Z1dfWTZSb3d1a09WRzJmNEEiLCJlbWFpbCI6Ijh5c2JjaHZjMm1AcHJpdmF0ZXJlbGF5LmFwcGxlaWQuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzX3ByaXZhdGVfZW1haWwiOnRydWUsImF1dGhfdGltZSI6MTczMDY3MzYxOCwibm9uY2Vfc3VwcG9ydGVkIjp0cnVlfQ.fb-e48W_zMGfT0LqciYnBUBy7KxVaV5JC5VV4HFhhpK8yz0AUxeYHmXpkvt1gLPNnjd3c-fzMS0hUR-NiffgYuNs3qSFXSenb4BwYdDIuMXElggUPX3j6HU2TV-JYsTFl4tZpgnFs_0_56pscaJzQONCdrZdKJiD0lmtum7D-doH43aKflV-pAMXSZTCli9HwRNeZikmbY6wBS5Ltg4VI5Z8Usge4eS2HINdHIPSCadYf858pZ8huAaj5Jm4t_5j988khwgqBMc9haTHZgiUpK7SZDePuRsAAQQVCXnRsuibxFX66ugo5BEEKCdK-xg66iAstb_mC_628gMrybC-_w
                     """)
 
             try await app.test(.GET, "test", headers: headers) { res async in
                 #expect(res.status == .unauthorized)
+                #expect(res.body.string.contains("expired"))
             }
 
             try await app.test(.GET, "test2", headers: headers) { res async in
                 #expect(res.status == .unauthorized)
+                #expect(res.body.string.contains("expired"))
             }
         }
     }

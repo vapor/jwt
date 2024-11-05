@@ -1,5 +1,6 @@
 import NIOConcurrencyHelpers
 import Vapor
+import JWTKit
 
 extension Request.JWT {
     public var apple: Apple {
@@ -30,12 +31,19 @@ extension Request.JWT {
             _ message: some DataProtocol & Sendable,
             applicationIdentifier: String? = nil
         ) async throws -> AppleIdentityToken {
-            let keys = try await self._jwt._request.application.jwt.apple.keys(on: self._jwt._request)
-            let token = try await keys.verify(message, as: AppleIdentityToken.self)
-            if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.apple.applicationIdentifier {
-                try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
+            do {
+                let keys = try await self._jwt._request.application.jwt.apple.keys(on: self._jwt._request)
+                let token = try await keys.verify(message, as: AppleIdentityToken.self)
+                if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.apple.applicationIdentifier {
+                    try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
+                }
+                return token
+            } catch {
+                if let jwtKitError = error as? JWTError {
+                    throw JWTErrorWrapper(underlying: jwtKitError)
+                }
+                throw error
             }
-            return token
         }
     }
 }

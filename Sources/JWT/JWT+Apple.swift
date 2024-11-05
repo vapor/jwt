@@ -1,6 +1,5 @@
 import NIOConcurrencyHelpers
 import Vapor
-import JWTKit
 
 extension Request.JWT {
     public var apple: Apple {

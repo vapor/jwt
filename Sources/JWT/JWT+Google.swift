@@ -33,20 +33,27 @@ extension Request.JWT {
             applicationIdentifier: String? = nil,
             gSuiteDomainName: String? = nil
         ) async throws -> GoogleIdentityToken {
-            let keys = try await self._jwt._request.application.jwt.google.keys(on: self._jwt._request)
-            let token = try await keys.verify(message, as: GoogleIdentityToken.self)
-            if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.google.applicationIdentifier {
-                try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
-            }
-            if let gSuiteDomainName = gSuiteDomainName ?? self._jwt._request.application.jwt.google.gSuiteDomainName {
-                guard let hd = token.hostedDomain, hd.value == gSuiteDomainName else {
-                    throw JWTError.claimVerificationFailure(
-                        failedClaim: token.hostedDomain,
-                        reason: "Hosted domain claim does not match gSuite domain name"
-                    )
+            do {
+                let keys = try await self._jwt._request.application.jwt.google.keys(on: self._jwt._request)
+                let token = try await keys.verify(message, as: GoogleIdentityToken.self)
+                if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.google.applicationIdentifier {
+                    try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
                 }
+                if let gSuiteDomainName = gSuiteDomainName ?? self._jwt._request.application.jwt.google.gSuiteDomainName {
+                    guard let hd = token.hostedDomain, hd.value == gSuiteDomainName else {
+                        throw JWTError.claimVerificationFailure(
+                            failedClaim: token.hostedDomain,
+                            reason: "Hosted domain claim does not match gSuite domain name"
+                        )
+                    }
+                }
+                return token
+            } catch {
+                if let jwtKitError = error as? JWTError {
+                    throw JWTErrorWrapper(underlying: jwtKitError)
+                }
+                throw error
             }
-            return token
         }
     }
 }

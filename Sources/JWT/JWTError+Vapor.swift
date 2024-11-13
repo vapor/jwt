@@ -5,7 +5,7 @@ extension JWTError: @retroactive AbortError {
         .unauthorized
     }
 
-    @_implements(AbortError, reason) public var abortErrorReason: String {
+    @_implements(AbortError,reason) public var abortErrorReason: String {
         self.reason ?? self.description
     }
 }

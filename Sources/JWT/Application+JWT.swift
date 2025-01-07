@@ -42,7 +42,7 @@ extension Application {
 
         public var keys: JWTKeyCollection {
             get { self.storage.keys }
-            set { self.storage.keys = newValue }
+            nonmutating set { self.storage.keys = newValue }
         }
 
         private var storage: Storage {

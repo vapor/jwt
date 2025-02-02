@@ -1,7 +1,7 @@
 import JWT
 import JWTKit
 import Testing
-import XCTVapor
+import VaporTesting
 
 @Suite("JWTTests")
 struct JWTTests {
@@ -128,14 +128,14 @@ struct JWTTests {
             var token: String?
 
             // test login
-            try await app.testable().test(
+            try await app.testing().test(
                 .POST, "login",
                 beforeRequest: { req in
                     try req.content.encode(LoginCredentials(name: "foo"))
                 },
                 afterResponse: { res async throws in
                     #expect(res.status == .ok)
-                    XCTAssertContent(LoginResponse.self, res) { login in
+                    expectContent(LoginResponse.self, res) { login in
                         token = login.token
                     }
                 }
@@ -147,7 +147,7 @@ struct JWTTests {
             }
 
             // test manual authentication using req.jwt.verify
-            try await app.testable().test(
+            try await app.testing().test(
                 .GET, "me", headers: ["authorization": "Bearer \(t)"]
             ) { res async in
                 #expect(res.status == .ok)
@@ -157,7 +157,7 @@ struct JWTTests {
             // create a token from a different signer
             let fakeToken = try await JWTKeyCollection()
                 .add(ecdsa: ES512PrivateKey()).sign(TestUser(name: "bob"))
-            try await app.testable().test(
+            try await app.testing().test(
                 .GET, "me", headers: ["authorization": "Bearer \(fakeToken)"]
             ) { res async in
                 #expect(res.status == .unauthorized)
@@ -197,14 +197,14 @@ struct JWTTests {
             var token: String?
 
             // test login
-            try await app.testable().test(
+            try await app.testing().test(
                 .POST, "login",
                 beforeRequest: { req in
                     try req.content.encode(LoginCredentials(name: "foo"))
                 },
                 afterResponse: { res async in
                     #expect(res.status == .ok)
-                    XCTAssertContent(LoginResponse.self, res) { login in
+                    expectContent(LoginResponse.self, res) { login in
                         token = login.token
                     }
                 }
@@ -215,19 +215,19 @@ struct JWTTests {
                 return
             }
 
-            try await app.testable().test(
+            try await app.testing().test(
                 .GET, "me", headers: ["authorization": "Bearer \(token)"]
             ) { res async in
                 #expect(res.status == .ok)
-                XCTAssertContent(TestUser.self, res) { user in
-                    XCTAssertEqual(user.name, "foo")
+                expectContent(TestUser.self, res) { user in
+                    #expect(user.name == "foo")
                 }
             }
 
             // token from same signer but for a different user
             // this tests that the guard middleware catches the failure to auth before it reaches the route handler
             let wrongNameToken = try await app.jwt.keys.sign(TestUser(name: "bob"))
-            try await app.testable().test(
+            try await app.testing().test(
                 .GET, "me", headers: ["authorization": "Bearer \(wrongNameToken)"]
             ) { res async in
                 #expect(res.status == .unauthorized)
@@ -235,7 +235,7 @@ struct JWTTests {
 
             // create a token from a different signer
             let fakeToken = try await JWTKeyCollection().add(ecdsa: ES512PrivateKey()).sign(TestUser(name: "bob"))
-            try await app.testable().test(
+            try await app.testing().test(
                 .GET, "me", headers: ["authorization": "Bearer \(fakeToken)"]
             ) { res async in
                 #expect(res.status == .unauthorized)

@@ -1,7 +1,7 @@
 import JWT
 import JWTKit
 import Testing
-import XCTVapor
+import VaporTesting
 
 @Suite("JWTTests")
 struct JWTTests {
@@ -128,14 +128,14 @@ struct JWTTests {
             var token: String?
 
             // test login
-            try await app.testable().test(
+            try await app.testing().test(
                 .POST, "login",
                 beforeRequest: { req in
                     try req.content.encode(LoginCredentials(name: "foo"))
                 },
                 afterResponse: { res async throws in
                     #expect(res.status == .ok)
-                    XCTAssertContent(LoginResponse.self, res) { login in
+                    expectContent(LoginResponse.self, res) { login in
                         token = login.token
                     }
                 }
@@ -147,7 +147,7 @@ struct JWTTests {
             }
 
             // test manual authentication using req.jwt.verify
-            try await app.testable().test(
+            try await app.testing().test(
                 .GET, "me", headers: ["authorization": "Bearer \(t)"]
             ) { res async in
                 #expect(res.status == .ok)
@@ -157,7 +157,7 @@ struct JWTTests {
             // create a token from a different signer
             let fakeToken = try await JWTKeyCollection()
                 .add(ecdsa: ES512PrivateKey()).sign(TestUser(name: "bob"))
-            try await app.testable().test(
+            try await app.testing().test(
                 .GET, "me", headers: ["authorization": "Bearer \(fakeToken)"]
             ) { res async in
                 #expect(res.status == .unauthorized)
@@ -197,14 +197,14 @@ struct JWTTests {
             var token: String?
 
             // test login
-            try await app.testable().test(
+            try await app.testing().test(
                 .POST, "login",
                 beforeRequest: { req in
                     try req.content.encode(LoginCredentials(name: "foo"))
                 },
                 afterResponse: { res async in
                     #expect(res.status == .ok)
-                    XCTAssertContent(LoginResponse.self, res) { login in
+                    expectContent(LoginResponse.self, res) { login in
                         token = login.token
                     }
                 }
@@ -215,19 +215,19 @@ struct JWTTests {
                 return
             }
 
-            try await app.testable().test(
+            try await app.testing().test(
                 .GET, "me", headers: ["authorization": "Bearer \(token)"]
             ) { res async in
                 #expect(res.status == .ok)
-                XCTAssertContent(TestUser.self, res) { user in
-                    XCTAssertEqual(user.name, "foo")
+                expectContent(TestUser.self, res) { user in
+                    #expect(user.name == "foo")
                 }
             }
 
             // token from same signer but for a different user
             // this tests that the guard middleware catches the failure to auth before it reaches the route handler
             let wrongNameToken = try await app.jwt.keys.sign(TestUser(name: "bob"))
-            try await app.testable().test(
+            try await app.testing().test(
                 .GET, "me", headers: ["authorization": "Bearer \(wrongNameToken)"]
             ) { res async in
                 #expect(res.status == .unauthorized)
@@ -235,7 +235,7 @@ struct JWTTests {
 
             // create a token from a different signer
             let fakeToken = try await JWTKeyCollection().add(ecdsa: ES512PrivateKey()).sign(TestUser(name: "bob"))
-            try await app.testable().test(
+            try await app.testing().test(
                 .GET, "me", headers: ["authorization": "Bearer \(fakeToken)"]
             ) { res async in
                 #expect(res.status == .unauthorized)
@@ -262,7 +262,7 @@ struct JWTTests {
             var headers = HTTPHeaders()
             headers.bearerAuthorization = .init(
                 token: """
-                    eyJraWQiOiJGZnRPTlR4b0VnIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoiZGV2LnRpbWMuc2l3YS1kZW1vLlRJTGlPUyIsImV4cCI6MTczMDc2MDAxOCwiaWF0IjoxNzMwNjczNjE4LCJzdWIiOiIwMDE1NDIuYjA0MTAwYzUxYWNiNDhkM2E1NzA2ODRmMTdkNjM5NGQuMTYwMyIsImNfaGFzaCI6IlUxc1d0Z1dfWTZSb3d1a09WRzJmNEEiLCJlbWFpbCI6Ijh5c2JjaHZjMm1AcHJpdmF0ZXJlbGF5LmFwcGxlaWQuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzX3ByaXZhdGVfZW1haWwiOnRydWUsImF1dGhfdGltZSI6MTczMDY3MzYxOCwibm9uY2Vfc3VwcG9ydGVkIjp0cnVlfQ.fb-e48W_zMGfT0LqciYnBUBy7KxVaV5JC5VV4HFhhpK8yz0AUxeYHmXpkvt1gLPNnjd3c-fzMS0hUR-NiffgYuNs3qSFXSenb4BwYdDIuMXElggUPX3j6HU2TV-JYsTFl4tZpgnFs_0_56pscaJzQONCdrZdKJiD0lmtum7D-doH43aKflV-pAMXSZTCli9HwRNeZikmbY6wBS5Ltg4VI5Z8Usge4eS2HINdHIPSCadYf858pZ8huAaj5Jm4t_5j988khwgqBMc9haTHZgiUpK7SZDePuRsAAQQVCXnRsuibxFX66ugo5BEEKCdK-xg66iAstb_mC_628gMrybC-_w
+                    eyJraWQiOiJkTWxFUkJhRmRLIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoiZGV2LnRpbWMuc2l3YS1kZW1vLlRJTGlPUyIsImV4cCI6MTczODU4MjMxOSwiaWF0IjoxNzM4NDk1OTE5LCJzdWIiOiIwMDE1NDIuYjA0MTAwYzUxYWNiNDhkM2E1NzA2ODRmMTdkNjM5NGQuMTYwMyIsImNfaGFzaCI6Ik9SMld3QWhXT3BrTF9jbTJvc0xMdVEiLCJlbWFpbCI6Ijh5c2JjaHZjMm1AcHJpdmF0ZXJlbGF5LmFwcGxlaWQuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImlzX3ByaXZhdGVfZW1haWwiOnRydWUsImF1dGhfdGltZSI6MTczODQ5NTkxOSwibm9uY2Vfc3VwcG9ydGVkIjp0cnVlLCJyZWFsX3VzZXJfc3RhdHVzIjowfQ.E33_wTzKG4h3E7EZ74ZDRrGRhZ-fmhe_2MlSTedQpwb8u3cqj5BdRgZ8eQ91WH7HPPCKoDtBK9W-H-kBtmDeqzNJM1m6nhYGvBs0XAoCaIzaWKNSl-pPVNbkIWwmwuKEHzN3Ra0uZ1Uw9GRp3DetgT10Qcyw855ladG42X_sWcFOf9xlOKRtZ6aOYH9oVK2Cw_6BiXYwuxDimN7YRfSVCsFsO5clYyS2axPQnVb1mLyFnJGrMr1rfa960QSvK2jD7cMny92msU2vECPjENgzUTL5ou__49KAH6scx6zChwE-_Uv2dYRkTVMbPgnVVvm2qOCblKnMSXKqlL3hzbXVDw
                     """)
 
             try await app.test(.GET, "test", headers: headers) { res async in

@@ -409,6 +409,7 @@ struct JWTTests {
                 await app.server.shutdown()
             } catch {
                 await app.server.shutdown()
+                throw error
             }
         }
     }

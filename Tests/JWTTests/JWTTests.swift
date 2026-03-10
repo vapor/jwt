@@ -333,78 +333,83 @@ struct JWTTests {
             let validToken = try await signingKeys.sign(validPayload, kid: "test-apple-key")
 
             try await app.server.start(address: .hostname("localhost", port: 0))
-            let port = try #require(app.http.server.shared.localAddress?.port, "Failed to get port")
 
-            app.jwt.apple.jwksEndpoint = "http://localhost:\(port)/mock-apple-jwks"
-            app.jwt.apple.applicationIdentifier = "com.example.app"
+            do {
+                let port = try #require(app.http.server.shared.localAddress?.port, "Failed to get port")
 
-            let verifyResponse = try await app.client.get(
-                "http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(validToken)"])
-            #expect(verifyResponse.status == .ok)
-            #expect(verifyResponse.body?.string == "001234.abcdef1234567890.1234")
+                app.jwt.apple.jwksEndpoint = "http://localhost:\(port)/mock-apple-jwks"
+                app.jwt.apple.applicationIdentifier = "com.example.app"
 
-            // Token with wrong application identifier should fail
-            let wrongAudiencePayload = AppleIdentityToken(
-                issuer: "https://appleid.apple.com",
-                audience: "com.wrong.app",
-                expires: .init(value: Date().addingTimeInterval(3600)),
-                issuedAt: .init(value: Date()),
-                subject: "001234.abcdef1234567890.1234"
-            )
-            let wrongAudienceToken = try await signingKeys.sign(wrongAudiencePayload, kid: "test-apple-key")
+                let verifyResponse = try await app.client.get(
+                    "http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(validToken)"])
+                #expect(verifyResponse.status == .ok)
+                #expect(verifyResponse.body?.string == "001234.abcdef1234567890.1234")
 
-            let wrongAudienceResponse = try await app.client.get(
-                "http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(wrongAudienceToken)"])
-            #expect(wrongAudienceResponse.status == .unauthorized)
+                // Token with wrong application identifier should fail
+                let wrongAudiencePayload = AppleIdentityToken(
+                    issuer: "https://appleid.apple.com",
+                    audience: "com.wrong.app",
+                    expires: .init(value: Date().addingTimeInterval(3600)),
+                    issuedAt: .init(value: Date()),
+                    subject: "001234.abcdef1234567890.1234"
+                )
+                let wrongAudienceToken = try await signingKeys.sign(wrongAudiencePayload, kid: "test-apple-key")
 
-            // Expired token should fail
-            let expiredPayload = AppleIdentityToken(
-                issuer: "https://appleid.apple.com",
-                audience: "com.example.app",
-                expires: .init(value: Date().addingTimeInterval(-3600)),
-                issuedAt: .init(value: Date().addingTimeInterval(-7200)),
-                subject: "001234.abcdef1234567890.1234"
-            )
-            let expiredToken = try await signingKeys.sign(expiredPayload, kid: "test-apple-key")
+                let wrongAudienceResponse = try await app.client.get(
+                    "http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(wrongAudienceToken)"])
+                #expect(wrongAudienceResponse.status == .unauthorized)
 
-            let expiredTokenResponse = try await app.client.get(
-                "http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(expiredToken)"])
-            #expect(expiredTokenResponse.status == .unauthorized)
+                // Expired token should fail
+                let expiredPayload = AppleIdentityToken(
+                    issuer: "https://appleid.apple.com",
+                    audience: "com.example.app",
+                    expires: .init(value: Date().addingTimeInterval(-3600)),
+                    issuedAt: .init(value: Date().addingTimeInterval(-7200)),
+                    subject: "001234.abcdef1234567890.1234"
+                )
+                let expiredToken = try await signingKeys.sign(expiredPayload, kid: "test-apple-key")
 
-            // Token with wrong issuer should fail
-            let wrongIssuerPayload = AppleIdentityToken(
-                issuer: "https://notapple.com",
-                audience: "com.example.app",
-                expires: .init(value: Date().addingTimeInterval(3600)),
-                issuedAt: .init(value: Date()),
-                subject: "001234.abcdef1234567890.1234"
-            )
-            let wrongIssuerToken = try await signingKeys.sign(wrongIssuerPayload, kid: "test-apple-key")
+                let expiredTokenResponse = try await app.client.get(
+                    "http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(expiredToken)"])
+                #expect(expiredTokenResponse.status == .unauthorized)
 
-            let wrongIssuerResponse = try await app.client.get(
-                "http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(wrongIssuerToken)"])
-            #expect(wrongIssuerResponse.status == .unauthorized)
+                // Token with wrong issuer should fail
+                let wrongIssuerPayload = AppleIdentityToken(
+                    issuer: "https://notapple.com",
+                    audience: "com.example.app",
+                    expires: .init(value: Date().addingTimeInterval(3600)),
+                    issuedAt: .init(value: Date()),
+                    subject: "001234.abcdef1234567890.1234"
+                )
+                let wrongIssuerToken = try await signingKeys.sign(wrongIssuerPayload, kid: "test-apple-key")
 
-            // Missing authorization header should fail
-            let missingAuthHeaderResponse = try await app.client.get("http://localhost:\(port)/apple-verify")
-            #expect(missingAuthHeaderResponse.status == .unauthorized)
+                let wrongIssuerResponse = try await app.client.get(
+                    "http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(wrongIssuerToken)"])
+                #expect(wrongIssuerResponse.status == .unauthorized)
 
-            // Verify application identifier can be overridden per-request
-            let customAudiencePayload = AppleIdentityToken(
-                issuer: "https://appleid.apple.com",
-                audience: "com.custom.app",
-                expires: .init(value: Date().addingTimeInterval(3600)),
-                issuedAt: .init(value: Date()),
-                subject: "custom-user-id"
-            )
-            let customToken = try await signingKeys.sign(customAudiencePayload, kid: "test-apple-key")
+                // Missing authorization header should fail
+                let missingAuthHeaderResponse = try await app.client.get("http://localhost:\(port)/apple-verify")
+                #expect(missingAuthHeaderResponse.status == .unauthorized)
 
-            let customKidResponse = try await app.client.get(
-                "http://localhost:\(port)/apple-verify-custom", headers: ["Authorization": "Bearer \(customToken)"])
-            #expect(customKidResponse.status == .ok)
-            #expect(customKidResponse.body?.string == "custom-user-id")
+                // Verify application identifier can be overridden per-request
+                let customAudiencePayload = AppleIdentityToken(
+                    issuer: "https://appleid.apple.com",
+                    audience: "com.custom.app",
+                    expires: .init(value: Date().addingTimeInterval(3600)),
+                    issuedAt: .init(value: Date()),
+                    subject: "custom-user-id"
+                )
+                let customToken = try await signingKeys.sign(customAudiencePayload, kid: "test-apple-key")
 
-            await app.server.shutdown()
+                let customKidResponse = try await app.client.get(
+                    "http://localhost:\(port)/apple-verify-custom", headers: ["Authorization": "Bearer \(customToken)"])
+                #expect(customKidResponse.status == .ok)
+                #expect(customKidResponse.body?.string == "custom-user-id")
+
+                await app.server.shutdown()
+            } catch {
+                await app.server.shutdown()
+            }
         }
     }
 

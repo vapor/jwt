@@ -338,7 +338,8 @@ struct JWTTests {
             app.jwt.apple.jwksEndpoint = "http://localhost:\(port)/mock-apple-jwks"
             app.jwt.apple.applicationIdentifier = "com.example.app"
 
-            let verifyResponse = try await app.client.get("http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(validToken)"])
+            let verifyResponse = try await app.client.get(
+                "http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(validToken)"])
             #expect(verifyResponse.status == .ok)
             #expect(verifyResponse.body?.string == "001234.abcdef1234567890.1234")
 
@@ -352,7 +353,8 @@ struct JWTTests {
             )
             let wrongAudienceToken = try await signingKeys.sign(wrongAudiencePayload, kid: "test-apple-key")
 
-            let wrongAudienceResponse = try await app.client.get("http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(wrongAudienceToken)"])
+            let wrongAudienceResponse = try await app.client.get(
+                "http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(wrongAudienceToken)"])
             #expect(wrongAudienceResponse.status == .unauthorized)
 
             // Expired token should fail
@@ -365,7 +367,8 @@ struct JWTTests {
             )
             let expiredToken = try await signingKeys.sign(expiredPayload, kid: "test-apple-key")
 
-            let expiredTokenResponse = try await app.client.get("http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(expiredToken)"])
+            let expiredTokenResponse = try await app.client.get(
+                "http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(expiredToken)"])
             #expect(expiredTokenResponse.status == .unauthorized)
 
             // Token with wrong issuer should fail
@@ -378,7 +381,8 @@ struct JWTTests {
             )
             let wrongIssuerToken = try await signingKeys.sign(wrongIssuerPayload, kid: "test-apple-key")
 
-            let wrongIssuerResponse = try await app.client.get("http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(wrongIssuerToken)"])
+            let wrongIssuerResponse = try await app.client.get(
+                "http://localhost:\(port)/apple-verify", headers: ["Authorization": "Bearer \(wrongIssuerToken)"])
             #expect(wrongIssuerResponse.status == .unauthorized)
 
             // Missing authorization header should fail
@@ -395,7 +399,8 @@ struct JWTTests {
             )
             let customToken = try await signingKeys.sign(customAudiencePayload, kid: "test-apple-key")
 
-            let customKidResponse = try await app.client.get("http://localhost:\(port)/apple-verify-custom", headers: ["Authorization": "Bearer \(customToken)"])
+            let customKidResponse = try await app.client.get(
+                "http://localhost:\(port)/apple-verify-custom", headers: ["Authorization": "Bearer \(customToken)"])
             #expect(customKidResponse.status == .ok)
             #expect(customKidResponse.body?.string == "custom-user-id")
 

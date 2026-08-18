@@ -26,10 +26,10 @@ struct JWTTests {
         }
 
         try await withApp { app in
-            await app.jwt.keys.add(hmac: "secret", digestAlgorithm: .sha256)
+            await app.jwt.keys.add(hmac: "a-string-secret-at-least-256-bits-long", digestAlgorithm: .sha256)
 
-            await app.jwt.keys.add(hmac: "foo", digestAlgorithm: .sha256, kid: "a")
-            await app.jwt.keys.add(hmac: "bar", digestAlgorithm: .sha256, kid: "b")
+            await app.jwt.keys.add(hmac: "another-string-secret-at-least-256-bits-long", digestAlgorithm: .sha256, kid: "a")
+            await app.jwt.keys.add(hmac: "a-third-string-secret-at-least-256-bits-long", digestAlgorithm: .sha256, kid: "b")
 
             app.jwt.apple.applicationIdentifier = "..."
             app.get("apple") { req async throws -> HTTPStatus in
@@ -90,7 +90,7 @@ struct JWTTests {
             }
 
             let token =
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ2YXBvciIsImV4cCI6NjQwOTIyMTEyMDAsImFkbWluIjp0cnVlfQ.lS5lpwfRNSZDvpGQk6x5JI1g40gkYCOWqbc3J_ghowo"
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ2YXBvciIsImV4cCI6NjQwOTIyMTEyMDAsImFkbWluIjp0cnVlfQ.023MpwVrTea_vZ7uzgZGN1dB-XK88BSC0oyLnQDbxSI"
 
             try await app.test(
                 .GET, "me", headers: ["Authorization": "Bearer \(token)"]
@@ -417,7 +417,7 @@ struct JWTTests {
     @Test("Test Microsoft Endpoint Switch")
     func testMicrosoftEndpointSwitch() async throws {
         try await withApp { app in
-            await app.jwt.keys.add(hmac: "secret", digestAlgorithm: .sha256)
+            await app.jwt.keys.add(hmac: "a-string-secret-at-least-256-bits-long", digestAlgorithm: .sha256)
 
             let testUser = TestUser(name: "foo")
             let token = try await app.jwt.keys.sign(testUser)

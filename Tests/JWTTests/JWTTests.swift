@@ -90,7 +90,7 @@ struct JWTTests {
             }
 
             let token =
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ2YXBvciIsImV4cCI6NjQwOTIyMTEyMDAsImFkbWluIjp0cnVlfQ.lS5lpwfRNSZDvpGQk6x5JI1g40gkYCOWqbc3J_ghowo"
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ2YXBvciIsImV4cCI6NjQwOTIyMTEyMDAsImFkbWluIjp0cnVlfQ.023MpwVrTea_vZ7uzgZGN1dB-XK88BSC0oyLnQDbxSI"
 
             try await app.test(
                 .GET, "me", headers: ["Authorization": "Bearer \(token)"]

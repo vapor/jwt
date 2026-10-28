@@ -10,31 +10,58 @@ extension Request.JWT {
         public let _jwt: Request.JWT
 
         public func verify(
-            applicationIdentifier: String? = nil
+            applicationIdentifier: String? = nil,
+            expectedAudiences: [String]? = nil,
+            trustedAdditionalAudiences: Set<String> = []
         ) async throws -> AppleIdentityToken {
             guard let token = self._jwt._request.headers.bearerAuthorization?.token else {
                 self._jwt._request.logger.error("Request is missing JWT bearer header.")
                 throw Abort(.unauthorized)
             }
-            return try await self.verify(token, applicationIdentifier: applicationIdentifier)
+            return try await self.verify(
+                token,
+                applicationIdentifier: applicationIdentifier,
+                expectedAudiences: expectedAudiences,
+                trustedAdditionalAudiences: trustedAdditionalAudiences)
         }
 
         public func verify(
             _ message: String,
-            applicationIdentifier: String? = nil
+            applicationIdentifier: String? = nil,
+            expectedAudiences: [String]? = nil,
+            trustedAdditionalAudiences: Set<String> = []
         ) async throws -> AppleIdentityToken {
-            try await self.verify([UInt8](message.utf8), applicationIdentifier: applicationIdentifier)
+            try await self.verify(
+                [UInt8](message.utf8),
+                applicationIdentifier: applicationIdentifier,
+                expectedAudiences: expectedAudiences,
+                trustedAdditionalAudiences: trustedAdditionalAudiences)
         }
 
         public func verify(
             _ message: some DataProtocol & Sendable,
-            applicationIdentifier: String? = nil
+            applicationIdentifier: String? = nil,
+            expectedAudiences: [String]? = nil,
+            trustedAdditionalAudiences: Set<String> = []
         ) async throws -> AppleIdentityToken {
             let keys = try await self._jwt._request.application.jwt.apple.keys(on: self._jwt._request)
-            let token = try await keys.verify(message, as: AppleIdentityToken.self)
-            if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.apple.applicationIdentifier {
-                try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
+            let configuredID = applicationIdentifier ?? self._jwt._request.application.jwt.apple.applicationIdentifier
+            if let expectedAudiences = expectedAudiences ?? configuredID.map({ [$0] }) {
+                return try await keys.verify(
+                    message,
+                    as: AppleIdentityToken.self,
+                    expectedAudiences: expectedAudiences,
+                    trustedAdditionalAudiences: trustedAdditionalAudiences)
             }
+
+            guard trustedAdditionalAudiences.isEmpty else {
+                throw JWTError.generic(
+                    identifier: "Audience",
+                    reason: "Expected audience required when trusting additional audiences")
+            }
+            let token = try await verifyIdentityTokenWithoutAudience(message, as: AppleIdentityToken.self, using: keys)
+            self._jwt._request.logger.warning(
+                "Apple identity token verified without an audience check; configure applicationIdentifier or pass expectedAudiences")
             return token
         }
     }

@@ -10,42 +10,70 @@ extension Request.JWT {
         public let _jwt: Request.JWT
 
         public func verify(
-            applicationIdentifier: String? = nil
+            applicationIdentifier: String? = nil,
+            expectedAudiences: [String]? = nil,
+            trustedAdditionalAudiences: Set<String> = []
         ) async throws -> FirebaseAuthIdentityToken {
             guard let token = self._jwt._request.headers.bearerAuthorization?.token else {
                 self._jwt._request.logger.error("Request is missing JWT bearer header.")
                 throw Abort(.unauthorized)
             }
-            return try await self.verify(token, applicationIdentifier: applicationIdentifier)
+            return try await self.verify(
+                token,
+                applicationIdentifier: applicationIdentifier,
+                expectedAudiences: expectedAudiences,
+                trustedAdditionalAudiences: trustedAdditionalAudiences)
         }
 
         public func verify(
             _ message: String,
-            applicationIdentifier: String? = nil
+            applicationIdentifier: String? = nil,
+            expectedAudiences: [String]? = nil,
+            trustedAdditionalAudiences: Set<String> = []
         ) async throws -> FirebaseAuthIdentityToken {
-            try await self.verify([UInt8](message.utf8), applicationIdentifier: applicationIdentifier)
+            try await self.verify(
+                [UInt8](message.utf8),
+                applicationIdentifier: applicationIdentifier,
+                expectedAudiences: expectedAudiences,
+                trustedAdditionalAudiences: trustedAdditionalAudiences)
         }
 
         public func verify(
             _ message: some DataProtocol & Sendable,
-            applicationIdentifier: String? = nil
+            applicationIdentifier: String? = nil,
+            expectedAudiences: [String]? = nil,
+            trustedAdditionalAudiences: Set<String> = []
         ) async throws -> FirebaseAuthIdentityToken {
             let keys = try await self._jwt._request.application.jwt.firebaseAuth.keys(on: self._jwt._request)
-            let token = try await keys.verify(message, as: FirebaseAuthIdentityToken.self)
-            if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.firebaseAuth.applicationIdentifier {
-                try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
-                guard token.audience.value.first == applicationIdentifier else {
+            let configuredID = applicationIdentifier ?? self._jwt._request.application.jwt.firebaseAuth.applicationIdentifier
+            let expected = expectedAudiences ?? configuredID.map { [$0] }
+            let token: FirebaseAuthIdentityToken
+            if let expected {
+                token = try await keys.verify(
+                    message,
+                    as: FirebaseAuthIdentityToken.self,
+                    expectedAudiences: expected,
+                    trustedAdditionalAudiences: trustedAdditionalAudiences)
+
+                guard let projectID = token.audience.value.first, expected.contains(projectID) else {
                     throw JWTError.claimVerificationFailure(
                         failedClaim: token.audience,
-                        reason: "Audience claim does not match expected value"
-                    )
+                        reason: "Audience claim does not match expected value")
                 }
-                guard token.issuer.value == "https://securetoken.google.com/\(applicationIdentifier)" else {
+                guard token.issuer.value == "https://securetoken.google.com/\(projectID)" else {
                     throw JWTError.claimVerificationFailure(
                         failedClaim: token.issuer,
-                        reason: "Issuer claim does not match expected value"
-                    )
+                        reason: "Issuer claim does not match expected value")
                 }
+            } else {
+                guard trustedAdditionalAudiences.isEmpty else {
+                    throw JWTError.generic(
+                        identifier: "Audience",
+                        reason: "Expected audience required when trusting additional audiences")
+                }
+                token = try await verifyIdentityTokenWithoutAudience(message, as: FirebaseAuthIdentityToken.self, using: keys)
+                self._jwt._request.logger.warning(
+                    "Firebase identity token verified without an audience check; configure applicationIdentifier or pass expectedAudiences")
             }
             return token
         }

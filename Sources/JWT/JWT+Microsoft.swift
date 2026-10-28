@@ -6,35 +6,62 @@ extension Request.JWT {
         .init(_jwt: self)
     }
 
-    public struct Microsoft {
+    public struct Microsoft: Sendable {
         public let _jwt: Request.JWT
 
         public func verify(
-            applicationIdentifier: String? = nil
+            applicationIdentifier: String? = nil,
+            expectedAudiences: [String]? = nil,
+            trustedAdditionalAudiences: Set<String> = []
         ) async throws -> MicrosoftIdentityToken {
             guard let token = self._jwt._request.headers.bearerAuthorization?.token else {
                 self._jwt._request.logger.error("Request is missing JWT bearer header.")
                 throw Abort(.unauthorized)
             }
-            return try await self.verify(token, applicationIdentifier: applicationIdentifier)
+            return try await self.verify(
+                token,
+                applicationIdentifier: applicationIdentifier,
+                expectedAudiences: expectedAudiences,
+                trustedAdditionalAudiences: trustedAdditionalAudiences)
         }
 
         public func verify(
             _ message: String,
-            applicationIdentifier: String? = nil
+            applicationIdentifier: String? = nil,
+            expectedAudiences: [String]? = nil,
+            trustedAdditionalAudiences: Set<String> = []
         ) async throws -> MicrosoftIdentityToken {
-            try await self.verify([UInt8](message.utf8), applicationIdentifier: applicationIdentifier)
+            try await self.verify(
+                [UInt8](message.utf8),
+                applicationIdentifier: applicationIdentifier,
+                expectedAudiences: expectedAudiences,
+                trustedAdditionalAudiences: trustedAdditionalAudiences)
         }
 
         public func verify(
             _ message: some DataProtocol & Sendable,
-            applicationIdentifier: String? = nil
+            applicationIdentifier: String? = nil,
+            expectedAudiences: [String]? = nil,
+            trustedAdditionalAudiences: Set<String> = []
         ) async throws -> MicrosoftIdentityToken {
             let keys = try await self._jwt._request.application.jwt.microsoft.keys(on: self._jwt._request)
-            let token = try await keys.verify(message, as: MicrosoftIdentityToken.self)
-            if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.microsoft.applicationIdentifier {
-                try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
+            let configuredID = applicationIdentifier ?? self._jwt._request.application.jwt.microsoft.applicationIdentifier
+            if let expectedAudiences = expectedAudiences ?? configuredID.map({ [$0] }) {
+                return try await keys.verify(
+                    message,
+                    as: MicrosoftIdentityToken.self,
+                    expectedAudiences: expectedAudiences,
+                    trustedAdditionalAudiences: trustedAdditionalAudiences)
             }
+
+            guard trustedAdditionalAudiences.isEmpty else {
+                throw JWTError.generic(
+                    identifier: "Audience",
+                    reason: "Expected audience required when trusting additional audiences")
+            }
+            let token = try await verifyIdentityTokenWithoutAudience(message, as: MicrosoftIdentityToken.self, using: keys)
+            self._jwt._request.logger.warning(
+                "Microsoft identity token verified without an audience check; configure applicationIdentifier or pass expectedAudiences")
             return token
         }
     }

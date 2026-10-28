@@ -243,10 +243,49 @@ struct JWTTests {
         }
     }
 
-    /// Tests the Apple Sign In verification flow using a mock JWKS endpoint.
-    /// This tests the full pipeline: JWKS fetching, token verification, and application identifier validation.
-    @Test("Test Apple Authentication with Mock JWKS")
-    func testAppleWithMockJWKS() async throws {
+    /// Exercises provider verification through a mock JWKS endpoint.
+    @Test("Test Identity Tokens with Mock JWKS")
+    func testIdentityTokensWithMockJWKS() async throws {
+        struct ProviderFixture: JWTPayload {
+            enum CodingKeys: String, CodingKey {
+                case issuer = "iss"
+                case audience = "aud"
+                case subject = "sub"
+                case authorizedPresenter = "azp"
+                case issuedAt = "iat"
+                case expires = "exp"
+                case notBefore = "nbf"
+                case tenantId = "tid"
+                case objectId = "oid"
+                case userID = "user_id"
+            }
+
+            var issuer: String
+            var audience: AudienceClaim
+            var subject = "test-user"
+            var authorizedPresenter = "mobile-client"
+            var issuedAt = Int(Date().timeIntervalSince1970)
+            var expires = Int(Date().addingTimeInterval(3600).timeIntervalSince1970)
+            var notBefore = Int(Date().addingTimeInterval(-60).timeIntervalSince1970)
+            var tenantId = "11111111-2222-3333-4444-555555555555"
+            var objectId = "test-object"
+            var userID = "test-user"
+
+            func verify(using _: some JWTAlgorithm) async throws {}
+        }
+        struct AppleLogin: Authenticatable {
+            let subject: String
+        }
+
+        struct AppleAuthenticator: AsyncBearerAuthenticator {
+            let clientID: String
+
+            func authenticate(bearer: BearerAuthorization, for request: Request) async throws {
+                let token = try await request.jwt.apple.verify(bearer.token, applicationIdentifier: clientID)
+                request.auth.login(AppleLogin(subject: token.subject.value))
+            }
+        }
+
         // JWKS JSON with RSA key taken from JWTKit Tests
         let mockJWKS = """
             {
@@ -308,9 +347,83 @@ struct JWTTests {
                 return token.subject.value
             }
 
+            let protectedApple = app.grouped(
+                AppleAuthenticator(clientID: "com.example.app"),
+                AppleLogin.guardMiddleware())
+            protectedApple.get("apple-auth") { req -> String in
+                try req.auth.require(AppleLogin.self).subject
+            }
+
             app.get("apple-verify-custom") { req async throws -> String in
                 let token = try await req.jwt.apple.verify(applicationIdentifier: "com.custom.app")
                 return token.subject.value
+            }
+            app.get("apple-verify-conflict") { req async throws -> String in
+                try await req.jwt.apple.verify(
+                    applicationIdentifier: "com.example.app",
+                    expectedAudiences: ["com.example.app"]
+                ).subject.value
+            }
+
+            app.get("apple-verify-multi") { req async throws -> String in
+                try await req.jwt.apple.verify(expectedAudiences: ["com.example.app", "com.wrong.app"]).subject.value
+            }
+            app.get("apple-verify-trusted") { req async throws -> String in
+                try await req.jwt.apple.verify(
+                    expectedAudiences: ["com.example.app"],
+                    trustedAdditionalAudiences: ["com.wrong.app"]
+                ).subject.value
+            }
+            app.get("generic-verify") { req async throws -> String in
+                try await req.jwt.verify(as: AppleIdentityToken.self, expectedAudience: "com.example.app").subject.value
+            }
+            app.get("generic-verify-multi") { req async throws -> String in
+                try await req.jwt.verify(
+                    as: AppleIdentityToken.self,
+                    expectedAudiences: ["com.example.app", "com.wrong.app"]
+                ).subject.value
+            }
+            app.get("generic-verify-unchecked") { req async throws -> String in
+                func verifyAsPayload<Payload: JWTPayload>(_ request: Request, as _: Payload.Type) async throws -> Payload {
+                    try await request.jwt.verify(as: Payload.self)
+                }
+                return try await verifyAsPayload(req, as: AppleIdentityToken.self).subject.value
+            }
+            app.get("google-verify") { req async throws -> String in
+                try await req.jwt.google.verify().subject.value
+            }
+            app.get("google-verify-conflict") { req async throws -> String in
+                try await req.jwt.google.verify(
+                    applicationIdentifier: "server-client",
+                    expectedAudiences: ["server-client"]
+                ).subject.value
+            }
+            app.get("google-verify-presenter") { req async throws -> String in
+                try await req.jwt.google.verify(trustedAuthorizedPresenters: ["mobile-client"]).subject.value
+            }
+            app.get("google-verify-wrong-presenter") { req async throws -> String in
+                try await req.jwt.google.verify(trustedAuthorizedPresenters: ["other-client"]).subject.value
+            }
+            app.get("microsoft-verify") { req async throws -> String in
+                try await req.jwt.microsoft.verify().subject.value
+            }
+            app.get("microsoft-verify-conflict") { req async throws -> String in
+                try await req.jwt.microsoft.verify(
+                    applicationIdentifier: "microsoft-client",
+                    expectedAudiences: ["microsoft-client"]
+                ).subject.value
+            }
+            app.get("firebase-verify") { req async throws -> String in
+                try await req.jwt.firebaseAuth.verify().subject.value
+            }
+            app.get("firebase-verify-conflict") { req async throws -> String in
+                try await req.jwt.firebaseAuth.verify(
+                    applicationIdentifier: "project-one",
+                    expectedAudiences: ["project-one"]
+                ).subject.value
+            }
+            app.get("firebase-verify-multi") { req async throws -> String in
+                try await req.jwt.firebaseAuth.verify(expectedAudiences: ["project-one", "project-two"]).subject.value
             }
 
             let privateKey = try Insecure.RSA.PrivateKey(pem: rsaPrivateKeyPEM)
@@ -319,6 +432,8 @@ struct JWTTests {
                 digestAlgorithm: .sha256,
                 kid: "test-apple-key"
             )
+
+            await app.jwt.keys.add(rsa: privateKey.publicKey, digestAlgorithm: .sha256, kid: "test-apple-key")
 
             // Valid token with correct application identifier
             let validPayload = AppleIdentityToken(
@@ -405,6 +520,73 @@ struct JWTTests {
                     "http://localhost:\(port)/apple-verify-custom", headers: ["Authorization": "Bearer \(customToken)"])
                 #expect(customKidResponse.status == .ok)
                 #expect(customKidResponse.body?.string == "custom-user-id")
+
+                func expectStatus(_ route: String, token: String, status: HTTPStatus) async throws {
+                    let response = try await app.client.get(
+                        "http://localhost:\(port)/\(route)",
+                        headers: ["Authorization": "Bearer \(token)"])
+                    #expect(response.status == status)
+                }
+
+                try await expectStatus("apple-auth", token: validToken, status: .ok)
+                try await expectStatus("apple-auth", token: wrongAudienceToken, status: .unauthorized)
+                try await expectStatus("apple-verify-conflict", token: validToken, status: .unauthorized)
+                try await expectStatus("generic-verify", token: validToken, status: .ok)
+                try await expectStatus("generic-verify", token: wrongAudienceToken, status: .unauthorized)
+                try await expectStatus("generic-verify-unchecked", token: wrongAudienceToken, status: .ok)
+
+                let mixedAudienceToken = try await signingKeys.sign(
+                    ProviderFixture(
+                        issuer: "https://appleid.apple.com",
+                        audience: .init(value: ["com.example.app", "com.wrong.app"])),
+                    kid: "test-apple-key")
+                try await expectStatus("apple-verify", token: mixedAudienceToken, status: .unauthorized)
+                try await expectStatus("apple-verify-multi", token: mixedAudienceToken, status: .ok)
+                try await expectStatus("apple-verify-trusted", token: mixedAudienceToken, status: .ok)
+                try await expectStatus("generic-verify-multi", token: mixedAudienceToken, status: .ok)
+
+                app.jwt.google.jwksEndpoint = "http://localhost:\(port)/mock-apple-jwks"
+                app.jwt.google.applicationIdentifier = "server-client"
+                let googleToken = try await signingKeys.sign(
+                    ProviderFixture(issuer: "https://accounts.google.com", audience: "server-client"),
+                    kid: "test-apple-key")
+                try await expectStatus("google-verify", token: googleToken, status: .ok)
+                try await expectStatus("google-verify-conflict", token: googleToken, status: .unauthorized)
+                try await expectStatus("google-verify-presenter", token: googleToken, status: .ok)
+                try await expectStatus("google-verify-wrong-presenter", token: googleToken, status: .unauthorized)
+                let otherGoogleToken = try await signingKeys.sign(
+                    ProviderFixture(issuer: "https://accounts.google.com", audience: "other-client"),
+                    kid: "test-apple-key")
+                try await expectStatus("google-verify", token: otherGoogleToken, status: .unauthorized)
+
+                app.jwt.microsoft.jwksEndpoint = "http://localhost:\(port)/mock-apple-jwks"
+                app.jwt.microsoft.applicationIdentifier = "microsoft-client"
+                let microsoftIssuer = "https://login.microsoftonline.com/11111111-2222-3333-4444-555555555555/v2.0"
+                let microsoftToken = try await signingKeys.sign(
+                    ProviderFixture(issuer: microsoftIssuer, audience: "microsoft-client"),
+                    kid: "test-apple-key")
+                try await expectStatus("microsoft-verify", token: microsoftToken, status: .ok)
+                try await expectStatus("microsoft-verify-conflict", token: microsoftToken, status: .unauthorized)
+                let otherMicrosoftToken = try await signingKeys.sign(
+                    ProviderFixture(issuer: microsoftIssuer, audience: "other-client"),
+                    kid: "test-apple-key")
+                try await expectStatus("microsoft-verify", token: otherMicrosoftToken, status: .unauthorized)
+
+                app.jwt.firebaseAuth.jwksEndpoint = "http://localhost:\(port)/mock-apple-jwks"
+                app.jwt.firebaseAuth.applicationIdentifier = "project-one"
+                let firebaseToken = try await signingKeys.sign(
+                    ProviderFixture(issuer: "https://securetoken.google.com/project-one", audience: "project-one"),
+                    kid: "test-apple-key")
+                try await expectStatus("firebase-verify", token: firebaseToken, status: .ok)
+                try await expectStatus("firebase-verify-conflict", token: firebaseToken, status: .unauthorized)
+                let otherFirebaseToken = try await signingKeys.sign(
+                    ProviderFixture(issuer: "https://securetoken.google.com/project-two", audience: "project-two"),
+                    kid: "test-apple-key")
+                try await expectStatus("firebase-verify", token: otherFirebaseToken, status: .unauthorized)
+                try await expectStatus("firebase-verify-multi", token: otherFirebaseToken, status: .ok)
+
+                app.jwt.apple.applicationIdentifier = nil
+                try await expectStatus("apple-verify", token: wrongAudienceToken, status: .ok)
 
                 await app.server.shutdown()
             } catch {

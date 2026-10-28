@@ -11,33 +11,84 @@ extension Request.JWT {
 
         public func verify(
             applicationIdentifier: String? = nil,
-            gSuiteDomainName: String? = nil
+            gSuiteDomainName: String? = nil,
+            expectedAudiences: [String]? = nil,
+            trustedAdditionalAudiences: Set<String> = [],
+            trustedAuthorizedPresenters: Set<String>? = nil
         ) async throws -> GoogleIdentityToken {
             guard let token = self._jwt._request.headers.bearerAuthorization?.token else {
                 self._jwt._request.logger.error("Request is missing JWT bearer header.")
                 throw Abort(.unauthorized)
             }
-            return try await self.verify(token, applicationIdentifier: applicationIdentifier, gSuiteDomainName: gSuiteDomainName)
+            return try await self.verify(
+                token,
+                applicationIdentifier: applicationIdentifier,
+                gSuiteDomainName: gSuiteDomainName,
+                expectedAudiences: expectedAudiences,
+                trustedAdditionalAudiences: trustedAdditionalAudiences,
+                trustedAuthorizedPresenters: trustedAuthorizedPresenters)
         }
 
         public func verify(
             _ message: String,
             applicationIdentifier: String? = nil,
-            gSuiteDomainName: String? = nil
+            gSuiteDomainName: String? = nil,
+            expectedAudiences: [String]? = nil,
+            trustedAdditionalAudiences: Set<String> = [],
+            trustedAuthorizedPresenters: Set<String>? = nil
         ) async throws -> GoogleIdentityToken {
-            try await self.verify([UInt8](message.utf8), applicationIdentifier: applicationIdentifier, gSuiteDomainName: gSuiteDomainName)
+            try await self.verify(
+                [UInt8](message.utf8),
+                applicationIdentifier: applicationIdentifier,
+                gSuiteDomainName: gSuiteDomainName,
+                expectedAudiences: expectedAudiences,
+                trustedAdditionalAudiences: trustedAdditionalAudiences,
+                trustedAuthorizedPresenters: trustedAuthorizedPresenters)
         }
 
         public func verify(
             _ message: some DataProtocol & Sendable,
             applicationIdentifier: String? = nil,
-            gSuiteDomainName: String? = nil
+            gSuiteDomainName: String? = nil,
+            expectedAudiences: [String]? = nil,
+            trustedAdditionalAudiences: Set<String> = [],
+            trustedAuthorizedPresenters: Set<String>? = nil
         ) async throws -> GoogleIdentityToken {
-            let keys = try await self._jwt._request.application.jwt.google.keys(on: self._jwt._request)
-            let token = try await keys.verify(message, as: GoogleIdentityToken.self)
-            if let applicationIdentifier = applicationIdentifier ?? self._jwt._request.application.jwt.google.applicationIdentifier {
-                try token.audience.verifyIntendedAudience(includes: applicationIdentifier)
+            guard applicationIdentifier == nil || expectedAudiences == nil else {
+                throw JWTError.generic(
+                    identifier: "Audience",
+                    reason: "Pass either applicationIdentifier or expectedAudiences, not both")
             }
+            let keys = try await self._jwt._request.application.jwt.google.keys(on: self._jwt._request)
+            let configuredID = applicationIdentifier ?? self._jwt._request.application.jwt.google.applicationIdentifier
+            let token: GoogleIdentityToken
+            if let expectedAudiences = expectedAudiences ?? configuredID.map({ [$0] }) {
+                if let trustedAuthorizedPresenters {
+                    token = try await keys.verify(
+                        message,
+                        as: GoogleIdentityToken.self,
+                        expectedAudiences: expectedAudiences,
+                        trustedAdditionalAudiences: trustedAdditionalAudiences,
+                        trustedAuthorizedPresenters: trustedAuthorizedPresenters)
+                } else {
+                    token = try await keys.verify(
+                        message,
+                        as: GoogleIdentityToken.self,
+                        expectedAudiences: expectedAudiences,
+                        trustedAdditionalAudiences: trustedAdditionalAudiences)
+                }
+            } else {
+                guard trustedAdditionalAudiences.isEmpty, trustedAuthorizedPresenters == nil else {
+                    throw JWTError.generic(
+                        identifier: "Audience",
+                        reason: "Expected audience required for audience or authorized presenter options")
+                }
+                token = try await verifyIdentityTokenWithoutAudience(message, as: GoogleIdentityToken.self, using: keys)
+                self._jwt._request.logger.warning(
+                    "Google identity token verified without an audience check; set app.jwt.google.applicationIdentifier or pass expectedAudiences"
+                )
+            }
+
             if let gSuiteDomainName = gSuiteDomainName ?? self._jwt._request.application.jwt.google.gSuiteDomainName {
                 guard let hd = token.hostedDomain, hd.value == gSuiteDomainName else {
                     throw JWTError.claimVerificationFailure(

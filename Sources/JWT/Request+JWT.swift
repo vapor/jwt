@@ -27,7 +27,8 @@ extension Request {
             let payload: Payload = try await self._request.application.jwt.keys.verify(message, as: Payload.self)
             if Payload.self is any JWTIdentityToken.Type {
                 self._request.logger.warning(
-                    "Identity token verified without an audience check; use expectedAudience or expectedAudiences")
+                    "Identity token verified without an audience check; use expectedAudience or expectedAudiences, or authenticator(expectedAudience:) for authentication"
+                )
             }
             return payload
         }
@@ -151,7 +152,8 @@ extension Request {
             let payload = try await verifyIdentityTokenWithoutAudience(
                 message, as: Payload.self, using: self._request.application.jwt.keys)
             self._request.logger.warning(
-                "Identity token verified without an audience check; use expectedAudience or expectedAudiences")
+                "Identity token verified without an audience check; use expectedAudience or expectedAudiences, or authenticator(expectedAudience:) for authentication"
+            )
             return payload
         }
 

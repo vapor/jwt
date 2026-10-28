@@ -54,6 +54,11 @@ extension Request.JWT {
             trustedAdditionalAudiences: Set<String> = [],
             trustedAuthorizedPresenters: Set<String>? = nil
         ) async throws -> GoogleIdentityToken {
+            guard applicationIdentifier == nil || expectedAudiences == nil else {
+                throw JWTError.generic(
+                    identifier: "Audience",
+                    reason: "Pass either applicationIdentifier or expectedAudiences, not both")
+            }
             let keys = try await self._jwt._request.application.jwt.google.keys(on: self._jwt._request)
             let configuredID = applicationIdentifier ?? self._jwt._request.application.jwt.google.applicationIdentifier
             let token: GoogleIdentityToken
@@ -80,7 +85,8 @@ extension Request.JWT {
                 }
                 token = try await verifyIdentityTokenWithoutAudience(message, as: GoogleIdentityToken.self, using: keys)
                 self._jwt._request.logger.warning(
-                    "Google identity token verified without an audience check; configure applicationIdentifier or pass expectedAudiences")
+                    "Google identity token verified without an audience check; set app.jwt.google.applicationIdentifier or pass expectedAudiences"
+                )
             }
 
             if let gSuiteDomainName = gSuiteDomainName ?? self._jwt._request.application.jwt.google.gSuiteDomainName {

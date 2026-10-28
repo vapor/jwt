@@ -273,6 +273,19 @@ struct JWTTests {
 
             func verify(using _: some JWTAlgorithm) async throws {}
         }
+        struct AppleLogin: Authenticatable {
+            let subject: String
+        }
+
+        struct AppleAuthenticator: AsyncBearerAuthenticator {
+            let clientID: String
+
+            func authenticate(bearer: BearerAuthorization, for request: Request) async throws {
+                let token = try await request.jwt.apple.verify(bearer.token, applicationIdentifier: clientID)
+                request.auth.login(AppleLogin(subject: token.subject.value))
+            }
+        }
+
         // JWKS JSON with RSA key taken from JWTKit Tests
         let mockJWKS = """
             {
@@ -334,9 +347,22 @@ struct JWTTests {
                 return token.subject.value
             }
 
+            let protectedApple = app.grouped(
+                AppleAuthenticator(clientID: "com.example.app"),
+                AppleLogin.guardMiddleware())
+            protectedApple.get("apple-auth") { req -> String in
+                try req.auth.require(AppleLogin.self).subject
+            }
+
             app.get("apple-verify-custom") { req async throws -> String in
                 let token = try await req.jwt.apple.verify(applicationIdentifier: "com.custom.app")
                 return token.subject.value
+            }
+            app.get("apple-verify-conflict") { req async throws -> String in
+                try await req.jwt.apple.verify(
+                    applicationIdentifier: "com.example.app",
+                    expectedAudiences: ["com.example.app"]
+                ).subject.value
             }
 
             app.get("apple-verify-multi") { req async throws -> String in
@@ -366,6 +392,12 @@ struct JWTTests {
             app.get("google-verify") { req async throws -> String in
                 try await req.jwt.google.verify().subject.value
             }
+            app.get("google-verify-conflict") { req async throws -> String in
+                try await req.jwt.google.verify(
+                    applicationIdentifier: "server-client",
+                    expectedAudiences: ["server-client"]
+                ).subject.value
+            }
             app.get("google-verify-presenter") { req async throws -> String in
                 try await req.jwt.google.verify(trustedAuthorizedPresenters: ["mobile-client"]).subject.value
             }
@@ -375,8 +407,20 @@ struct JWTTests {
             app.get("microsoft-verify") { req async throws -> String in
                 try await req.jwt.microsoft.verify().subject.value
             }
+            app.get("microsoft-verify-conflict") { req async throws -> String in
+                try await req.jwt.microsoft.verify(
+                    applicationIdentifier: "microsoft-client",
+                    expectedAudiences: ["microsoft-client"]
+                ).subject.value
+            }
             app.get("firebase-verify") { req async throws -> String in
                 try await req.jwt.firebaseAuth.verify().subject.value
+            }
+            app.get("firebase-verify-conflict") { req async throws -> String in
+                try await req.jwt.firebaseAuth.verify(
+                    applicationIdentifier: "project-one",
+                    expectedAudiences: ["project-one"]
+                ).subject.value
             }
             app.get("firebase-verify-multi") { req async throws -> String in
                 try await req.jwt.firebaseAuth.verify(expectedAudiences: ["project-one", "project-two"]).subject.value
@@ -484,6 +528,9 @@ struct JWTTests {
                     #expect(response.status == status)
                 }
 
+                try await expectStatus("apple-auth", token: validToken, status: .ok)
+                try await expectStatus("apple-auth", token: wrongAudienceToken, status: .unauthorized)
+                try await expectStatus("apple-verify-conflict", token: validToken, status: .unauthorized)
                 try await expectStatus("generic-verify", token: validToken, status: .ok)
                 try await expectStatus("generic-verify", token: wrongAudienceToken, status: .unauthorized)
                 try await expectStatus("generic-verify-unchecked", token: wrongAudienceToken, status: .ok)
@@ -504,6 +551,7 @@ struct JWTTests {
                     ProviderFixture(issuer: "https://accounts.google.com", audience: "server-client"),
                     kid: "test-apple-key")
                 try await expectStatus("google-verify", token: googleToken, status: .ok)
+                try await expectStatus("google-verify-conflict", token: googleToken, status: .unauthorized)
                 try await expectStatus("google-verify-presenter", token: googleToken, status: .ok)
                 try await expectStatus("google-verify-wrong-presenter", token: googleToken, status: .unauthorized)
                 let otherGoogleToken = try await signingKeys.sign(
@@ -518,6 +566,7 @@ struct JWTTests {
                     ProviderFixture(issuer: microsoftIssuer, audience: "microsoft-client"),
                     kid: "test-apple-key")
                 try await expectStatus("microsoft-verify", token: microsoftToken, status: .ok)
+                try await expectStatus("microsoft-verify-conflict", token: microsoftToken, status: .unauthorized)
                 let otherMicrosoftToken = try await signingKeys.sign(
                     ProviderFixture(issuer: microsoftIssuer, audience: "other-client"),
                     kid: "test-apple-key")
@@ -529,6 +578,7 @@ struct JWTTests {
                     ProviderFixture(issuer: "https://securetoken.google.com/project-one", audience: "project-one"),
                     kid: "test-apple-key")
                 try await expectStatus("firebase-verify", token: firebaseToken, status: .ok)
+                try await expectStatus("firebase-verify-conflict", token: firebaseToken, status: .unauthorized)
                 let otherFirebaseToken = try await signingKeys.sign(
                     ProviderFixture(issuer: "https://securetoken.google.com/project-two", audience: "project-two"),
                     kid: "test-apple-key")

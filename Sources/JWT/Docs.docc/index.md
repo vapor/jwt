@@ -12,6 +12,12 @@ Identity tokens must be verified against the audience identifiers accepted by th
 let token = try await req.jwt.apple.verify(applicationIdentifier: appleClientID)
 ```
 
+To use `req.jwt.apple.verify()` without passing the ID each time, configure it first:
+
+```swift
+app.jwt.apple.applicationIdentifier = appleClientID
+```
+
 For an endpoint that accepts several audience identifiers, use `expectedAudiences`:
 
 ```swift
@@ -20,7 +26,7 @@ let token = try await req.jwt.google.verify(
 )
 ```
 
-Generic identity-token verification accepts `expectedAudience` or `expectedAudiences`:
+Generic identity-token verification accepts `expectedAudience` or `expectedAudiences` and checks signatures using keys registered in `app.jwt.keys`:
 
 ```swift
 let token = try await req.jwt.verify(
@@ -33,4 +39,30 @@ At least one expected ID must appear in `aud`. Any other audience values must be
 
 In Google mobile sign-in, a token requested for a backend server client ID can have that ID in `aud` and the mobile client ID in `azp`. Verify the server client ID as the audience. The default does not restrict `azp`; use `trustedAuthorizedPresenters` on the Google helper if the application needs to restrict presenting clients.
 
-An audience-free call verifies the signature and other claims without checking whether the token was issued for your application. Accepting the token as a login is insecure. Such identity-token calls are deprecated, and the request and provider helpers log a warning when they use them. Calls through a generic `JWTPayload` constraint may not receive a compile-time warning.
+### Authenticating identity tokens
+
+The no-argument `JWTPayload.authenticator()` uses generic verification and does not check the audience. For an identity token type that conforms to `Authenticatable`, when the provider's signing keys are registered in `app.jwt.keys`, use the audience-aware overload:
+
+```swift
+let protected = app.grouped(
+    AppleIdentityToken.authenticator(expectedAudience: appleClientID),
+    AppleIdentityToken.guardMiddleware()
+)
+```
+
+If you have a custom `JWTAuthenticator` whose `Payload` is an identity token, replace it with a bearer authenticator that checks the audience. When using a provider helper to fetch its signing keys, call that helper with an expected audience. For example, with an `AppleUser` type conforming to `Authenticatable`:
+
+```swift
+struct AppleAuthenticator: AsyncBearerAuthenticator {
+    let clientID: String
+
+    func authenticate(bearer: BearerAuthorization, for request: Request) async throws {
+        let token = try await request.jwt.apple.verify(bearer.token, applicationIdentifier: clientID)
+        request.auth.login(AppleUser(subject: token.subject.value))
+    }
+}
+```
+
+If no audience is passed or configured, a provider helper still returns a signature-verified token for compatibility and logs a warning. It does not check that the token was issued for your application, so accepting it as a login is insecure. The audience-free `req.jwt.verify(as:)` and `authenticator()` calls on concrete identity token types are deprecated. Calls through a generic `JWTPayload` constraint, including custom `JWTAuthenticator` types, receive no compile-time warning; successful verification logs a runtime warning.
+
+Pass either `applicationIdentifier` or `expectedAudiences` in a provider helper call. An explicit audience list overrides an identifier configured on `app.jwt.<provider>` for that call.

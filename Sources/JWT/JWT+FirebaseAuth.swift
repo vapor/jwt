@@ -44,6 +44,11 @@ extension Request.JWT {
             expectedAudiences: [String]? = nil,
             trustedAdditionalAudiences: Set<String> = []
         ) async throws -> FirebaseAuthIdentityToken {
+            guard applicationIdentifier == nil || expectedAudiences == nil else {
+                throw JWTError.generic(
+                    identifier: "Audience",
+                    reason: "Pass either applicationIdentifier or expectedAudiences, not both")
+            }
             let keys = try await self._jwt._request.application.jwt.firebaseAuth.keys(on: self._jwt._request)
             let configuredID = applicationIdentifier ?? self._jwt._request.application.jwt.firebaseAuth.applicationIdentifier
             let expected = expectedAudiences ?? configuredID.map { [$0] }
@@ -73,7 +78,8 @@ extension Request.JWT {
                 }
                 token = try await verifyIdentityTokenWithoutAudience(message, as: FirebaseAuthIdentityToken.self, using: keys)
                 self._jwt._request.logger.warning(
-                    "Firebase identity token verified without an audience check; configure applicationIdentifier or pass expectedAudiences")
+                    "Firebase identity token verified without an audience check; set app.jwt.firebaseAuth.applicationIdentifier or pass expectedAudiences"
+                )
             }
             return token
         }

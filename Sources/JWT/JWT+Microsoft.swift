@@ -44,6 +44,11 @@ extension Request.JWT {
             expectedAudiences: [String]? = nil,
             trustedAdditionalAudiences: Set<String> = []
         ) async throws -> MicrosoftIdentityToken {
+            guard applicationIdentifier == nil || expectedAudiences == nil else {
+                throw JWTError.generic(
+                    identifier: "Audience",
+                    reason: "Pass either applicationIdentifier or expectedAudiences, not both")
+            }
             let keys = try await self._jwt._request.application.jwt.microsoft.keys(on: self._jwt._request)
             let configuredID = applicationIdentifier ?? self._jwt._request.application.jwt.microsoft.applicationIdentifier
             if let expectedAudiences = expectedAudiences ?? configuredID.map({ [$0] }) {
@@ -61,7 +66,8 @@ extension Request.JWT {
             }
             let token = try await verifyIdentityTokenWithoutAudience(message, as: MicrosoftIdentityToken.self, using: keys)
             self._jwt._request.logger.warning(
-                "Microsoft identity token verified without an audience check; configure applicationIdentifier or pass expectedAudiences")
+                "Microsoft identity token verified without an audience check; set app.jwt.microsoft.applicationIdentifier or pass expectedAudiences"
+            )
             return token
         }
     }

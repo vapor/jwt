@@ -40,34 +40,3 @@ and add it to your target's dependencies:
 ```swift
 .product(name: "JWT", package: "jwt")
 ```
-
-### Verifying identity tokens
-
-Identity tokens must be verified against the audience identifiers your application accepts (client IDs for Apple, Google, and Microsoft; project IDs for Firebase). For a provider helper, pass `applicationIdentifier` or configure it on `app.jwt.apple`, `app.jwt.google`, `app.jwt.microsoft`, or `app.jwt.firebaseAuth`:
-
-```swift
-let token = try await req.jwt.apple.verify(applicationIdentifier: appleClientID)
-```
-
-When one endpoint accepts several audience identifiers, pass all of them to `expectedAudiences`:
-
-```swift
-let token = try await req.jwt.google.verify(
-    expectedAudiences: [webClientID, mobileClientID]
-)
-```
-
-For generic verification, pass `expectedAudience` or `expectedAudiences` directly:
-
-```swift
-let token = try await req.jwt.verify(
-    as: AppleIdentityToken.self,
-    expectedAudience: appleClientID
-)
-```
-
-The verifier requires at least one expected ID in the token's `aud` claim. Any other IDs in `aud` must also be expected or explicitly listed in `trustedAdditionalAudiences`.
-
-A Google mobile app can request a token for a backend server client ID. In that case, `aud` is the server client ID and `azp` can be the mobile client ID. Verify the server ID as the audience; `azp` is unrestricted by default. To restrict the presenter too, pass `trustedAuthorizedPresenters` to the Google helper.
-
-A call without an expected audience verifies the signature and other claims but does not establish that the token was issued for your application. Accepting it as a login is insecure. The audience-free identity-token overload is deprecated, and the request and provider helpers log a warning when they use it. Calls through a generic `JWTPayload` constraint may not produce a compile-time warning.
